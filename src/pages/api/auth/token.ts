@@ -1,10 +1,19 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSideOidcConfig } from '../../../config/auth.config'
 
+// Disable body parser for debugging if needed
+export const config = {
+  api: {
+    bodyParser: true
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log('🔵 Token API called with method:', req.method)
+
   // Allow preflight
   if (req.method === 'OPTIONS') {
     res.setHeader('Allow', 'POST, OPTIONS')
@@ -12,7 +21,11 @@ export default async function handler(
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    console.log('🔴 Method not allowed:', req.method)
+    return res.status(405).json({
+      error: 'Method not allowed',
+      allowedMethods: ['POST', 'OPTIONS']
+    })
   }
 
   try {
@@ -22,13 +35,30 @@ export default async function handler(
       code_verifier: codeVerifier
     } = req.body
 
+    console.log('🔵 Token request received:', {
+      code: code?.substring(0, 20) + '...',
+      redirectUri,
+      codeVerifier: codeVerifier?.substring(0, 20) + '...'
+    })
+
     if (!code || !redirectUri || !codeVerifier) {
       return res.status(400).json({
-        error: 'Missing required parameters'
+        error: 'Missing required parameters',
+        missing: {
+          code: !code,
+          redirectUri: !redirectUri,
+          codeVerifier: !codeVerifier
+        }
       })
     }
 
     const oidcConfig = getServerSideOidcConfig()
+
+    console.log('🔵 OIDC Config:', {
+      issuer: oidcConfig.issuer,
+      clientId: oidcConfig.clientId,
+      hasSecret: !!oidcConfig.clientSecret
+    })
 
     if (!oidcConfig.clientSecret) {
       console.error('❌ Missing client secret on server')
@@ -38,6 +68,7 @@ export default async function handler(
     }
 
     const tokenUrl = `${oidcConfig.issuer.replace(/\/$/, '')}/token/`
+    console.log('🔵 Token URL:', tokenUrl)
 
     const body = new URLSearchParams({
       grant_type: 'authorization_code',
@@ -48,6 +79,8 @@ export default async function handler(
       code_verifier: codeVerifier
     })
 
+    console.log('🔵 Sending request to Authentik...')
+
     const response = await fetch(tokenUrl, {
       method: 'POST',
       headers: {
@@ -57,6 +90,8 @@ export default async function handler(
     })
 
     const text = await response.text()
+    console.log('🔵 Authentik response status:', response.status)
+    console.log('🔵 Authentik response body preview:', text.substring(0, 200))
 
     let data
     try {
@@ -70,11 +105,13 @@ export default async function handler(
       return res.status(response.status).json(data)
     }
 
+    console.log('✅ Token exchange successful')
     return res.status(200).json(data)
   } catch (error) {
     console.error('❌ Token endpoint crash:', error)
     return res.status(500).json({
-      error: 'Internal server error'
+      error: 'Internal server error',
+      message: error.message
     })
   }
 }

@@ -1,10 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSideOidcConfig } from '../../../config/auth.config'
 
+export const config = {
+  api: {
+    bodyParser: true
+  }
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log('🔵 Refresh API called with method:', req.method)
+
   // Allow preflight requests
   if (req.method === 'OPTIONS') {
     res.setHeader('Allow', 'POST, OPTIONS')
@@ -12,11 +20,17 @@ export default async function handler(
   }
 
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    console.log('🔴 Method not allowed:', req.method)
+    return res.status(405).json({
+      error: 'Method not allowed',
+      allowedMethods: ['POST', 'OPTIONS']
+    })
   }
 
   try {
     const { refresh_token: refreshToken } = req.body
+
+    console.log('🔵 Refresh token request received:', !!refreshToken)
 
     if (!refreshToken) {
       return res.status(400).json({
@@ -26,7 +40,14 @@ export default async function handler(
 
     const oidcConfig = getServerSideOidcConfig()
 
+    console.log('🔵 OIDC Config for refresh:', {
+      issuer: oidcConfig.issuer,
+      clientId: oidcConfig.clientId,
+      hasSecret: !!oidcConfig.clientSecret
+    })
+
     const tokenUrl = `${oidcConfig.issuer.replace(/\/$/, '')}/token/`
+    console.log('🔵 Token URL:', tokenUrl)
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
@@ -42,13 +63,20 @@ export default async function handler(
     })
 
     const data = await response.json()
+    console.log('🔵 Refresh response status:', response.status)
+
+    if (!response.ok) {
+      console.error('❌ Refresh failed:', data)
+    } else {
+      console.log('✅ Refresh successful')
+    }
 
     return res.status(response.status).json(data)
   } catch (error) {
-    console.error('Refresh error:', error)
-
+    console.error('❌ Refresh error:', error)
     return res.status(500).json({
-      error: 'Internal server error'
+      error: 'Internal server error',
+      message: error.message
     })
   }
 }
