@@ -1,140 +1,85 @@
-import { NextApiRequest, NextApiResponse } from 'next'
-import { getServerSideOidcConfig } from '../../../config/auth.config'
-
-export const config = {
-  api: {
-    bodyParser: true
-  }
-}
+/* eslint-disable camelcase */
+import type { NextApiRequest, NextApiResponse } from 'next'
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Log EVERYTHING for debugging
-  console.log('🔵 Token API called with:', {
-    method: req.method,
-    url: req.url,
-    headers: req.headers,
-    body: req.body
-  })
+  console.log('=== TOKEN ENDPOINT HIT ===')
+  console.log('Method:', req.method)
 
-  // Handle OPTIONS for CORS preflight
-  if (req.method === 'OPTIONS') {
-    console.log('🟡 Handling OPTIONS preflight')
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    res.setHeader('Access-Control-Allow-Origin', '*')
-    return res.status(200).end()
+  // For testing - respond to GET requests to verify endpoint exists
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      message: 'Token endpoint is reachable. Use POST method.',
+      status: 'alive'
+    })
   }
 
   // Only allow POST
   if (req.method !== 'POST') {
-    console.log(`🔴 Method not allowed: ${req.method}`)
     return res.status(405).json({
       error: 'Method not allowed',
-      allowedMethods: ['POST', 'OPTIONS'],
-      receivedMethod: req.method
+      message: `Method ${req.method} not supported. Use POST.`,
+      allowedMethods: ['POST']
     })
   }
 
   try {
-    const {
-      code,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier
-    } = req.body
+    const { getServerSideOidcConfig } = await import(
+      '../../../config/auth.config'
+    )
 
-    console.log('🔵 Token request received:', {
+    const { code, redirect_uri, code_verifier } = req.body
+
+    console.log('Request body:', {
       hasCode: !!code,
-      hasRedirectUri: !!redirectUri,
-      hasCodeVerifier: !!codeVerifier,
-      codePreview: code?.substring(0, 20)
+      hasRedirectUri: !!redirect_uri,
+      hasCodeVerifier: !!code_verifier
     })
 
-    if (!code || !redirectUri || !codeVerifier) {
+    if (!code || !redirect_uri || !code_verifier) {
       return res.status(400).json({
-        error: 'Missing required parameters',
-        required: ['code', 'redirect_uri', 'code_verifier'],
+        error: 'Missing parameters',
         received: {
           code: !!code,
-          redirect_uri: !!redirectUri,
-          code_verifier: !!codeVerifier
+          redirect_uri: !!redirect_uri,
+          code_verifier: !!code_verifier
         }
       })
     }
 
     const oidcConfig = getServerSideOidcConfig()
+    const tokenUrl = oidcConfig.issuer.replace(/\/$/, '') + '/token/'
 
-    console.log('🔵 OIDC Config:', {
-      issuer: oidcConfig.issuer,
-      clientId: oidcConfig.clientId,
-      hasSecret: !!oidcConfig.clientSecret,
-      secretLength: oidcConfig.clientSecret?.length
-    })
-
-    if (!oidcConfig.clientSecret) {
-      console.error('❌ Missing client secret on server')
-      return res.status(500).json({
-        error: 'Server misconfiguration: missing client secret'
-      })
-    }
-
-    const tokenUrl = `${oidcConfig.issuer.replace(/\/$/, '')}/token/`
-    console.log('🔵 Token URL:', tokenUrl)
-
-    const body = new URLSearchParams({
+    const params = new URLSearchParams({
       grant_type: 'authorization_code',
       client_id: oidcConfig.clientId,
       client_secret: oidcConfig.clientSecret,
       code,
-      redirect_uri: redirectUri,
-      code_verifier: codeVerifier
-    })
-
-    console.log('🔵 Sending request to Authentik...')
-    console.log('🔵 Request params:', {
-      grant_type: 'authorization_code',
-      client_id: oidcConfig.clientId,
-      hasSecret: true,
-      hasCode: !!code,
-      redirect_uri: redirectUri,
-      hasCodeVerifier: !!codeVerifier
+      redirect_uri,
+      code_verifier
     })
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
     })
 
-    const text = await response.text()
-    console.log('🔵 Authentik response status:', response.status)
-    console.log('🔵 Authentik response headers:', response.headers)
-    console.log('🔵 Authentik response body:', text.substring(0, 500))
-
-    let data
-    try {
-      data = JSON.parse(text)
-    } catch {
-      data = { raw: text }
-    }
+    const data = await response.json()
 
     if (!response.ok) {
-      console.error('❌ Authentik token error:', data)
+      console.error('Authentik error:', data)
       return res.status(response.status).json(data)
     }
 
-    console.log('✅ Token exchange successful')
     return res.status(200).json(data)
   } catch (error) {
-    console.error('❌ Token endpoint crash:', error)
+    console.error('Token error:', error)
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message,
-      stack: error.stack
+      message: error.message
     })
   }
 }
