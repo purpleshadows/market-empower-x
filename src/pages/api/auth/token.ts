@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSideOidcConfig } from '../../../config/auth.config'
 
-// Disable body parser for debugging if needed
 export const config = {
   api: {
     bodyParser: true
@@ -12,19 +11,30 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log('🔵 Token API called with method:', req.method)
+  // Log EVERYTHING for debugging
+  console.log('🔵 Token API called with:', {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    body: req.body
+  })
 
-  // Allow preflight
+  // Handle OPTIONS for CORS preflight
   if (req.method === 'OPTIONS') {
-    res.setHeader('Allow', 'POST, OPTIONS')
+    console.log('🟡 Handling OPTIONS preflight')
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    res.setHeader('Access-Control-Allow-Origin', '*')
     return res.status(200).end()
   }
 
+  // Only allow POST
   if (req.method !== 'POST') {
-    console.log('🔴 Method not allowed:', req.method)
+    console.log(`🔴 Method not allowed: ${req.method}`)
     return res.status(405).json({
       error: 'Method not allowed',
-      allowedMethods: ['POST', 'OPTIONS']
+      allowedMethods: ['POST', 'OPTIONS'],
+      receivedMethod: req.method
     })
   }
 
@@ -36,18 +46,20 @@ export default async function handler(
     } = req.body
 
     console.log('🔵 Token request received:', {
-      code: code?.substring(0, 20) + '...',
-      redirectUri,
-      codeVerifier: codeVerifier?.substring(0, 20) + '...'
+      hasCode: !!code,
+      hasRedirectUri: !!redirectUri,
+      hasCodeVerifier: !!codeVerifier,
+      codePreview: code?.substring(0, 20)
     })
 
     if (!code || !redirectUri || !codeVerifier) {
       return res.status(400).json({
         error: 'Missing required parameters',
-        missing: {
-          code: !code,
-          redirectUri: !redirectUri,
-          codeVerifier: !codeVerifier
+        required: ['code', 'redirect_uri', 'code_verifier'],
+        received: {
+          code: !!code,
+          redirect_uri: !!redirectUri,
+          code_verifier: !!codeVerifier
         }
       })
     }
@@ -57,7 +69,8 @@ export default async function handler(
     console.log('🔵 OIDC Config:', {
       issuer: oidcConfig.issuer,
       clientId: oidcConfig.clientId,
-      hasSecret: !!oidcConfig.clientSecret
+      hasSecret: !!oidcConfig.clientSecret,
+      secretLength: oidcConfig.clientSecret?.length
     })
 
     if (!oidcConfig.clientSecret) {
@@ -80,6 +93,14 @@ export default async function handler(
     })
 
     console.log('🔵 Sending request to Authentik...')
+    console.log('🔵 Request params:', {
+      grant_type: 'authorization_code',
+      client_id: oidcConfig.clientId,
+      hasSecret: true,
+      hasCode: !!code,
+      redirect_uri: redirectUri,
+      hasCodeVerifier: !!codeVerifier
+    })
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
@@ -91,7 +112,8 @@ export default async function handler(
 
     const text = await response.text()
     console.log('🔵 Authentik response status:', response.status)
-    console.log('🔵 Authentik response body preview:', text.substring(0, 200))
+    console.log('🔵 Authentik response headers:', response.headers)
+    console.log('🔵 Authentik response body:', text.substring(0, 500))
 
     let data
     try {
@@ -111,7 +133,8 @@ export default async function handler(
     console.error('❌ Token endpoint crash:', error)
     return res.status(500).json({
       error: 'Internal server error',
-      message: error.message
+      message: error.message,
+      stack: error.stack
     })
   }
 }
