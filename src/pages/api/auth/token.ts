@@ -1,6 +1,8 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
 
+const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -14,6 +16,12 @@ export default async function handler(
   }
 
   try {
+    if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
+      return res.status(404).json({
+        error: 'Not found'
+      })
+    }
+
     const { code, redirect_uri, code_verifier } = req.body
 
     if (!code || !redirect_uri || !code_verifier) {
@@ -24,7 +32,7 @@ export default async function handler(
     }
 
     const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
-    const clientSecret = process.env.OIDC_CLIENT_SECRET
+    const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
     let tokenUrl = process.env.NEXT_PUBLIC_OIDC_TOKEN_URL
     const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
 
