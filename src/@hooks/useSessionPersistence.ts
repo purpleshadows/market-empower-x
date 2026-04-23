@@ -6,7 +6,6 @@ export function useSessionPersistence() {
 
   const refreshToken = async (refreshTokenString: string) => {
     try {
-      // Use server-side API endpoint to refresh token (hides client secret)
       const response = await fetch('/api/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

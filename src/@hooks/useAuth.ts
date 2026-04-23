@@ -285,7 +285,6 @@ export const useAuth = () => {
           )
         }
 
-        // Use server-side API endpoint for token exchange (hides client secret)
         const res = await fetch('/api/auth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
