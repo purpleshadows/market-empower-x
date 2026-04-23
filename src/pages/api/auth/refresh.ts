@@ -5,23 +5,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log('=== REFRESH TOKEN ENDPOINT HIT ===')
-  console.log('Method:', req.method)
-
   if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST'])
     return res.status(405).json({
       error: 'Method not allowed',
-      allowedMethods: ['POST']
+      message: 'This endpoint only accepts POST requests'
     })
   }
 
   try {
-    const { getServerSideOidcConfig } = await import(
-      '../../../config/auth.config'
-    )
     const { refresh_token } = req.body
-
-    console.log('Refresh token received:', !!refresh_token)
 
     if (!refresh_token) {
       return res.status(400).json({
@@ -29,8 +22,27 @@ export default async function handler(
       })
     }
 
-    const oidcConfig = getServerSideOidcConfig()
-    const tokenUrl = `${oidcConfig.issuer.replace(/\/$/, '')}/token/`
+    const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
+    const clientSecret = process.env.NEXT_PUBLIC_OIDC_CLIENT_SECRET
+    let tokenUrl = process.env.NEXT_PUBLIC_OIDC_TOKEN_URL
+    const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
+
+    if (!tokenUrl && issuer) {
+      if (issuer.includes('/application/o/')) {
+        const baseUrl = issuer.split('/application/o/')[0]
+        tokenUrl = `${baseUrl}/application/o/token/`
+      } else {
+        tokenUrl = `${issuer.replace(/\/$/, '')}/token/`
+      }
+    }
+
+    if (!clientId || !clientSecret || !tokenUrl) {
+      console.error('Missing OIDC configuration')
+      return res.status(500).json({
+        error: 'Server configuration error',
+        message: 'OIDC credentials or token URL not configured'
+      })
+    }
 
     const response = await fetch(tokenUrl, {
       method: 'POST',
@@ -39,23 +51,35 @@ export default async function handler(
       },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
-        client_id: oidcConfig.clientId,
-        client_secret: oidcConfig.clientSecret,
+        client_id: clientId,
+        client_secret: clientSecret,
         refresh_token
-      })
+      }),
+      signal: AbortSignal.timeout(10000)
     })
 
     const data = await response.json()
 
     if (!response.ok) {
-      console.error('Refresh failed:', data)
+      console.error('Token refresh error:', {
+        status: response.status,
+        error: data.error,
+        description: data.error_description
+      })
       return res.status(response.status).json(data)
     }
 
-    console.log('Refresh successful')
     return res.status(200).json(data)
   } catch (error) {
     console.error('Refresh error:', error)
+
+    if (error.name === 'TimeoutError') {
+      return res.status(504).json({
+        error: 'Gateway timeout',
+        message: 'Authentication server did not respond in time'
+      })
+    }
+
     return res.status(500).json({
       error: 'Internal server error',
       message: error.message
