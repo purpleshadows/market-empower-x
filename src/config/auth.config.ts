@@ -20,7 +20,7 @@ export const getServerSideClientSecret = (): string => {
   if (!isServer()) {
     return ''
   }
-  return process.env.NEXT_PUBLIC_OIDC_CLIENT_SECRET || ''
+  return process.env.OIDC_CLIENT_SECRET || ''
 }
 
 export const authConfig = ((): AuthConfig => {

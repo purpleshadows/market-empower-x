@@ -24,7 +24,7 @@ export default async function handler(
     }
 
     const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
-    const clientSecret = process.env.NEXT_PUBLIC_OIDC_CLIENT_SECRET
+    const clientSecret = process.env.OIDC_CLIENT_SECRET
     let tokenUrl = process.env.NEXT_PUBLIC_OIDC_TOKEN_URL
     const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
 

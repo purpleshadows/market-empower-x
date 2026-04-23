@@ -4,6 +4,9 @@ const require = createRequire(import.meta.url)
 const nextConfig = {
   output: 'standalone',
   serverExternalPackages: ['wagmi', 'viem', 'connectkit'],
+  env: {
+    OIDC_CLIENT_SECRET: process.env.OIDC_CLIENT_SECRET
+  },
   experimental: {
     esmExternals: 'loose'
   },
@@ -89,7 +92,6 @@ const nextConfig = {
 
     return routes
   },
-  // Ensure API routes are properly handled
   api: {
     bodyParser: {
       sizeLimit: '1mb'
