@@ -51,9 +51,9 @@ class OIDCProvider {
       config.scope
     }&code_challenge=${codeChallenge}&code_challenge_method=S256`
     const authentikBase = config.issuer.replace(/\/application\/o\/.*$/, '')
-    const signupUrl = `${authentikBase}/if/flow/self-service-registration/?next=${encodeURIComponent(
-      authorizeUrl
-    )}`
+    const signupUrl = `${authentikBase}/if/flow/${
+      config.signupFlow
+    }/?next=${encodeURIComponent(authorizeUrl)}`
     window.location.href = signupUrl
   }
 
@@ -277,7 +277,6 @@ export const useAuth = () => {
 
       try {
         const config = authConfig.oidc
-        const endpoints = getEndpoints(config.issuer)
         const codeVerifier = sessionStorage.getItem('oidc_pkce_code_verifier')
 
         if (!codeVerifier) {
@@ -286,13 +285,10 @@ export const useAuth = () => {
           )
         }
 
-        const res = await fetch(endpoints.token, {
+        const res = await fetch('/api/auth/token', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            client_id: config.clientId,
-            client_secret: config.clientSecret || '',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
             code,
             redirect_uri: config.redirectUri,
             code_verifier: codeVerifier
@@ -300,8 +296,8 @@ export const useAuth = () => {
         })
 
         if (!res.ok) {
-          const errorText = await res.text()
-          throw new Error(errorText)
+          const errorData = await res.json()
+          throw new Error(errorData.error || 'Token exchange failed')
         }
 
         const tokens = await res.json()

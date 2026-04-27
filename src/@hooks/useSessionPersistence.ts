@@ -1,37 +1,15 @@
 import { useEffect } from 'react'
 import { useAuth } from './useAuth'
-import { authConfig } from '../config/auth.config'
-
-const getEndpoints = (issuer: string) => {
-  const isAuthentik = issuer.includes('/application/o/')
-  let baseUrl: string
-  if (isAuthentik) {
-    const match = issuer.match(/(.*\/application\/o\/)[^/]+\/?$/)
-    baseUrl = match
-      ? match[1].replace(/\/$/, '')
-      : issuer.replace(/\/[^/]+?\/?$/, '')
-  } else {
-    baseUrl = issuer.endsWith('/') ? issuer.slice(0, -1) : issuer
-  }
-  return { token: `${baseUrl}/token/` }
-}
 
 export function useSessionPersistence() {
   const { user, logout } = useAuth()
 
   const refreshToken = async (refreshTokenString: string) => {
     try {
-      const config = authConfig.oidc
-      const endpoints = getEndpoints(config.issuer)
-      const response = await fetch(endpoints.token, {
+      const response = await fetch('/api/auth/refresh', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          client_id: config.clientId,
-          client_secret: config.clientSecret || '',
-          refresh_token: refreshTokenString
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshTokenString })
       })
 
       if (response.ok) {
