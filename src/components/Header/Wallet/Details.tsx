@@ -195,6 +195,23 @@ export default function Details({
       sessionStorage.setItem('logout_flow', 'vm3')
       saveVM3SessionData()
 
+      const rawTokens = localStorage.getItem('oidc_tokens')
+      if (rawTokens) {
+        try {
+          const parsedTokens = JSON.parse(rawTokens)
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: parsedTokens?.access_token, // eslint-disable-line camelcase
+              refresh_token: parsedTokens?.refresh_token // eslint-disable-line camelcase
+            })
+          })
+        } catch (e) {
+          // don't block VM3 redirect if revocation fails
+        }
+      }
+
       const timeoutId = setTimeout(() => {
         if (sessionStorage.getItem('logout_flow') === 'vm3') {
           console.warn('VM3 logout timeout, forcing cleanup')
