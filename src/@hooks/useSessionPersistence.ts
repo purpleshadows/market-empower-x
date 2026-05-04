@@ -36,14 +36,21 @@ export function useSessionPersistence() {
   useEffect(() => {
     if (!user) return
 
-    const interval = setInterval(() => {
+    const checkAndRefresh = () => {
       const tokenExpiresAt = Number(localStorage.getItem('token_expires_at'))
-      if (!Number.isFinite(tokenExpiresAt) || tokenExpiresAt <= 0) return
+      if (!Number.isFinite(tokenExpiresAt) || tokenExpiresAt <= 0) {
+        refreshToken()
+        return
+      }
 
       if (tokenExpiresAt - Date.now() <= 60000) {
         refreshToken()
       }
-    }, 30000)
+    }
+
+    checkAndRefresh()
+
+    const interval = setInterval(checkAndRefresh, 30000)
 
     return () => clearInterval(interval)
   }, [user, refreshToken])

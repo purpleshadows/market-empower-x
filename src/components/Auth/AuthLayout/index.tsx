@@ -4,6 +4,7 @@ import LoginForm from '../Login/LoginForm'
 import SignupForm from '../Signup/SignupForm'
 import {
   authTabLabels,
+  OIDC_LOGOUT_PENDING_KEY,
   type AuthPanelContent,
   type AuthTab
 } from '../constants'
@@ -23,6 +24,10 @@ export default function AuthLayout({
 }: AuthLayoutProps) {
   const { isAuthenticated, isLogoutPending } = useAuth()
   const [activeTab, setActiveTab] = useState<AuthTab>(initialTab)
+  const hasStoredLogoutPending =
+    typeof window !== 'undefined' &&
+    sessionStorage.getItem(OIDC_LOGOUT_PENDING_KEY) === 'true'
+  const showLogoutPending = isLogoutPending || hasStoredLogoutPending
 
   useEffect(() => {
     setActiveTab(initialTab)
@@ -33,7 +38,7 @@ export default function AuthLayout({
       <div className={styles.card}>
         <BrandPanel content={content} />
         <div className={styles.formPanel}>
-          {!isAuthenticated && !isLogoutPending && (
+          {!isAuthenticated && !showLogoutPending && (
             <div className={styles.pillTabs}>
               <button
                 type="button"
@@ -57,7 +62,7 @@ export default function AuthLayout({
           )}
 
           <div className={styles.formContent}>
-            {isLogoutPending ? (
+            {showLogoutPending ? (
               <LogoutPanel />
             ) : isAuthenticated ? (
               <SetupPanel />

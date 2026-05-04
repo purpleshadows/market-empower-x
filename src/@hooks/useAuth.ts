@@ -16,6 +16,8 @@ const OIDC_LOGOUT_PENDING_KEY = 'oidc_logout_pending'
 const OIDC_LOGOUT_STATE_KEY = 'oidc_logout_state'
 const OIDC_LOGOUT_STARTED_AT_KEY = 'oidc_logout_started_at'
 const OIDC_LOGOUT_RETURN_FALLBACK_MS = 5000
+const OIDC_LOGIN_STATE_KEY = 'oidc_login_state'
+const OIDC_LOGIN_NONCE_KEY = 'oidc_login_nonce'
 
 const getEndpoints = (issuer: string) => {
   const match = issuer.match(/(.*\/application\/o\/)[^/]+\/?$/)
@@ -41,7 +43,11 @@ class OIDCProvider {
     const endpoints = getEndpoints(config.issuer)
     const codeVerifier = this.generateCodeVerifier()
     const codeChallenge = await this.generateCodeChallenge(codeVerifier)
+    const state = this.generateRandomString()
+    const nonce = this.generateRandomString()
     sessionStorage.setItem('oidc_pkce_code_verifier', codeVerifier)
+    sessionStorage.setItem(OIDC_LOGIN_STATE_KEY, state)
+    sessionStorage.setItem(OIDC_LOGIN_NONCE_KEY, nonce)
 
     const authorizeUrl = `${endpoints.authorize}?client_id=${
       config.clientId
@@ -49,7 +55,7 @@ class OIDCProvider {
       config.redirectUri
     )}&response_type=code&scope=${
       config.scope
-    }&code_challenge=${codeChallenge}&code_challenge_method=S256`
+    }&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}&nonce=${nonce}`
     const authentikBase = config.issuer.replace(/\/application\/o\/.*$/, '')
     const signupUrl = `${authentikBase}/if/flow/${
       config.signupFlow
@@ -64,7 +70,11 @@ class OIDCProvider {
     const endpoints = getEndpoints(config.issuer)
     const codeVerifier = this.generateCodeVerifier()
     const codeChallenge = await this.generateCodeChallenge(codeVerifier)
+    const state = this.generateRandomString()
+    const nonce = this.generateRandomString()
     sessionStorage.setItem('oidc_pkce_code_verifier', codeVerifier)
+    sessionStorage.setItem(OIDC_LOGIN_STATE_KEY, state)
+    sessionStorage.setItem(OIDC_LOGIN_NONCE_KEY, nonce)
 
     const authUrl = `${endpoints.authorize}?client_id=${
       config.clientId
@@ -72,7 +82,7 @@ class OIDCProvider {
       config.redirectUri
     )}&response_type=code&scope=${
       config.scope
-    }&code_challenge=${codeChallenge}&code_challenge_method=S256`
+    }&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}&nonce=${nonce}`
     window.location.href = authUrl
   }
 
@@ -113,6 +123,8 @@ class OIDCProvider {
     localStorage.removeItem('auth_meta')
     localStorage.removeItem('oidc_auth_meta')
     sessionStorage.removeItem('oidc_pkce_code_verifier')
+    sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
+    sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
     sessionStorage.removeItem('oidc_processing')
     sessionStorage.removeItem(OIDC_LOGOUT_STATE_KEY)
     sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
@@ -120,6 +132,10 @@ class OIDCProvider {
   }
 
   private generateCodeVerifier(): string {
+    return this.generateRandomString()
+  }
+
+  private generateRandomString(): string {
     const array = new Uint8Array(32)
     crypto.getRandomValues(array)
     return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('')
@@ -143,6 +159,8 @@ const clearOidcStorage = () => {
   localStorage.removeItem('oidc_session')
   localStorage.removeItem('token_expires_at')
   sessionStorage.removeItem('oidc_pkce_code_verifier')
+  sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
+  sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
   sessionStorage.removeItem('oidc_processing')
   sessionStorage.removeItem(OIDC_LOGOUT_STATE_KEY)
   sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
@@ -243,7 +261,7 @@ export const useAuth = () => {
   }, [setUser])
 
   const handleOIDCCallback = React.useCallback(
-    async (code: string) => {
+    async (code: string, returnedState: string | null) => {
       if (sessionStorage.getItem('oidc_processing')) {
         sessionStorage.removeItem('oidc_processing')
       }
@@ -253,11 +271,21 @@ export const useAuth = () => {
       try {
         const config = authConfig.oidc
         const codeVerifier = sessionStorage.getItem('oidc_pkce_code_verifier')
+        const expectedState = sessionStorage.getItem(OIDC_LOGIN_STATE_KEY)
+        const nonce = sessionStorage.getItem(OIDC_LOGIN_NONCE_KEY)
 
         if (!codeVerifier) {
           throw new Error(
             'No code verifier found. Please try logging in again.'
           )
+        }
+
+        if (!expectedState || returnedState !== expectedState) {
+          throw new Error('Invalid OIDC state. Please try logging in again.')
+        }
+
+        if (!nonce) {
+          throw new Error('Missing OIDC nonce. Please try logging in again.')
         }
 
         const res = await fetch('/api/auth/token', {
@@ -266,7 +294,8 @@ export const useAuth = () => {
           body: JSON.stringify({
             code,
             redirect_uri: config.redirectUri,
-            code_verifier: codeVerifier
+            code_verifier: codeVerifier,
+            nonce
           })
         })
 
@@ -288,6 +317,8 @@ export const useAuth = () => {
           'token_expires_at',
           String(Date.now() + tokens.expires_in * 1000)
         )
+        sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
+        sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
 
         const callbackUrl = getPendingCallbackUrl()
         clearPendingCallbackUrl()
@@ -312,8 +343,10 @@ export const useAuth = () => {
   )
 
   const checkSession = React.useCallback(async () => {
-    const code = new URLSearchParams(window.location.search).get('code')
-    if (code) await handleOIDCCallback(code)
+    const searchParams = new URLSearchParams(window.location.search)
+    const code = searchParams.get('code')
+    const state = searchParams.get('state')
+    if (code) await handleOIDCCallback(code, state)
   }, [handleOIDCCallback])
 
   const login = async (mode: PendingAuthMode = 'login') => {

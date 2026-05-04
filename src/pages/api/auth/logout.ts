@@ -74,6 +74,7 @@ export default async function handler(
 
   if (!clientId || !clientSecret || !issuer) {
     console.error('Missing OIDC configuration for logout')
+    clearAuthCookies(res)
     return res.status(500).json({ error: 'Server configuration error' })
   }
 

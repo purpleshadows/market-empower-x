@@ -1,19 +1,74 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
 import { getAccessTokenMaxAge, setAuthCookies } from './_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+const oidcMetadataCache = new Map<
+  string,
+  {
+    issuer: string
+    jwks: ReturnType<typeof createRemoteJWKSet>
+  }
+>()
 
-function decodeJwtPayload(idToken: string) {
-  const payload = idToken.split('.')[1]
-  if (!payload) throw new Error('Missing id_token payload')
+async function getOidcMetadata(issuer: string) {
+  const normalizedIssuer = issuer.replace(/\/$/, '')
+  const cached = oidcMetadataCache.get(normalizedIssuer)
+  if (cached) return cached
 
-  const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = base64.padEnd(
-    base64.length + ((4 - (base64.length % 4)) % 4),
-    '='
-  )
-  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'))
+  const discoveryUrl = `${normalizedIssuer}/.well-known/openid-configuration`
+  const response = await fetch(discoveryUrl, {
+    signal: AbortSignal.timeout(10000)
+  })
+
+  if (!response.ok) {
+    throw new Error('Unable to load OIDC discovery document')
+  }
+
+  const discovery = await response.json()
+  if (!discovery.jwks_uri) {
+    throw new Error('OIDC discovery document missing jwks_uri')
+  }
+
+  const metadata = {
+    issuer: typeof discovery.issuer === 'string' ? discovery.issuer : issuer,
+    jwks: createRemoteJWKSet(new URL(discovery.jwks_uri))
+  }
+  oidcMetadataCache.set(normalizedIssuer, metadata)
+  return metadata
+}
+
+async function verifyIdToken(
+  idToken: string,
+  issuer: string,
+  clientId: string
+) {
+  const metadata = await getOidcMetadata(issuer)
+  const { payload } = await jwtVerify(idToken, metadata.jwks, {
+    issuer: metadata.issuer,
+    audience: clientId
+  })
+
+  return payload
+}
+
+function getRequiredStringClaim(payload: JWTPayload, claim: string) {
+  const value = payload[claim]
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new Error(`id_token missing required claim: ${claim}`)
+  }
+
+  return value
+}
+
+function getOptionalStringClaim(payload: JWTPayload, claim: string) {
+  const value = payload[claim]
+  return typeof value === 'string' ? value : undefined
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0
 }
 
 export default async function handler(
@@ -35,12 +90,17 @@ export default async function handler(
       })
     }
 
-    const { code, redirect_uri, code_verifier } = req.body
+    const { code, redirect_uri, code_verifier, nonce } = req.body
 
-    if (!code || !redirect_uri || !code_verifier) {
+    if (
+      !isNonEmptyString(code) ||
+      !isNonEmptyString(redirect_uri) ||
+      !isNonEmptyString(code_verifier) ||
+      !isNonEmptyString(nonce)
+    ) {
       return res.status(400).json({
         error: 'Missing required parameters',
-        required: ['code', 'redirect_uri', 'code_verifier']
+        required: ['code', 'redirect_uri', 'code_verifier', 'nonce']
       })
     }
 
@@ -48,6 +108,13 @@ export default async function handler(
     const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
     let tokenUrl = process.env.NEXT_PUBLIC_OIDC_TOKEN_URL
     const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
+    const configuredRedirectUri = process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI
+
+    if (!configuredRedirectUri || redirect_uri !== configuredRedirectUri) {
+      return res.status(400).json({
+        error: 'Invalid redirect_uri'
+      })
+    }
 
     if (!tokenUrl && issuer) {
       if (issuer.includes('/application/o/')) {
@@ -58,11 +125,12 @@ export default async function handler(
       }
     }
 
-    if (!clientId || !clientSecret || !tokenUrl) {
+    if (!clientId || !clientSecret || !tokenUrl || !issuer) {
       console.error('Missing OIDC configuration', {
         hasClientId: !!clientId,
         hasClientSecret: !!clientSecret,
-        hasTokenUrl: !!tokenUrl
+        hasTokenUrl: !!tokenUrl,
+        hasIssuer: !!issuer
       })
       return res.status(500).json({
         error: 'Server configuration error',
@@ -99,16 +167,30 @@ export default async function handler(
       return res.status(response.status).json(data)
     }
 
-    const payload = decodeJwtPayload(data.id_token)
+    const payload = await verifyIdToken(data.id_token, issuer, clientId)
+    if (payload.nonce !== nonce) {
+      return res.status(401).json({
+        error: 'Invalid nonce'
+      })
+    }
+
+    const userId = getRequiredStringClaim(payload, 'sub')
+    const email = getRequiredStringClaim(payload, 'email')
+    const name = getRequiredStringClaim(payload, 'name')
+    const username =
+      getOptionalStringClaim(payload, 'preferred_username') ||
+      getOptionalStringClaim(payload, 'username')
     const authMeta = {
-      main_oidc: payload.iss,
+      main_oidc: getRequiredStringClaim(payload, 'iss'),
       upstream_idp:
-        payload.upstream_idp ||
-        payload.last_idp ||
-        payload.idp ||
-        payload.source ||
-        payload.provider ||
-        payload.amr?.[0] ||
+        getOptionalStringClaim(payload, 'upstream_idp') ||
+        getOptionalStringClaim(payload, 'last_idp') ||
+        getOptionalStringClaim(payload, 'idp') ||
+        getOptionalStringClaim(payload, 'source') ||
+        getOptionalStringClaim(payload, 'provider') ||
+        (Array.isArray(payload.amr) && typeof payload.amr[0] === 'string'
+          ? payload.amr[0]
+          : undefined) ||
         'unknown'
     }
 
@@ -116,10 +198,10 @@ export default async function handler(
 
     return res.status(200).json({
       user: {
-        id: payload.sub,
-        email: payload.email,
-        name: payload.name,
-        username: payload.preferred_username || payload.username
+        id: userId,
+        email,
+        name,
+        username
       },
       authMeta,
       expires_in: getAccessTokenMaxAge(data)
