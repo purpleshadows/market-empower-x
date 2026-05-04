@@ -50,12 +50,20 @@ export async function getStaticProps({
   params
 }: {
   params: { slug: string }
-}): Promise<{ props: PageData }> {
-  const page = getPageBySlug(params.slug)
+}): Promise<{ props: PageData; revalidate?: number }> {
+  const page = await getPageBySlug(params.slug)
   const content = markdownToHtmlWithToc(page?.content || '')
+  const hasExternalUrls = !!(
+    process.env.NEXT_PUBLIC_IMPRINT_URL ||
+    process.env.NEXT_PUBLIC_TC_URL ||
+    process.env.NEXT_PUBLIC_PP_URL ||
+    process.env.NEXT_PUBLIC_CP_URL ||
+    process.env.NEXT_PUBLIC_DPUA_URL
+  )
 
   return {
-    props: { ...page, content }
+    props: { ...page, content },
+    revalidate: hasExternalUrls ? 3600 : undefined
   }
 }
 
@@ -65,7 +73,7 @@ export async function getStaticPaths(): Promise<{
       slug: string
     }
   }[]
-  fallback: boolean
+  fallback: boolean | 'blocking'
 }> {
   const pages = getAllPages()
 
@@ -75,6 +83,6 @@ export async function getStaticPaths(): Promise<{
         params: { slug: page.slug }
       }
     }),
-    fallback: false
+    fallback: 'blocking'
   }
 }

@@ -63,13 +63,22 @@ export async function getStaticProps({
   params
 }: {
   params: { slug: string }
-}): Promise<{ props: PrivacyPageData }> {
-  const page = getPageBySlug(params.slug, 'privacy')
+}): Promise<{ props: PrivacyPageData; revalidate?: number }> {
+  const page = await getPageBySlug(params.slug, 'privacy')
   const content = markdownToHtmlWithToc(page?.content || '')
   const headings = extractHeadingsFromMarkdown(page?.content || '')
 
+  const hasExternalUrls = !!(
+    process.env.NEXT_PUBLIC_IMPRINT_URL ||
+    process.env.NEXT_PUBLIC_TC_URL ||
+    process.env.NEXT_PUBLIC_PP_URL ||
+    process.env.NEXT_PUBLIC_CP_URL ||
+    process.env.NEXT_PUBLIC_DPUA_URL
+  )
+
   return {
-    props: { ...page, content, headings }
+    props: { ...page, content, headings },
+    revalidate: hasExternalUrls ? 3600 : undefined
   }
 }
 
@@ -79,7 +88,7 @@ export async function getStaticPaths(): Promise<{
       slug: string
     }
   }[]
-  fallback: boolean
+  fallback: boolean | 'blocking'
 }> {
   const pages = getAllPages('privacy')
 
@@ -89,6 +98,6 @@ export async function getStaticPaths(): Promise<{
         params: { slug: page.slug }
       }
     }),
-    fallback: false
+    fallback: 'blocking'
   }
 }
