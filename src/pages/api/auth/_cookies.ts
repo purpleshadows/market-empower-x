@@ -2,7 +2,7 @@
 import type { NextApiResponse } from 'next'
 
 const AUTH_COOKIE_NAMES = ['access_token', 'refresh_token', 'id_token'] as const
-const DEFAULT_ACCESS_TOKEN_MAX_AGE = 3600
+export const DEFAULT_ACCESS_TOKEN_MAX_AGE = 3600
 const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
 
 type AuthCookieName = (typeof AUTH_COOKIE_NAMES)[number]

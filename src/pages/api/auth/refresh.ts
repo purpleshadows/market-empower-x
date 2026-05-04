@@ -1,6 +1,13 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getAccessTokenMaxAge, setAuthCookies } from './_cookies'
+import { jwtVerify } from 'jose'
+import {
+  clearAuthCookies,
+  getAccessTokenMaxAge,
+  setAuthCookies
+} from './_cookies'
+import { getOidcMetadata } from './_oidc'
+import { isSessionBlacklisted } from './_session-blacklist'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
 
@@ -13,6 +20,22 @@ function isAllowedOrigin(origin: string | undefined) {
   } catch {
     return origin === appUrl.replace(/\/$/, '')
   }
+}
+
+async function getSidFromIdToken(
+  idToken: string,
+  issuer: string,
+  clientId: string
+) {
+  const metadata = await getOidcMetadata(issuer)
+  const { payload } = await jwtVerify(idToken, metadata.jwks, {
+    issuer: metadata.issuer,
+    audience: clientId
+  })
+
+  return typeof payload.sid === 'string' && payload.sid.length > 0
+    ? payload.sid
+    : undefined
 }
 
 export default async function handler(
@@ -67,6 +90,20 @@ export default async function handler(
         error: 'Server configuration error',
         message: 'OIDC credentials or token URL not configured'
       })
+    }
+
+    if (id_token && issuer) {
+      try {
+        const sid = await getSidFromIdToken(id_token, issuer, clientId)
+        if (sid && isSessionBlacklisted(sid)) {
+          clearAuthCookies(res)
+          return res.status(401).json({
+            error: 'Session has been terminated'
+          })
+        }
+      } catch (error) {
+        console.error('Unable to verify id_token for blacklist check:', error)
+      }
     }
 
     const response = await fetch(tokenUrl, {

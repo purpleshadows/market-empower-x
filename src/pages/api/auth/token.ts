@@ -1,43 +1,10 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createRemoteJWKSet, jwtVerify, type JWTPayload } from 'jose'
+import { jwtVerify, type JWTPayload } from 'jose'
 import { getAccessTokenMaxAge, setAuthCookies } from './_cookies'
+import { getOidcMetadata } from './_oidc'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
-const oidcMetadataCache = new Map<
-  string,
-  {
-    issuer: string
-    jwks: ReturnType<typeof createRemoteJWKSet>
-  }
->()
-
-async function getOidcMetadata(issuer: string) {
-  const normalizedIssuer = issuer.replace(/\/$/, '')
-  const cached = oidcMetadataCache.get(normalizedIssuer)
-  if (cached) return cached
-
-  const discoveryUrl = `${normalizedIssuer}/.well-known/openid-configuration`
-  const response = await fetch(discoveryUrl, {
-    signal: AbortSignal.timeout(10000)
-  })
-
-  if (!response.ok) {
-    throw new Error('Unable to load OIDC discovery document')
-  }
-
-  const discovery = await response.json()
-  if (!discovery.jwks_uri) {
-    throw new Error('OIDC discovery document missing jwks_uri')
-  }
-
-  const metadata = {
-    issuer: typeof discovery.issuer === 'string' ? discovery.issuer : issuer,
-    jwks: createRemoteJWKSet(new URL(discovery.jwks_uri))
-  }
-  oidcMetadataCache.set(normalizedIssuer, metadata)
-  return metadata
-}
 
 async function verifyIdToken(
   idToken: string,
