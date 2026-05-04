@@ -20,7 +20,6 @@ import {
   getAuthMeta,
   saveVM3SessionData
 } from '@utils/logoutRouter'
-import { useAuthStore } from '@hooks/stores/authStore'
 
 interface DetailsProps {
   onRequestClose?: () => void
@@ -117,7 +116,6 @@ export default function Details({
   const { connector: activeConnector, address: accountId } = useAccount()
   const { disconnect } = useDisconnect()
   const { logout, isAuthenticated, user, authEnabled } = useAuth()
-  const storeLogout = useAuthStore((s) => s.logout)
   const { setOpen } = useModal()
   const router = useRouter()
   const { showOnboardingModule } = useUserPreferences()
@@ -195,21 +193,16 @@ export default function Details({
       sessionStorage.setItem('logout_flow', 'vm3')
       saveVM3SessionData()
 
-      const rawTokens = localStorage.getItem('oidc_tokens')
-      if (rawTokens) {
-        try {
-          const parsedTokens = JSON.parse(rawTokens)
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              access_token: parsedTokens?.access_token, // eslint-disable-line camelcase
-              refresh_token: parsedTokens?.refresh_token // eslint-disable-line camelcase
-            })
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            revoke_only: true // eslint-disable-line camelcase
           })
-        } catch (e) {
-          // don't block VM3 redirect if revocation fails
-        }
+        })
+      } catch (e) {
+        // don't block VM3 redirect if revocation fails
       }
 
       const timeoutId = setTimeout(() => {

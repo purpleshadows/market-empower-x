@@ -1,7 +1,20 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { getAccessTokenMaxAge, setAuthCookies } from './_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+
+function decodeJwtPayload(idToken: string) {
+  const payload = idToken.split('.')[1]
+  if (!payload) throw new Error('Missing id_token payload')
+
+  const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = base64.padEnd(
+    base64.length + ((4 - (base64.length % 4)) % 4),
+    '='
+  )
+  return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'))
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -86,7 +99,31 @@ export default async function handler(
       return res.status(response.status).json(data)
     }
 
-    return res.status(200).json(data)
+    const payload = decodeJwtPayload(data.id_token)
+    const authMeta = {
+      main_oidc: payload.iss,
+      upstream_idp:
+        payload.upstream_idp ||
+        payload.last_idp ||
+        payload.idp ||
+        payload.source ||
+        payload.provider ||
+        payload.amr?.[0] ||
+        'unknown'
+    }
+
+    setAuthCookies(res, data)
+
+    return res.status(200).json({
+      user: {
+        id: payload.sub,
+        email: payload.email,
+        name: payload.name,
+        username: payload.preferred_username || payload.username
+      },
+      authMeta,
+      expires_in: getAccessTokenMaxAge(data)
+    })
   } catch (error) {
     console.error('Token exchange error:', error)
 

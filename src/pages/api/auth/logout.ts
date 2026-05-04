@@ -1,7 +1,19 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { clearAuthCookies } from './_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+
+function isAllowedOrigin(origin: string | undefined) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) return true
+
+  try {
+    return origin === new URL(appUrl).origin
+  } catch {
+    return origin === appUrl.replace(/\/$/, '')
+  }
+}
 
 function getEndSessionUrl(issuer: string) {
   return `${issuer.replace(/\/$/, '')}/end-session/`
@@ -52,6 +64,10 @@ export default async function handler(
     return res.status(404).json({ error: 'Not found' })
   }
 
+  if (!isAllowedOrigin(req.headers.origin)) {
+    return res.status(403).json({ error: 'Forbidden' })
+  }
+
   const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
   const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
   const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
@@ -61,13 +77,8 @@ export default async function handler(
     return res.status(500).json({ error: 'Server configuration error' })
   }
 
-  const {
-    id_token,
-    access_token,
-    refresh_token,
-    state,
-    post_logout_redirect_uri
-  } = req.body
+  const { access_token, refresh_token, id_token } = req.cookies
+  const { state, post_logout_redirect_uri, revoke_only } = req.body
 
   const revokeUrl = getRevokeUrl(issuer)
 
@@ -100,6 +111,12 @@ export default async function handler(
   if (state) params.set('state', state)
 
   const logoutUrl = `${getEndSessionUrl(issuer)}?${params.toString()}`
+
+  if (revoke_only) {
+    return res.status(200).json({ logoutUrl })
+  }
+
+  clearAuthCookies(res)
 
   return res.status(200).json({ logoutUrl })
 }

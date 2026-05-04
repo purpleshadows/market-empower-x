@@ -1,7 +1,19 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { getAccessTokenMaxAge, setAuthCookies } from './_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+
+function isAllowedOrigin(origin: string | undefined) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (!appUrl) return true
+
+  try {
+    return origin === new URL(appUrl).origin
+  } catch {
+    return origin === appUrl.replace(/\/$/, '')
+  }
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,10 +34,15 @@ export default async function handler(
       })
     }
 
-    const { refresh_token } = req.body
+    if (!isAllowedOrigin(req.headers.origin)) {
+      return res.status(403).json({
+        error: 'Forbidden'
+      })
+    }
 
+    const { refresh_token } = req.cookies
     if (!refresh_token) {
-      return res.status(400).json({
+      return res.status(401).json({
         error: 'Refresh token required'
       })
     }
@@ -77,7 +94,11 @@ export default async function handler(
       return res.status(response.status).json(data)
     }
 
-    return res.status(200).json(data)
+    setAuthCookies(res, data)
+
+    return res.status(200).json({
+      expires_in: getAccessTokenMaxAge(data)
+    })
   } catch (error) {
     console.error('Refresh error:', error)
 

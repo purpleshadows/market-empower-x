@@ -32,22 +32,17 @@ export const clearVM3Storage = () => {
   localStorage.removeItem('auth_meta')
   localStorage.removeItem('oidc_auth_meta')
   sessionStorage.removeItem('vm3_oidc_session')
-  sessionStorage.removeItem('vm3_oidc_tokens')
   sessionStorage.removeItem('vm3_logout_timeout')
 }
 
 export const saveVM3SessionData = () => {
   const oidcSession = localStorage.getItem('oidc_session')
-  const oidcTokens = localStorage.getItem('oidc_tokens')
 
   if (oidcSession) sessionStorage.setItem('vm3_oidc_session', oidcSession)
-  if (oidcTokens) sessionStorage.setItem('vm3_oidc_tokens', oidcTokens)
 }
 
 export const restoreVM3SessionData = () => {
   const savedSession = sessionStorage.getItem('vm3_oidc_session')
-  const savedTokens = sessionStorage.getItem('vm3_oidc_tokens')
 
   if (savedSession) localStorage.setItem('oidc_session', savedSession)
-  if (savedTokens) localStorage.setItem('oidc_tokens', savedTokens)
 }

@@ -35,7 +35,7 @@ export default function LogoutCallback() {
         await logout()
       } else {
         localStorage.removeItem('oidc_session')
-        localStorage.removeItem('oidc_tokens')
+        localStorage.removeItem('token_expires_at')
         storeLogout()
         router.replace('/auth/login')
       }

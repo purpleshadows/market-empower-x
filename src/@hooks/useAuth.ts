@@ -83,23 +83,12 @@ class OIDCProvider {
       sessionStorage.setItem(OIDC_LOGOUT_PENDING_KEY, 'true')
       sessionStorage.setItem(OIDC_LOGOUT_STARTED_AT_KEY, Date.now().toString())
 
-      let parsedTokens: Record<string, string> | null = null
-      const rawTokens = localStorage.getItem('oidc_tokens')
-      if (rawTokens) {
-        try {
-          parsedTokens = JSON.parse(rawTokens)
-        } catch (e) {}
-      }
-
       const postLogoutRedirectUri = `${window.location.origin}/auth/login`
 
       const res = await fetch('/api/auth/logout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_token: parsedTokens?.id_token, // eslint-disable-line camelcase
-          access_token: parsedTokens?.access_token, // eslint-disable-line camelcase
-          refresh_token: parsedTokens?.refresh_token, // eslint-disable-line camelcase
           state,
           post_logout_redirect_uri: postLogoutRedirectUri // eslint-disable-line camelcase
         })
@@ -120,7 +109,7 @@ class OIDCProvider {
 
   private clearSessionData(): void {
     localStorage.removeItem('oidc_session')
-    localStorage.removeItem('oidc_tokens')
+    localStorage.removeItem('token_expires_at')
     localStorage.removeItem('auth_meta')
     localStorage.removeItem('oidc_auth_meta')
     sessionStorage.removeItem('oidc_pkce_code_verifier')
@@ -152,7 +141,7 @@ const oidcProvider = new OIDCProvider()
 
 const clearOidcStorage = () => {
   localStorage.removeItem('oidc_session')
-  localStorage.removeItem('oidc_tokens')
+  localStorage.removeItem('token_expires_at')
   sessionStorage.removeItem('oidc_pkce_code_verifier')
   sessionStorage.removeItem('oidc_processing')
   sessionStorage.removeItem(OIDC_LOGOUT_STATE_KEY)
@@ -162,15 +151,18 @@ const clearOidcStorage = () => {
   clearPendingCallbackUrl()
 }
 
-const getUserDataFromIdToken = (idToken: string): User => {
-  const payload = JSON.parse(atob(idToken.split('.')[1]))
-
+const getUserDataFromTokenResponse = (user: {
+  id: string
+  email: string
+  name: string
+  username?: string
+}): User => {
   return {
-    id: payload.sub,
-    email: payload.email,
-    name: payload.name,
-    username: payload.preferred_username || payload.username,
-    avatar: `https://ui-avatars.com/api/?name=${payload.name}`,
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    username: user.username,
+    avatar: `https://ui-avatars.com/api/?name=${user.name}`,
     isOnboarded: false,
     authProvider: 'oidc'
   }
@@ -246,31 +238,7 @@ export const useAuth = () => {
       if (!session) return
 
       const parsedSession = JSON.parse(session) as User
-
-      if (parsedSession.username) {
-        setUser(parsedSession)
-        return
-      }
-
-      const tokens = localStorage.getItem('oidc_tokens')
-      if (!tokens) {
-        setUser(parsedSession)
-        return
-      }
-
-      const parsedTokens = JSON.parse(tokens)
-      if (!parsedTokens.id_token) {
-        setUser(parsedSession)
-        return
-      }
-
-      const enrichedSession = {
-        ...parsedSession,
-        ...getUserDataFromIdToken(parsedTokens.id_token)
-      }
-
-      localStorage.setItem('oidc_session', JSON.stringify(enrichedSession))
-      setUser(enrichedSession)
+      setUser(parsedSession)
     } catch {}
   }, [setUser])
 
@@ -308,27 +276,18 @@ export const useAuth = () => {
         }
 
         const tokens = await res.json()
-        const payload = JSON.parse(atob(tokens.id_token.split('.')[1]))
-
-        const authMeta = {
-          main_oidc: payload.iss,
-          upstream_idp:
-            payload.upstream_idp ||
-            payload.last_idp ||
-            payload.idp ||
-            payload.source ||
-            payload.provider ||
-            payload.amr?.[0] ||
-            'unknown'
-        }
+        const { authMeta } = tokens
 
         localStorage.setItem('oidc_auth_meta', JSON.stringify(authMeta))
         localStorage.setItem('auth_meta', JSON.stringify(authMeta))
 
-        const userData = getUserDataFromIdToken(tokens.id_token)
+        const userData = getUserDataFromTokenResponse(tokens.user)
 
         localStorage.setItem('oidc_session', JSON.stringify(userData))
-        localStorage.setItem('oidc_tokens', JSON.stringify(tokens))
+        localStorage.setItem(
+          'token_expires_at',
+          String(Date.now() + tokens.expires_in * 1000)
+        )
 
         const callbackUrl = getPendingCallbackUrl()
         clearPendingCallbackUrl()
@@ -399,6 +358,7 @@ export const useAuth = () => {
         if (user?.authProvider === 'oidc') {
           setLogoutPending(true)
           localStorage.removeItem('oidc_session')
+          localStorage.removeItem('token_expires_at')
           clearPendingAuthMode()
           clearPendingCallbackUrl()
           storeLogout()
@@ -410,6 +370,7 @@ export const useAuth = () => {
       if (user?.authProvider === 'oidc') {
         setLogoutPending(true)
         localStorage.removeItem('oidc_session')
+        localStorage.removeItem('token_expires_at')
         clearPendingAuthMode()
         clearPendingCallbackUrl()
         storeLogout()
