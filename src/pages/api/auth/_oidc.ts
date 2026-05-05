@@ -1,4 +1,4 @@
-import { createRemoteJWKSet } from 'jose'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 import { OIDC_DISCOVERY_PATH, OIDC_REQUEST_TIMEOUT_MS } from './_constants'
 
 export const oidcMetadataCache = new Map<
@@ -34,4 +34,19 @@ export async function getOidcMetadata(issuer: string) {
   }
   oidcMetadataCache.set(normalizedIssuer, metadata)
   return metadata
+}
+
+export async function getSidFromIdToken(
+  idToken: string,
+  issuer: string,
+  clientId: string
+): Promise<string | undefined> {
+  const metadata = await getOidcMetadata(issuer)
+  const { payload } = await jwtVerify(idToken, metadata.jwks, {
+    issuer: metadata.issuer,
+    audience: clientId
+  })
+  return typeof payload.sid === 'string' && payload.sid.length > 0
+    ? payload.sid
+    : undefined
 }

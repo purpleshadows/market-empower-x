@@ -113,11 +113,11 @@ export default async function handler(
 
   const logoutUrl = `${getEndSessionUrl(issuer)}?${params.toString()}`
 
+  clearAuthCookies(res)
+
   if (revoke_only) {
     return res.status(200).json({ logoutUrl })
   }
-
-  clearAuthCookies(res)
 
   return res.status(200).json({ logoutUrl })
 }

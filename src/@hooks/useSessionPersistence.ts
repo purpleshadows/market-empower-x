@@ -4,6 +4,17 @@ import { useAuth } from './useAuth'
 export function useSessionPersistence() {
   const { user, logout } = useAuth()
 
+  const checkSession = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/session')
+      if (!response.ok) {
+        logout()
+      }
+    } catch {
+      // network error — transient, don't logout
+    }
+  }, [logout])
+
   const refreshToken = useCallback(async () => {
     try {
       const response = await fetch('/api/auth/refresh', {
@@ -45,6 +56,8 @@ export function useSessionPersistence() {
 
       if (tokenExpiresAt - Date.now() <= 60000) {
         refreshToken()
+      } else {
+        checkSession()
       }
     }
 
@@ -53,7 +66,7 @@ export function useSessionPersistence() {
     const interval = setInterval(checkAndRefresh, 30000)
 
     return () => clearInterval(interval)
-  }, [user, refreshToken])
+  }, [user, refreshToken, checkSession])
 
   return null
 }
