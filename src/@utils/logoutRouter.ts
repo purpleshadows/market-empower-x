@@ -1,3 +1,5 @@
+import { getRuntimeConfig } from '@utils/runtimeConfig'
+
 export const getAuthMeta = () => {
   try {
     return JSON.parse(localStorage.getItem('auth_meta') || '{}')
@@ -6,43 +8,51 @@ export const getAuthMeta = () => {
   }
 }
 
-export const isVM3User = () => {
-  const meta = getAuthMeta()
-  const issuer = (meta?.issuer || '').toLowerCase()
-  const upstream = (meta?.upstream_idp || '').toLowerCase()
-  const mainOidc = (meta?.main_oidc || '').toLowerCase()
+const getFederatedIssuers = (): string[] => {
+  try {
+    const raw = getRuntimeConfig().NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(
+      (s): s is string => typeof s === 'string' && s.length > 0
+    )
+  } catch {
+    return []
+  }
+}
 
-  return (
-    issuer.includes('vm3') ||
-    upstream.includes('vm3') ||
-    upstream.includes('partner') ||
-    mainOidc.includes('vm3')
-  )
+export const isFederatedUser = (): boolean => {
+  const issuers = getFederatedIssuers()
+  if (issuers.length === 0) return false
+
+  const upstream = (getAuthMeta()?.upstream_idp || '').toLowerCase()
+  if (!upstream || upstream === 'unknown') return false
+
+  return issuers.some((issuer) => upstream.includes(issuer.toLowerCase()))
 }
 
 export const getLogoutRedirect = () => {
   return `${window.location.origin}/auth/callback/logout`
 }
 
-export const getVM3LogoutUrl = () => {
-  return 'https://ocean-node-vm3.oceanenterprise.io:8443/application/o/vm2-federation/end-session/'
+export const getFederatedIdpEndSessionUrl = (): string => {
+  return getRuntimeConfig().NEXT_PUBLIC_FEDERATED_IDP_END_SESSION_URL || ''
 }
 
-export const clearVM3Storage = () => {
+export const clearFederatedStorage = () => {
   localStorage.removeItem('auth_meta')
-  localStorage.removeItem('oidc_auth_meta')
-  sessionStorage.removeItem('vm3_oidc_session')
-  sessionStorage.removeItem('vm3_logout_timeout')
+
+  sessionStorage.removeItem('federated_oidc_session')
+  sessionStorage.removeItem('federated_logout_timeout')
 }
 
-export const saveVM3SessionData = () => {
+export const saveFederatedSessionData = () => {
   const oidcSession = localStorage.getItem('oidc_session')
-
-  if (oidcSession) sessionStorage.setItem('vm3_oidc_session', oidcSession)
+  if (oidcSession) sessionStorage.setItem('federated_oidc_session', oidcSession)
 }
 
-export const restoreVM3SessionData = () => {
-  const savedSession = sessionStorage.getItem('vm3_oidc_session')
-
+export const restoreFederatedSessionData = () => {
+  const savedSession = sessionStorage.getItem('federated_oidc_session')
   if (savedSession) localStorage.setItem('oidc_session', savedSession)
 }

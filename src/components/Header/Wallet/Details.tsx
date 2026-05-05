@@ -16,9 +16,9 @@ import { useRouter } from 'next/router'
 import { useUserPreferences } from '@context/UserPreferences'
 import {
   getLogoutRedirect,
-  getVM3LogoutUrl,
-  getAuthMeta,
-  saveVM3SessionData
+  getFederatedIdpEndSessionUrl,
+  isFederatedUser,
+  saveFederatedSessionData
 } from '@utils/logoutRouter'
 
 interface DetailsProps {
@@ -182,16 +182,11 @@ export default function Details({
     }
 
     const callbackUrl = getLogoutRedirect()
-    const meta = getAuthMeta()
+    const endSessionUrl = getFederatedIdpEndSessionUrl()
 
-    const isVm3 =
-      meta?.issuer?.includes('vm3') ||
-      meta?.upstream_idp?.toLowerCase?.().includes('vm3')
-
-    if (isVm3) {
-      const vm3Url = getVM3LogoutUrl()
-      sessionStorage.setItem('logout_flow', 'vm3')
-      saveVM3SessionData()
+    if (isFederatedUser() && endSessionUrl) {
+      sessionStorage.setItem('logout_flow', 'federated')
+      saveFederatedSessionData()
 
       try {
         await fetch('/api/auth/logout', {
@@ -202,19 +197,19 @@ export default function Details({
           })
         })
       } catch (e) {
-        // don't block VM3 redirect if revocation fails
+        // don't block federated redirect if revocation fails
       }
 
       const timeoutId = setTimeout(() => {
-        if (sessionStorage.getItem('logout_flow') === 'vm3') {
-          console.warn('VM3 logout timeout, forcing cleanup')
-          sessionStorage.setItem('vm3_logout_timeout', 'true')
+        if (sessionStorage.getItem('logout_flow') === 'federated') {
+          console.warn('Federated logout timeout, forcing cleanup')
+          sessionStorage.setItem('federated_logout_timeout', 'true')
           window.location.href = callbackUrl
         }
       }, 5000)
 
-      sessionStorage.setItem('vm3_timeout_id', String(timeoutId))
-      window.location.href = `${vm3Url}?post_logout_redirect_uri=${encodeURIComponent(
+      sessionStorage.setItem('federated_timeout_id', String(timeoutId))
+      window.location.href = `${endSessionUrl}?post_logout_redirect_uri=${encodeURIComponent(
         callbackUrl
       )}`
       return

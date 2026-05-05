@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { useAuthStore } from '@hooks/stores/authStore'
 import { useAuth } from '@hooks/useAuth'
 import { useRouter } from 'next/router'
-import { clearVM3Storage, restoreVM3SessionData } from '@utils/logoutRouter'
+import {
+  clearFederatedStorage,
+  restoreFederatedSessionData
+} from '@utils/logoutRouter'
 
 export default function LogoutCallback() {
   const router = useRouter()
@@ -11,27 +14,28 @@ export default function LogoutCallback() {
 
   useEffect(() => {
     const flow = sessionStorage.getItem('logout_flow')
-    const isTimeout = sessionStorage.getItem('vm3_logout_timeout') === 'true'
-    const timeoutId = sessionStorage.getItem('vm3_timeout_id')
+    const isTimeout =
+      sessionStorage.getItem('federated_logout_timeout') === 'true'
+    const timeoutId = sessionStorage.getItem('federated_timeout_id')
 
     if (timeoutId) {
       clearTimeout(parseInt(timeoutId))
-      sessionStorage.removeItem('vm3_timeout_id')
+      sessionStorage.removeItem('federated_timeout_id')
     }
 
     if (isTimeout) {
-      sessionStorage.removeItem('vm3_logout_timeout')
+      sessionStorage.removeItem('federated_logout_timeout')
     }
 
     const run = async () => {
-      if (flow === 'vm3' || isTimeout) {
+      if (flow === 'federated' || isTimeout) {
         sessionStorage.removeItem('logout_flow')
 
         if (!isTimeout) {
-          restoreVM3SessionData()
+          restoreFederatedSessionData()
         }
 
-        clearVM3Storage()
+        clearFederatedStorage()
         await logout()
       } else {
         localStorage.removeItem('oidc_session')

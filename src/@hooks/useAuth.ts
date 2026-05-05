@@ -121,7 +121,7 @@ class OIDCProvider {
     localStorage.removeItem('oidc_session')
     localStorage.removeItem('token_expires_at')
     localStorage.removeItem('auth_meta')
-    localStorage.removeItem('oidc_auth_meta')
+
     sessionStorage.removeItem('oidc_pkce_code_verifier')
     sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
     sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
@@ -307,7 +307,6 @@ export const useAuth = () => {
         const tokens = await res.json()
         const { authMeta } = tokens
 
-        localStorage.setItem('oidc_auth_meta', JSON.stringify(authMeta))
         localStorage.setItem('auth_meta', JSON.stringify(authMeta))
 
         const userData = getUserDataFromTokenResponse(tokens.user)
@@ -381,12 +380,14 @@ export const useAuth = () => {
   const logout = async () => {
     setLoading(true)
     try {
-      const isVm3Callback = sessionStorage.getItem('logout_flow') === 'vm3'
-      const vm3Timeout = sessionStorage.getItem('vm3_logout_timeout') === 'true'
+      const isFederatedCallback =
+        sessionStorage.getItem('logout_flow') === 'federated'
+      const federatedTimeout =
+        sessionStorage.getItem('federated_logout_timeout') === 'true'
 
-      if (isVm3Callback || vm3Timeout) {
+      if (isFederatedCallback || federatedTimeout) {
         sessionStorage.removeItem('logout_flow')
-        sessionStorage.removeItem('vm3_logout_timeout')
+        sessionStorage.removeItem('federated_logout_timeout')
 
         if (user?.authProvider === 'oidc') {
           setLogoutPending(true)
