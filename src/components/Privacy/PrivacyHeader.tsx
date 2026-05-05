@@ -7,7 +7,6 @@ import AnchorNavigation from '@shared/AnchorNavigation'
 export default function PrivacyPolicyHeader({
   lastUpdatedDate
 }: {
-  policy: string
   lastUpdatedDate?: string
 }): ReactElement {
   const { policies } = usePrivacyMetadata()
