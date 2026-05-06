@@ -1,5 +1,5 @@
 import { ReactElement } from 'react'
-import { getPageBySlug, getAllPages, PageData } from '@utils/markdownPages'
+import { getPageBySlug, PageData } from '@utils/markdownPages'
 import Page from '@shared/Page'
 import styles from '@shared/Page/PageMarkdown.module.css'
 import Container from '@shared/atoms/Container'
@@ -46,43 +46,15 @@ export default function PageMarkdown(page: PageData): ReactElement {
   )
 }
 
-export async function getStaticProps({
+export async function getServerSideProps({
   params
 }: {
   params: { slug: string }
-}): Promise<{ props: PageData; revalidate?: number }> {
+}) {
   const page = await getPageBySlug(params.slug)
   const content = markdownToHtmlWithToc(page?.content || '')
-  const hasExternalUrls = !!(
-    process.env.NEXT_PUBLIC_IMPRINT_URL ||
-    process.env.NEXT_PUBLIC_TC_URL ||
-    process.env.NEXT_PUBLIC_PP_URL ||
-    process.env.NEXT_PUBLIC_CP_URL ||
-    process.env.NEXT_PUBLIC_DPUA_URL
-  )
 
   return {
-    props: { ...page, content },
-    revalidate: hasExternalUrls ? 3600 : undefined
-  }
-}
-
-export async function getStaticPaths(): Promise<{
-  paths: {
-    params: {
-      slug: string
-    }
-  }[]
-  fallback: boolean | 'blocking'
-}> {
-  const pages = getAllPages()
-
-  return {
-    paths: pages.map((page) => {
-      return {
-        params: { slug: page.slug }
-      }
-    }),
-    fallback: 'blocking'
+    props: { ...page, content }
   }
 }

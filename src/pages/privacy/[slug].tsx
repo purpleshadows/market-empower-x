@@ -1,6 +1,6 @@
 import { ReactElement } from 'react'
 import { markdownToHtmlWithToc } from '@utils/markdown'
-import { getPageBySlug, getAllPages, PageData } from '@utils/markdownPages'
+import { getPageBySlug, PageData } from '@utils/markdownPages'
 import { extractHeadingsFromMarkdown, Heading } from '@utils/extractHeadings'
 import Page from '@shared/Page'
 import styles from '@shared/Page/PageMarkdown.module.css'
@@ -10,7 +10,6 @@ import TableOfContents from '../../components/@shared/TableOfContents'
 import StickySidebarLayout from '../../components/@shared/StickySidebarLayout'
 import HashScrollHandler from '../../components/@shared/HashScrollHandler'
 import { useRouter } from 'next/router'
-import DynamicPolicyContent from '../../components/Privacy/DynamicPolicyContent'
 
 interface PrivacyPageData extends PageData {
   headings: Heading[]
@@ -38,21 +37,17 @@ export default function PageMarkdown(page: PrivacyPageData): ReactElement {
             sidebar={<TableOfContents headings={headings} />}
           >
             <div className={styles.section}>
-              <DynamicPolicyContent
-                slug={slug?.replace('/privacy/', '') || ''}
-                localContent={content}
-                localHeadings={headings}
-                localTitle={title}
+              <div
+                className={styles.content}
+                dangerouslySetInnerHTML={{ __html: content }}
               />
             </div>
           </StickySidebarLayout>
         ) : (
           <div className={styles.section}>
-            <DynamicPolicyContent
-              slug={slug?.replace('/privacy/', '') || ''}
-              localContent={content}
-              localHeadings={headings}
-              localTitle={title}
+            <div
+              className={styles.content}
+              dangerouslySetInnerHTML={{ __html: content }}
             />
           </div>
         )}
@@ -61,45 +56,16 @@ export default function PageMarkdown(page: PrivacyPageData): ReactElement {
   )
 }
 
-export async function getStaticProps({
+export async function getServerSideProps({
   params
 }: {
   params: { slug: string }
-}): Promise<{ props: PrivacyPageData; revalidate?: number }> {
+}) {
   const page = await getPageBySlug(params.slug, 'privacy')
   const content = markdownToHtmlWithToc(page?.content || '')
   const headings = extractHeadingsFromMarkdown(page?.content || '')
 
-  const hasExternalUrls = !!(
-    process.env.NEXT_PUBLIC_IMPRINT_URL ||
-    process.env.NEXT_PUBLIC_TC_URL ||
-    process.env.NEXT_PUBLIC_PP_URL ||
-    process.env.NEXT_PUBLIC_CP_URL ||
-    process.env.NEXT_PUBLIC_DPUA_URL
-  )
-
   return {
-    props: { ...page, content, headings },
-    revalidate: hasExternalUrls ? 3600 : undefined
-  }
-}
-
-export async function getStaticPaths(): Promise<{
-  paths: {
-    params: {
-      slug: string
-    }
-  }[]
-  fallback: boolean | 'blocking'
-}> {
-  const pages = getAllPages('privacy')
-
-  return {
-    paths: pages.map((page) => {
-      return {
-        params: { slug: page.slug }
-      }
-    }),
-    fallback: 'blocking'
+    props: { ...page, content, headings }
   }
 }
