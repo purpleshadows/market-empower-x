@@ -33,7 +33,10 @@ export const isFederatedUser = (): boolean => {
 }
 
 export const getLogoutRedirect = () => {
-  return `${window.location.origin}/auth/callback/logout`
+  return (
+    getRuntimeConfig().NEXT_PUBLIC_OIDC_REDIRECT_URI ||
+    `${window.location.origin}/auth/callback`
+  )
 }
 
 export const getFederatedIdpEndSessionUrl = (): string => {

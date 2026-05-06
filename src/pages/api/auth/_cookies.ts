@@ -23,10 +23,9 @@ function serializeCookie(name: AuthCookieName, value: string, maxAge: number) {
   )}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict; Path=/`
 }
 
-export function setAuthCookies(res: NextApiResponse, tokens: AuthTokens) {
+export function buildAuthCookieStrings(tokens: AuthTokens): string[] {
   const accessTokenMaxAge = getAccessTokenMaxAge(tokens)
-
-  const cookies = [
+  return [
     tokens.access_token &&
       serializeCookie('access_token', tokens.access_token, accessTokenMaxAge),
     tokens.refresh_token &&
@@ -38,13 +37,17 @@ export function setAuthCookies(res: NextApiResponse, tokens: AuthTokens) {
     tokens.id_token &&
       serializeCookie('id_token', tokens.id_token, accessTokenMaxAge)
   ].filter(Boolean) as string[]
+}
 
+export function buildClearAuthCookieStrings(): string[] {
+  return AUTH_COOKIE_NAMES.map((name) => serializeCookie(name, '', 0))
+}
+
+export function setAuthCookies(res: NextApiResponse, tokens: AuthTokens) {
+  const cookies = buildAuthCookieStrings(tokens)
   if (cookies.length > 0) res.setHeader('Set-Cookie', cookies)
 }
 
 export function clearAuthCookies(res: NextApiResponse) {
-  res.setHeader(
-    'Set-Cookie',
-    AUTH_COOKIE_NAMES.map((name) => serializeCookie(name, '', 0))
-  )
+  res.setHeader('Set-Cookie', buildClearAuthCookieStrings())
 }

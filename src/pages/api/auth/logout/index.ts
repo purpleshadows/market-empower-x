@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { clearAuthCookies } from './_cookies'
+import { clearAuthCookies } from '../_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
 
@@ -51,19 +51,57 @@ async function revokeToken(
   }
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST'])
-    return res.status(405).json({ error: 'Method not allowed' })
+async function handleGet(req: NextApiRequest, res: NextApiResponse) {
+  const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
+  const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
+  const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
+
+  if (!clientId || !clientSecret || !issuer) {
+    console.error('Missing OIDC configuration for logout')
+    clearAuthCookies(res)
+    return res.redirect(302, '/auth/login')
   }
 
-  if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
-    return res.status(404).json({ error: 'Not found' })
-  }
+  const { access_token, refresh_token, id_token } = req.cookies
+  const revokeUrl = getRevokeUrl(issuer)
 
+  await Promise.all([
+    access_token
+      ? revokeToken(
+          revokeUrl,
+          clientId,
+          clientSecret,
+          access_token,
+          'access_token'
+        )
+      : Promise.resolve(),
+    refresh_token
+      ? revokeToken(
+          revokeUrl,
+          clientId,
+          clientSecret,
+          refresh_token,
+          'refresh_token'
+        )
+      : Promise.resolve()
+  ])
+
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL || `https://${req.headers.host}`
+  const postLogoutRedirectUri = `${appUrl.replace(
+    /\/$/,
+    ''
+  )}/api/auth/logout/callback`
+
+  const params = new URLSearchParams({ client_id: clientId })
+  if (id_token) params.set('id_token_hint', id_token)
+  params.set('post_logout_redirect_uri', postLogoutRedirectUri)
+
+  clearAuthCookies(res)
+  return res.redirect(302, `${getEndSessionUrl(issuer)}?${params.toString()}`)
+}
+
+async function handlePost(req: NextApiRequest, res: NextApiResponse) {
   if (!isAllowedOrigin(req.headers.origin)) {
     return res.status(403).json({ error: 'Forbidden' })
   }
@@ -105,7 +143,6 @@ export default async function handler(
   ])
 
   const params = new URLSearchParams({ client_id: clientId })
-
   if (id_token) params.set('id_token_hint', id_token)
   if (post_logout_redirect_uri)
     params.set('post_logout_redirect_uri', post_logout_redirect_uri)
@@ -120,4 +157,19 @@ export default async function handler(
   }
 
   return res.status(200).json({ logoutUrl })
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
+    return res.status(404).json({ error: 'Not found' })
+  }
+
+  if (req.method === 'GET') return handleGet(req, res)
+  if (req.method === 'POST') return handlePost(req, res)
+
+  res.setHeader('Allow', ['GET', 'POST'])
+  return res.status(405).json({ error: 'Method not allowed' })
 }

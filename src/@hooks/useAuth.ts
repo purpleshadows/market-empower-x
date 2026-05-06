@@ -7,7 +7,6 @@ import {
   clearPendingAuthMode,
   clearPendingCallbackUrl,
   setPendingAuthMode,
-  getPendingCallbackUrl,
   setPendingCallbackUrl,
   type PendingAuthMode
 } from '@utils/authFlow'
@@ -15,152 +14,31 @@ import {
 const OIDC_LOGOUT_PENDING_KEY = 'oidc_logout_pending'
 const OIDC_LOGOUT_STATE_KEY = 'oidc_logout_state'
 const OIDC_LOGOUT_STARTED_AT_KEY = 'oidc_logout_started_at'
-const OIDC_LOGOUT_RETURN_FALLBACK_MS = 5000
-const OIDC_LOGIN_STATE_KEY = 'oidc_login_state'
-const OIDC_LOGIN_NONCE_KEY = 'oidc_login_nonce'
 
-const getEndpoints = (issuer: string) => {
-  const match = issuer.match(/(.*\/application\/o\/)[^/]+\/?$/)
-  const baseUrl = match
-    ? match[1].replace(/\/$/, '')
-    : issuer.replace(/\/[^/]+?\/?$/, '')
+const getUserDataFromSessionResponse = (user: {
+  id?: string
+  email?: string
+  name?: string
+  username?: string
+}): User => {
   return {
-    authorize: `${baseUrl}/authorize/`,
-    token: `${baseUrl}/token/`,
-    endSession: `${issuer.replace(/\/$/, '')}/end-session/`
+    id: user.id || '',
+    email: user.email || '',
+    name: user.name || '',
+    username: user.username,
+    avatar: `https://ui-avatars.com/api/?name=${user.name || ''}`,
+    isOnboarded: false,
+    authProvider: 'oidc'
   }
 }
-
-class OIDCProvider {
-  private getConfig() {
-    return authConfig.oidc
-  }
-
-  async signup(): Promise<void> {
-    this.clearSessionData()
-
-    const config = this.getConfig()
-    const endpoints = getEndpoints(config.issuer)
-    const codeVerifier = this.generateCodeVerifier()
-    const codeChallenge = await this.generateCodeChallenge(codeVerifier)
-    const state = this.generateRandomString()
-    const nonce = this.generateRandomString()
-    sessionStorage.setItem('oidc_pkce_code_verifier', codeVerifier)
-    sessionStorage.setItem(OIDC_LOGIN_STATE_KEY, state)
-    sessionStorage.setItem(OIDC_LOGIN_NONCE_KEY, nonce)
-
-    const authorizeUrl = `${endpoints.authorize}?client_id=${
-      config.clientId
-    }&redirect_uri=${encodeURIComponent(
-      config.redirectUri
-    )}&response_type=code&scope=${
-      config.scope
-    }&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}&nonce=${nonce}`
-    const authentikBase = config.issuer.replace(/\/application\/o\/.*$/, '')
-    const signupUrl = `${authentikBase}/if/flow/${
-      config.signupFlow
-    }/?next=${encodeURIComponent(authorizeUrl)}`
-    window.location.href = signupUrl
-  }
-
-  async login(): Promise<void> {
-    this.clearSessionData()
-
-    const config = this.getConfig()
-    const endpoints = getEndpoints(config.issuer)
-    const codeVerifier = this.generateCodeVerifier()
-    const codeChallenge = await this.generateCodeChallenge(codeVerifier)
-    const state = this.generateRandomString()
-    const nonce = this.generateRandomString()
-    sessionStorage.setItem('oidc_pkce_code_verifier', codeVerifier)
-    sessionStorage.setItem(OIDC_LOGIN_STATE_KEY, state)
-    sessionStorage.setItem(OIDC_LOGIN_NONCE_KEY, nonce)
-
-    const authUrl = `${endpoints.authorize}?client_id=${
-      config.clientId
-    }&redirect_uri=${encodeURIComponent(
-      config.redirectUri
-    )}&response_type=code&scope=${
-      config.scope
-    }&code_challenge=${codeChallenge}&code_challenge_method=S256&state=${state}&nonce=${nonce}`
-    window.location.href = authUrl
-  }
-
-  async logout(): Promise<void> {
-    try {
-      const state = Math.random().toString(36).substring(2)
-      sessionStorage.setItem(OIDC_LOGOUT_STATE_KEY, state)
-      sessionStorage.setItem(OIDC_LOGOUT_PENDING_KEY, 'true')
-      sessionStorage.setItem(OIDC_LOGOUT_STARTED_AT_KEY, Date.now().toString())
-
-      const postLogoutRedirectUri = `${window.location.origin}/auth/login`
-
-      const res = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          state,
-          post_logout_redirect_uri: postLogoutRedirectUri // eslint-disable-line camelcase
-        })
-      })
-
-      if (!res.ok) {
-        throw new Error('Logout request failed')
-      }
-
-      const { logoutUrl } = await res.json()
-      window.location.href = logoutUrl
-    } catch (err) {
-      console.error('Logout error:', err)
-      toast.error('Logout failed')
-      throw err
-    }
-  }
-
-  private clearSessionData(): void {
-    localStorage.removeItem('oidc_session')
-    localStorage.removeItem('token_expires_at')
-    localStorage.removeItem('auth_meta')
-
-    sessionStorage.removeItem('oidc_pkce_code_verifier')
-    sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
-    sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
-    sessionStorage.removeItem('oidc_processing')
-    sessionStorage.removeItem(OIDC_LOGOUT_STATE_KEY)
-    sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
-    sessionStorage.removeItem(OIDC_LOGOUT_STARTED_AT_KEY)
-  }
-
-  private generateCodeVerifier(): string {
-    return this.generateRandomString()
-  }
-
-  private generateRandomString(): string {
-    const array = new Uint8Array(32)
-    crypto.getRandomValues(array)
-    return Array.from(array, (b) => b.toString(16).padStart(2, '0')).join('')
-  }
-
-  private async generateCodeChallenge(verifier: string): Promise<string> {
-    const hash = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(verifier)
-    )
-    return btoa(String.fromCharCode(...new Uint8Array(hash)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '')
-  }
-}
-
-const oidcProvider = new OIDCProvider()
 
 const clearOidcStorage = () => {
   localStorage.removeItem('oidc_session')
   localStorage.removeItem('token_expires_at')
+  localStorage.removeItem('auth_meta')
   sessionStorage.removeItem('oidc_pkce_code_verifier')
-  sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
-  sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
+  sessionStorage.removeItem('oidc_login_state')
+  sessionStorage.removeItem('oidc_login_nonce')
   sessionStorage.removeItem('oidc_processing')
   sessionStorage.removeItem(OIDC_LOGOUT_STATE_KEY)
   sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
@@ -168,33 +46,6 @@ const clearOidcStorage = () => {
   clearPendingAuthMode()
   clearPendingCallbackUrl()
 }
-
-const getUserDataFromTokenResponse = (user: {
-  id: string
-  email: string
-  name: string
-  username?: string
-}): User => {
-  return {
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    username: user.username,
-    avatar: `https://ui-avatars.com/api/?name=${user.name}`,
-    isOnboarded: false,
-    authProvider: 'oidc'
-  }
-}
-
-const isOidcLogoutPending = () =>
-  typeof window !== 'undefined' &&
-  sessionStorage.getItem(OIDC_LOGOUT_PENDING_KEY) === 'true'
-
-const hasOidcLogoutReturnState = (returnState: string | null) =>
-  typeof window !== 'undefined' &&
-  Boolean(
-    returnState && sessionStorage.getItem(OIDC_LOGOUT_STATE_KEY) === returnState
-  )
 
 export const useAuth = () => {
   const {
@@ -208,174 +59,44 @@ export const useAuth = () => {
   } = useAuthStore()
   const authEnabled = authConfig.enabled
   const router = useRouter()
-  const logoutReturnState =
-    typeof router.query.state === 'string' ? router.query.state : null
 
+  // Hydrate user data from localStorage on mount (existing sessions)
   React.useEffect(() => {
-    if (!router.isReady) return
-    if (isOidcLogoutPending()) {
-      const completeOidcLogoutReturn = () => {
-        if (!isOidcLogoutPending()) return
-        clearOidcStorage()
-        setLogoutPending(false)
-        storeLogout()
-        if (window.location.pathname !== '/auth/login') {
-          router.replace('/auth/login')
-          return
-        }
-        if (!logoutReturnState) return
-        const nextQuery = { ...router.query }
-        delete nextQuery.state
-        router.replace(
-          { pathname: '/auth/login', query: nextQuery },
-          undefined,
-          { shallow: true }
-        )
-      }
-
-      if (
-        window.location.pathname !== '/auth/login' ||
-        hasOidcLogoutReturnState(logoutReturnState)
-      ) {
-        completeOidcLogoutReturn()
-        return
-      }
-
-      const timeoutId = window.setTimeout(
-        completeOidcLogoutReturn,
-        OIDC_LOGOUT_RETURN_FALLBACK_MS
-      )
-      return () => window.clearTimeout(timeoutId)
-    }
-  }, [logoutReturnState, router, setLogoutPending, storeLogout])
-
-  React.useEffect(() => {
-    if (isOidcLogoutPending()) return
     try {
       const session = localStorage.getItem('oidc_session')
       if (!session) return
-
       const parsedSession = JSON.parse(session) as User
       setUser(parsedSession)
     } catch {}
   }, [setUser])
 
-  const handleOIDCCallback = React.useCallback(
-    async (code: string, returnedState: string | null) => {
-      if (sessionStorage.getItem('oidc_processing')) {
-        sessionStorage.removeItem('oidc_processing')
-      }
+  // After server-driven callback, ?hydrated=1 signals us to fetch session data
+  React.useEffect(() => {
+    if (!router.isReady) return
+    if (router.query.hydrated !== '1') return
 
-      sessionStorage.setItem('oidc_processing', 'true')
+    const { hydrated: _, ...rest } = router.query
+    router.replace({ pathname: router.pathname, query: rest }, undefined, {
+      shallow: true
+    })
 
-      try {
-        const config = authConfig.oidc
-        const codeVerifier = sessionStorage.getItem('oidc_pkce_code_verifier')
-        const expectedState = sessionStorage.getItem(OIDC_LOGIN_STATE_KEY)
-        const nonce = sessionStorage.getItem(OIDC_LOGIN_NONCE_KEY)
-
-        if (!codeVerifier) {
-          throw new Error(
-            'No code verifier found. Please try logging in again.'
-          )
-        }
-
-        if (!expectedState || returnedState !== expectedState) {
-          throw new Error('Invalid OIDC state. Please try logging in again.')
-        }
-
-        if (!nonce) {
-          throw new Error('Missing OIDC nonce. Please try logging in again.')
-        }
-
-        const res = await fetch('/api/auth/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code,
-            redirect_uri: config.redirectUri,
-            code_verifier: codeVerifier,
-            nonce
-          })
-        })
-
-        if (!res.ok) {
-          const errorData = await res.json()
-          throw new Error(errorData.error || 'Token exchange failed')
-        }
-
-        const tokens = await res.json()
-        const { authMeta } = tokens
-
-        localStorage.setItem('auth_meta', JSON.stringify(authMeta))
-
-        const userData = getUserDataFromTokenResponse(tokens.user)
-
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.user) return
+        const userData = getUserDataFromSessionResponse(data.user)
         localStorage.setItem('oidc_session', JSON.stringify(userData))
         localStorage.setItem(
           'token_expires_at',
-          String(Date.now() + tokens.expires_in * 1000)
+          String(Date.now() + (data.expires_in ?? 3600) * 1000)
         )
-        sessionStorage.removeItem(OIDC_LOGIN_STATE_KEY)
-        sessionStorage.removeItem(OIDC_LOGIN_NONCE_KEY)
-
-        const callbackUrl = getPendingCallbackUrl()
-        clearPendingCallbackUrl()
+        if (data.authMeta) {
+          localStorage.setItem('auth_meta', JSON.stringify(data.authMeta))
+        }
         setUser(userData)
-
-        router.replace({
-          pathname: '/auth/login',
-          ...(callbackUrl ? { query: { callbackUrl } } : {})
-        })
-      } catch (err) {
-        console.error('OIDC callback error:', err)
-        clearOidcStorage()
-        clearPendingAuthMode()
-        clearPendingCallbackUrl()
-        toast.error('Login failed. Please try again.')
-        router.replace('/auth/login')
-      } finally {
-        sessionStorage.removeItem('oidc_processing')
-      }
-    },
-    [router, setUser]
-  )
-
-  const checkSession = React.useCallback(async () => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const code = searchParams.get('code')
-    const state = searchParams.get('state')
-    if (code) await handleOIDCCallback(code, state)
-  }, [handleOIDCCallback])
-
-  const login = async (mode: PendingAuthMode = 'login') => {
-    setLoading(true)
-    try {
-      if (mode === 'signup') {
-        await oidcProvider.signup()
-      } else {
-        await oidcProvider.login()
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const beginOidcFlow = async (mode: PendingAuthMode) => {
-    clearOidcStorage()
-
-    const callbackUrl =
-      typeof router.query.callbackUrl === 'string'
-        ? router.query.callbackUrl
-        : null
-    setPendingAuthMode(mode)
-    if (callbackUrl) {
-      setPendingCallbackUrl(callbackUrl)
-    } else {
-      clearPendingCallbackUrl()
-    }
-    await login(mode)
-  }
+      })
+      .catch(() => {})
+  }, [router, setUser])
 
   const clearLocalSession = React.useCallback(() => {
     clearOidcStorage()
@@ -383,6 +104,35 @@ export const useAuth = () => {
     storeLogout()
     router.replace('/auth/login')
   }, [router, setLogoutPending, storeLogout])
+
+  const login = async (mode: PendingAuthMode = 'login') => {
+    setLoading(true)
+    try {
+      const callbackUrl =
+        typeof router.query.callbackUrl === 'string'
+          ? router.query.callbackUrl
+          : null
+      clearOidcStorage()
+      setPendingAuthMode(mode)
+      if (callbackUrl) {
+        setPendingCallbackUrl(callbackUrl)
+      } else {
+        clearPendingCallbackUrl()
+      }
+
+      const params = new URLSearchParams()
+      if (callbackUrl) params.set('callbackUrl', callbackUrl)
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      window.location.href =
+        mode === 'signup' ? `/api/auth/signup${qs}` : `/api/auth/login${qs}`
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const beginOidcFlow = async (mode: PendingAuthMode) => {
+    await login(mode)
+  }
 
   const logout = async () => {
     setLoading(true)
@@ -395,27 +145,35 @@ export const useAuth = () => {
       if (isFederatedCallback || federatedTimeout) {
         sessionStorage.removeItem('logout_flow')
         sessionStorage.removeItem('federated_logout_timeout')
-
-        if (user?.authProvider === 'oidc') {
-          setLogoutPending(true)
-          localStorage.removeItem('oidc_session')
-          localStorage.removeItem('token_expires_at')
-          clearPendingAuthMode()
-          clearPendingCallbackUrl()
-          storeLogout()
-          await oidcProvider.logout()
-          return
-        }
       }
 
       if (user?.authProvider === 'oidc') {
         setLogoutPending(true)
-        localStorage.removeItem('oidc_session')
-        localStorage.removeItem('token_expires_at')
-        clearPendingAuthMode()
-        clearPendingCallbackUrl()
+        clearOidcStorage()
         storeLogout()
-        await oidcProvider.logout()
+
+        if (isFederatedCallback || federatedTimeout) {
+          // Federated return path: POST to revoke + get logoutUrl, then follow it
+          const state = Math.random().toString(36).substring(2)
+          sessionStorage.setItem(OIDC_LOGOUT_STATE_KEY, state)
+          sessionStorage.setItem(OIDC_LOGOUT_PENDING_KEY, 'true')
+          sessionStorage.setItem(
+            OIDC_LOGOUT_STARTED_AT_KEY,
+            Date.now().toString()
+          )
+          const res = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state })
+          })
+          if (!res.ok) throw new Error('Logout request failed')
+          const { logoutUrl } = await res.json()
+          window.location.href = logoutUrl
+          return
+        }
+
+        // Standard path: server-driven GET logout
+        window.location.href = '/api/auth/logout'
         return
       }
 
@@ -423,6 +181,7 @@ export const useAuth = () => {
     } catch (error) {
       setLogoutPending(false)
       console.error('Logout flow failed:', error)
+      toast.error('Logout failed')
     } finally {
       setLoading(false)
     }
@@ -437,7 +196,6 @@ export const useAuth = () => {
     beginOidcFlow,
     logout,
     clearLocalSession,
-    checkSession,
     authEnabled
   }
 }
