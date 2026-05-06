@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import { useAuth } from '@hooks/useAuth'
 import LoginForm from '../Login/LoginForm'
 import SignupForm from '../Signup/SignupForm'
 import {
   authTabLabels,
   OIDC_LOGOUT_PENDING_KEY,
+  OIDC_LOGOUT_RETURN_FALLBACK_MS,
   type AuthPanelContent,
   type AuthTab
 } from '../constants'
@@ -23,15 +25,39 @@ export default function AuthLayout({
   initialTab = 'login'
 }: AuthLayoutProps) {
   const { isAuthenticated, isLogoutPending } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<AuthTab>(initialTab)
-  const hasStoredLogoutPending =
-    typeof window !== 'undefined' &&
-    sessionStorage.getItem(OIDC_LOGOUT_PENDING_KEY) === 'true'
-  const showLogoutPending = isLogoutPending || hasStoredLogoutPending
+  const [storedLogoutPending, setStoredLogoutPending] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem(OIDC_LOGOUT_PENDING_KEY) === 'true'
+  )
+  const showLogoutPending = isLogoutPending || storedLogoutPending
 
   useEffect(() => {
     setActiveTab(initialTab)
   }, [initialTab])
+
+  // ?loggedout=1 signals a clean logout completed via /api/auth/logout/callback
+  useEffect(() => {
+    if (!router.isReady || router.query.loggedout !== '1') return
+    sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
+    setStoredLogoutPending(false)
+    const { loggedout: _, ...rest } = router.query
+    router.replace({ pathname: router.pathname, query: rest }, undefined, {
+      shallow: true
+    })
+  }, [router])
+
+  // Fallback: if logout is done but callback didn't send ?loggedout=1
+  useEffect(() => {
+    if (!storedLogoutPending || isAuthenticated || isLogoutPending) return
+    const timer = setTimeout(() => {
+      sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
+      setStoredLogoutPending(false)
+    }, OIDC_LOGOUT_RETURN_FALLBACK_MS)
+    return () => clearTimeout(timer)
+  }, [storedLogoutPending, isAuthenticated, isLogoutPending])
 
   return (
     <div className={styles.page}>

@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from 'react'
-import { useAuth } from './useAuth'
+import { useAuth, verifyAuthSession } from './useAuth'
 
 export function useSessionPersistence() {
   const { user, clearLocalSession } = useAuth()
 
   const checkSession = useCallback(async () => {
     try {
-      const response = await fetch('/api/auth/session')
-      if (!response.ok) {
+      const verifiedUser = await verifyAuthSession()
+      if (!verifiedUser) {
         clearLocalSession()
       }
     } catch {

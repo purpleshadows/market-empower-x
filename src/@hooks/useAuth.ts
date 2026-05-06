@@ -15,6 +15,18 @@ const OIDC_LOGOUT_PENDING_KEY = 'oidc_logout_pending'
 const OIDC_LOGOUT_STATE_KEY = 'oidc_logout_state'
 const OIDC_LOGOUT_STARTED_AT_KEY = 'oidc_logout_started_at'
 
+type SessionResponse = {
+  user?: {
+    id?: string
+    email?: string
+    name?: string
+    username?: string
+  }
+  authMeta?: Record<string, unknown>
+  expires_in?: number
+  refresh_required?: boolean
+}
+
 const getUserDataFromSessionResponse = (user: {
   id?: string
   email?: string
@@ -47,56 +59,137 @@ const clearOidcStorage = () => {
   clearPendingCallbackUrl()
 }
 
+const clearStoredSessionData = () => {
+  localStorage.removeItem('oidc_session')
+  localStorage.removeItem('token_expires_at')
+  localStorage.removeItem('auth_meta')
+}
+
+const persistVerifiedSession = (data: SessionResponse) => {
+  if (!data.user) {
+    clearStoredSessionData()
+    return null
+  }
+
+  const userData = getUserDataFromSessionResponse(data.user)
+  localStorage.setItem('oidc_session', JSON.stringify(userData))
+  localStorage.setItem(
+    'token_expires_at',
+    String(Date.now() + (data.expires_in ?? 3600) * 1000)
+  )
+
+  if (data.authMeta) {
+    localStorage.setItem('auth_meta', JSON.stringify(data.authMeta))
+  } else {
+    localStorage.removeItem('auth_meta')
+  }
+
+  return userData
+}
+
+async function fetchSessionResponse(): Promise<{
+  response: Response
+  data: SessionResponse
+}> {
+  const response = await fetch('/api/auth/session')
+  const data = (await response.json().catch(() => ({}))) as SessionResponse
+  return { response, data }
+}
+
+export async function verifyAuthSession({
+  allowRefresh = true
+}: {
+  allowRefresh?: boolean
+} = {}): Promise<User | null> {
+  const { response, data } = await fetchSessionResponse()
+
+  if (response.ok) {
+    return persistVerifiedSession(data)
+  }
+
+  if (allowRefresh && data.refresh_required) {
+    const refreshResponse = await fetch('/api/auth/refresh', {
+      method: 'POST'
+    })
+
+    if (refreshResponse.ok) {
+      const { response: retryResponse, data: retryData } =
+        await fetchSessionResponse()
+      if (retryResponse.ok) {
+        return persistVerifiedSession(retryData)
+      }
+    }
+  }
+
+  clearStoredSessionData()
+  return null
+}
+
 export const useAuth = () => {
   const {
     user,
     isLoading,
+    isSessionVerified,
     isLogoutPending,
     setUser,
     setLoading,
+    setSessionVerified,
     setLogoutPending,
     logout: storeLogout
   } = useAuthStore()
   const authEnabled = authConfig.enabled
   const router = useRouter()
 
-  // Hydrate user data from localStorage on mount (existing sessions)
+  // Server session is the source of truth; localStorage is only a verified UI cache.
   React.useEffect(() => {
-    try {
-      const session = localStorage.getItem('oidc_session')
-      if (!session) return
-      const parsedSession = JSON.parse(session) as User
-      setUser(parsedSession)
-    } catch {}
-  }, [setUser])
+    if (!authEnabled || isSessionVerified) return
+
+    let cancelled = false
+
+    const hydrate = async () => {
+      setLoading(true)
+      try {
+        const verifiedUser = await verifyAuthSession()
+        if (cancelled) return
+        setUser(verifiedUser)
+      } catch {
+        if (cancelled) return
+        setUser(null)
+      } finally {
+        if (!cancelled) {
+          setSessionVerified(true)
+          setLoading(false)
+        }
+      }
+    }
+
+    hydrate()
+
+    return () => {
+      cancelled = true
+    }
+  }, [authEnabled, isSessionVerified, setLoading, setSessionVerified, setUser])
 
   // After server-driven callback, ?hydrated=1 signals us to fetch session data
   React.useEffect(() => {
     if (!router.isReady) return
     if (router.query.hydrated !== '1') return
 
-    const { hydrated: _, ...rest } = router.query
+    const rest = { ...router.query }
+    delete rest.hydrated
     router.replace({ pathname: router.pathname, query: rest }, undefined, {
       shallow: true
     })
 
-    fetch('/api/auth/session')
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.user) return
-        const userData = getUserDataFromSessionResponse(data.user)
-        localStorage.setItem('oidc_session', JSON.stringify(userData))
-        localStorage.setItem(
-          'token_expires_at',
-          String(Date.now() + (data.expires_in ?? 3600) * 1000)
-        )
-        if (data.authMeta) {
-          localStorage.setItem('auth_meta', JSON.stringify(data.authMeta))
-        }
-        setUser(userData)
+    setLoading(true)
+    verifyAuthSession()
+      .then((verifiedUser) => setUser(verifiedUser))
+      .catch(() => setUser(null))
+      .finally(() => {
+        setSessionVerified(true)
+        setLoading(false)
       })
-      .catch(() => {})
-  }, [router, setUser])
+  }, [router, setLoading, setSessionVerified, setUser])
 
   const clearLocalSession = React.useCallback(() => {
     clearOidcStorage()
@@ -173,6 +266,7 @@ export const useAuth = () => {
         }
 
         // Standard path: server-driven GET logout
+        sessionStorage.setItem(OIDC_LOGOUT_PENDING_KEY, 'true')
         window.location.href = '/api/auth/logout'
         return
       }
@@ -189,7 +283,7 @@ export const useAuth = () => {
 
   return {
     user,
-    isLoading,
+    isLoading: authEnabled && !isSessionVerified ? true : isLoading,
     isLogoutPending,
     isAuthenticated: !!user,
     login,

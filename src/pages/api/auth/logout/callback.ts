@@ -6,5 +6,5 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     return res.status(405).end()
   }
 
-  return res.redirect(302, '/auth/login')
+  return res.redirect(302, '/auth/login?loggedout=1')
 }

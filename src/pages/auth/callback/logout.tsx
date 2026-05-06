@@ -1,16 +1,11 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '@hooks/stores/authStore'
-import { useAuth } from '@hooks/useAuth'
 import { useRouter } from 'next/router'
-import {
-  clearFederatedStorage,
-  restoreFederatedSessionData
-} from '@utils/logoutRouter'
+import { clearFederatedStorage } from '@utils/logoutRouter'
 
 export default function LogoutCallback() {
   const router = useRouter()
   const storeLogout = useAuthStore((s) => s.logout)
-  const { logout } = useAuth()
 
   useEffect(() => {
     const flow = sessionStorage.getItem('logout_flow')
@@ -27,16 +22,15 @@ export default function LogoutCallback() {
       sessionStorage.removeItem('federated_logout_timeout')
     }
 
-    const run = async () => {
+    const run = () => {
       if (flow === 'federated' || isTimeout) {
         sessionStorage.removeItem('logout_flow')
 
-        if (!isTimeout) {
-          restoreFederatedSessionData()
-        }
-
         clearFederatedStorage()
-        await logout()
+        localStorage.removeItem('oidc_session')
+        localStorage.removeItem('token_expires_at')
+        storeLogout()
+        window.location.href = '/api/auth/logout'
       } else {
         localStorage.removeItem('oidc_session')
         localStorage.removeItem('token_expires_at')
@@ -46,7 +40,7 @@ export default function LogoutCallback() {
     }
 
     run()
-  }, [router, storeLogout, logout])
+  }, [router, storeLogout])
 
   return <div>Signing you out...</div>
 }
