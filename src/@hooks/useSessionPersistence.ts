@@ -34,13 +34,14 @@ export function useSessionPersistence() {
           )
           clearLocalSession()
         }
-      } else {
-        console.error('Token refresh failed, logging out')
+      } else if (response.status !== 503 && response.status !== 504) {
+        // Only logout on definitive failures (401/400), not transient server errors
+        console.error('Token refresh failed, logging out', response.status)
         clearLocalSession()
       }
     } catch (error) {
-      console.error('Token refresh error:', error)
-      clearLocalSession()
+      // Network error — transient, don't logout (matches checkSession behavior)
+      console.error('Token refresh network error, will retry:', error)
     }
   }, [clearLocalSession])
 

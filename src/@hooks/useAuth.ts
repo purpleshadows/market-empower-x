@@ -147,6 +147,14 @@ export const useAuth = () => {
     let cancelled = false
 
     const hydrate = async () => {
+      if (
+        typeof window !== 'undefined' &&
+        sessionStorage.getItem(OIDC_LOGOUT_PENDING_KEY) === 'true'
+      ) {
+        setSessionVerified(true)
+        return
+      }
+
       setLoading(true)
       try {
         const verifiedUser = await verifyAuthSession()
