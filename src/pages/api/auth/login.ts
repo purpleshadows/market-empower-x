@@ -62,8 +62,7 @@ export default async function handler(
     code_challenge: codeChallenge,
     code_challenge_method: 'S256',
     state,
-    nonce,
-    prompt: 'login'
+    nonce
   })
 
   return res.redirect(302, `${getAuthorizeUrl(issuer)}?${params.toString()}`)
