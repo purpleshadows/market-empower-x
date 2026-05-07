@@ -193,5 +193,20 @@ module.exports = {
   ),
 
   dataspace:
-    getEnv('NEXT_PUBLIC_DATASPACE') || process.env.NEXT_PUBLIC_DATASPACE || null
+    getEnv('NEXT_PUBLIC_DATASPACE') ||
+    process.env.NEXT_PUBLIC_DATASPACE ||
+    null,
+
+  imprintUrl:
+    getEnv('NEXT_PUBLIC_IMPRINT_URL') ||
+    process.env.NEXT_PUBLIC_IMPRINT_URL ||
+    '',
+  termsUrl:
+    getEnv('NEXT_PUBLIC_TC_URL') || process.env.NEXT_PUBLIC_TC_URL || '',
+  privacyPolicyUrl:
+    getEnv('NEXT_PUBLIC_PP_URL') || process.env.NEXT_PUBLIC_PP_URL || '',
+  cookiePolicyUrl:
+    getEnv('NEXT_PUBLIC_CP_URL') || process.env.NEXT_PUBLIC_CP_URL || '',
+  dpuaUrl:
+    getEnv('NEXT_PUBLIC_DPUA_URL') || process.env.NEXT_PUBLIC_DPUA_URL || ''
 }
