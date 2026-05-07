@@ -109,8 +109,14 @@ export default async function handler(
     getRequiredStringClaim(payload, 'name')
     getRequiredStringClaim(payload, 'iss')
 
+    const upstreamIdp =
+      (typeof payload.upstream_idp === 'string' && payload.upstream_idp) ||
+      (typeof payload.last_idp === 'string' && payload.last_idp) ||
+      (typeof payload.idp === 'string' && payload.idp) ||
+      undefined
+
     res.setHeader('Set-Cookie', [
-      ...buildAuthCookieStrings(data),
+      ...buildAuthCookieStrings(data, upstreamIdp),
       ...buildClearTransientCookieStrings()
     ])
 
