@@ -14,12 +14,7 @@ import { useAuth } from '@hooks/useAuth'
 import { useModal } from 'connectkit'
 import { useRouter } from 'next/router'
 import { useUserPreferences } from '@context/UserPreferences'
-import {
-  getLogoutRedirect,
-  getFederatedIdpEndSessionUrl,
-  isFederatedUser,
-  saveFederatedSessionData
-} from '@utils/logoutRouter'
+import { clearFederatedStorage } from '@utils/logoutRouter'
 
 interface DetailsProps {
   onRequestClose?: () => void
@@ -181,41 +176,7 @@ export default function Details({
       console.error('wallet logout error', error)
     }
 
-    const callbackUrl = getLogoutRedirect()
-    const endSessionUrl = getFederatedIdpEndSessionUrl()
-
-    if (isFederatedUser() && endSessionUrl) {
-      sessionStorage.setItem('logout_flow', 'federated')
-      saveFederatedSessionData()
-
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            revoke_only: true // eslint-disable-line camelcase
-          })
-        })
-      } catch (e) {
-        // don't block federated redirect if revocation fails
-      }
-
-      const timeoutId = setTimeout(() => {
-        if (sessionStorage.getItem('logout_flow') === 'federated') {
-          console.warn('Federated logout timeout, forcing cleanup')
-          sessionStorage.setItem('federated_logout_timeout', 'true')
-          window.location.href = callbackUrl
-        }
-      }, 5000)
-
-      sessionStorage.setItem('federated_timeout_id', String(timeoutId))
-      window.location.href = `${endSessionUrl}?post_logout_redirect_uri=${encodeURIComponent(
-        callbackUrl
-      )}`
-      return
-    }
-
-    sessionStorage.setItem('logout_flow', 'vm2')
+    clearFederatedStorage()
     await logout()
     onRequestClose?.()
     setIsLoggingOut(false)

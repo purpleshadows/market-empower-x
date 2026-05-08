@@ -104,7 +104,9 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL || `https://${req.headers.host}`
-  const callbackUrl = `${appUrl.replace(/\/$/, '')}/api/auth/logout/callback`
+  // Use /auth/callback/logout as the VM2 end-session return URL — this page is
+  // registered in the OIDC provider and handles the final redirect to market login.
+  const callbackUrl = `${appUrl.replace(/\/$/, '')}/auth/callback/logout`
 
   const vm2Params = new URLSearchParams({ client_id: clientId })
   if (id_token) vm2Params.set('id_token_hint', id_token)
@@ -112,15 +114,9 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   const vm2EndSessionUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
 
   const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL
-  // vm2_only=1 means the federated IdP (e.g. VM3) has already been logged out
-  // by the client-side flow; skip re-entering the federation chain and go
-  // straight to the primary OIDC provider (VM2) end-session.
-  const vm2Only = req.query.vm2_only === '1'
-  const isFederatedLogin =
-    !vm2Only &&
-    Boolean(
-      login_source && federationEndSessionUrl && isFederatedSource(login_source)
-    )
+  const isFederatedLogin = Boolean(
+    login_source && federationEndSessionUrl && isFederatedSource(login_source)
+  )
 
   const redirectUrl = isFederatedLogin
     ? `${federationEndSessionUrl}?${new URLSearchParams({
