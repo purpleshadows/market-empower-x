@@ -2,6 +2,7 @@
 import type { NextApiResponse } from 'next'
 
 const AUTH_COOKIE_NAMES = ['access_token', 'refresh_token', 'id_token'] as const
+const LOGOUT_ID_TOKEN_COOKIE = 'logout_id_token'
 export const DEFAULT_ACCESS_TOKEN_MAX_AGE = 3600
 const REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60
 
@@ -17,10 +18,15 @@ export function getAccessTokenMaxAge(tokens: AuthTokens) {
     : DEFAULT_ACCESS_TOKEN_MAX_AGE
 }
 
-function serializeCookie(name: AuthCookieName, value: string, maxAge: number) {
+function serializeCookie(
+  name: string,
+  value: string,
+  maxAge: number,
+  path = '/'
+) {
   return `${name}=${encodeURIComponent(
     value
-  )}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict; Path=/`
+  )}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict; Path=${path}`
 }
 
 function serializeSessionCookie(
@@ -49,16 +55,35 @@ export function buildAuthCookieStrings(
       ),
     tokens.id_token &&
       serializeCookie('id_token', tokens.id_token, accessTokenMaxAge),
+    tokens.id_token &&
+      serializeCookie(
+        LOGOUT_ID_TOKEN_COOKIE,
+        tokens.id_token,
+        REFRESH_TOKEN_MAX_AGE,
+        '/api/auth/logout'
+      ),
     loginSource &&
       serializeSessionCookie('login_source', loginSource, REFRESH_TOKEN_MAX_AGE)
   ].filter(Boolean) as string[]
 }
 
-export function buildClearAuthCookieStrings(): string[] {
+export function buildClearAuthCookieStrings({
+  keepIdToken = false,
+  keepLogoutIdToken = false
+}: {
+  keepIdToken?: boolean
+  keepLogoutIdToken?: boolean
+} = {}): string[] {
+  const authCookieNames = AUTH_COOKIE_NAMES.filter(
+    (name) => !(keepIdToken && name === 'id_token')
+  )
+
   return [
-    ...AUTH_COOKIE_NAMES.map((name) => serializeCookie(name, '', 0)),
+    ...authCookieNames.map((name) => serializeCookie(name, '', 0)),
+    !keepLogoutIdToken &&
+      serializeCookie(LOGOUT_ID_TOKEN_COOKIE, '', 0, '/api/auth/logout'),
     serializeSessionCookie('login_source', '', 0)
-  ]
+  ].filter(Boolean) as string[]
 }
 
 export function setAuthCookies(res: NextApiResponse, tokens: AuthTokens) {

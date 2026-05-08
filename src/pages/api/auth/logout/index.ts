@@ -1,22 +1,37 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { clearAuthCookies } from '../_cookies'
+import { buildClearAuthCookieStrings, clearAuthCookies } from '../_cookies'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+const FEDERATED_LOGOUT_CONTINUE_COOKIE = 'federated_logout_continue'
 
-function isAllowedOrigin(origin: string | undefined) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (!appUrl) return true
+function getHeaderValue(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] || '' : value || ''
+}
 
-  try {
-    return origin === new URL(appUrl).origin
-  } catch {
-    return origin === appUrl.replace(/\/$/, '')
-  }
+function getRequestOrigin(req: NextApiRequest): string {
+  const host = getHeaderValue(req.headers.host)
+  const forwardedProto = getHeaderValue(req.headers['x-forwarded-proto'])
+  const protocol = forwardedProto.split(',')[0]?.trim() || 'https'
+
+  return `${protocol}://${host}`
+}
+
+function isAllowedOrigin(req: NextApiRequest) {
+  const { origin } = req.headers
+  if (!origin) return true
+
+  return origin === getRequestOrigin(req)
 }
 
 function getEndSessionUrl(issuer: string) {
   return `${issuer.replace(/\/$/, '')}/end-session/`
+}
+
+function serializeFederatedLogoutContinueCookie(value: string, maxAge: number) {
+  return `${FEDERATED_LOGOUT_CONTINUE_COOKIE}=${encodeURIComponent(
+    value
+  )}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax; Path=/api/auth/logout`
 }
 
 function isFederatedSource(loginSource: string): boolean {
@@ -78,7 +93,13 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     return res.redirect(302, '/auth/login')
   }
 
-  const { access_token, refresh_token, id_token, login_source } = req.cookies
+  const {
+    access_token,
+    refresh_token,
+    id_token,
+    logout_id_token,
+    login_source
+  } = req.cookies
   const revokeUrl = getRevokeUrl(issuer)
 
   await Promise.all([
@@ -102,14 +123,13 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       : Promise.resolve()
   ])
 
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL || `https://${req.headers.host}`
   // Use /auth/callback/logout as the VM2 end-session return URL — this page is
   // registered in the OIDC provider and handles the final redirect to market login.
-  const callbackUrl = `${appUrl.replace(/\/$/, '')}/auth/callback/logout`
+  const callbackUrl = `${getRequestOrigin(req)}/auth/callback/logout`
 
   const vm2Params = new URLSearchParams({ client_id: clientId })
-  if (id_token) vm2Params.set('id_token_hint', id_token)
+  if (id_token || logout_id_token)
+    vm2Params.set('id_token_hint', id_token || logout_id_token)
   vm2Params.set('post_logout_redirect_uri', callbackUrl)
   const vm2EndSessionUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
 
@@ -118,18 +138,24 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
     login_source && federationEndSessionUrl && isFederatedSource(login_source)
   )
 
-  const redirectUrl = isFederatedLogin
-    ? `${federationEndSessionUrl}?${new URLSearchParams({
-        post_logout_redirect_uri: vm2EndSessionUrl
-      }).toString()}`
-    : vm2EndSessionUrl
+  if (isFederatedLogin) {
+    res.setHeader('Set-Cookie', [
+      ...buildClearAuthCookieStrings({ keepLogoutIdToken: true }),
+      serializeFederatedLogoutContinueCookie('1', 300)
+    ])
+
+    const redirectUrl = `${federationEndSessionUrl}?${new URLSearchParams({
+      post_logout_redirect_uri: callbackUrl
+    }).toString()}`
+    return res.redirect(302, redirectUrl)
+  }
 
   clearAuthCookies(res)
-  return res.redirect(302, redirectUrl)
+  return res.redirect(302, vm2EndSessionUrl)
 }
 
 async function handlePost(req: NextApiRequest, res: NextApiResponse) {
-  if (!isAllowedOrigin(req.headers.origin)) {
+  if (!isAllowedOrigin(req)) {
     return res.status(403).json({ error: 'Forbidden' })
   }
 
