@@ -131,6 +131,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   if (id_token || logout_id_token)
     vm2Params.set('id_token_hint', id_token || logout_id_token)
   vm2Params.set('post_logout_redirect_uri', callbackUrl)
+  vm2Params.set('state', 'logout')
   const vm2EndSessionUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
 
   const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL

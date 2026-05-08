@@ -63,6 +63,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   if (idTokenHint) vm2Params.set('id_token_hint', idTokenHint)
   vm2Params.set('post_logout_redirect_uri', callbackUrl)
+  vm2Params.set('state', 'logout')
 
   clearLogoutCookies(res)
   return res.redirect(
