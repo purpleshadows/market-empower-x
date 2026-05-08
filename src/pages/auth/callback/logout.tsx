@@ -30,7 +30,7 @@ export default function LogoutCallback() {
         localStorage.removeItem('oidc_session')
         localStorage.removeItem('token_expires_at')
         storeLogout()
-        window.location.href = '/api/auth/logout'
+        window.location.href = '/api/auth/logout?vm2_only=1'
       } else {
         localStorage.removeItem('oidc_session')
         localStorage.removeItem('token_expires_at')

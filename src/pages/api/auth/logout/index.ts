@@ -112,9 +112,15 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   const vm2EndSessionUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
 
   const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL
-  const isFederatedLogin = Boolean(
-    login_source && federationEndSessionUrl && isFederatedSource(login_source)
-  )
+  // vm2_only=1 means the federated IdP (e.g. VM3) has already been logged out
+  // by the client-side flow; skip re-entering the federation chain and go
+  // straight to the primary OIDC provider (VM2) end-session.
+  const vm2Only = req.query.vm2_only === '1'
+  const isFederatedLogin =
+    !vm2Only &&
+    Boolean(
+      login_source && federationEndSessionUrl && isFederatedSource(login_source)
+    )
 
   const redirectUrl = isFederatedLogin
     ? `${federationEndSessionUrl}?${new URLSearchParams({
