@@ -22,6 +22,8 @@ export default async function handler(
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  res.setHeader('Cache-Control', 'no-store')
+
   if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
     return res.status(404).json({ error: 'Not found' })
   }
@@ -31,7 +33,10 @@ export default async function handler(
   const idToken = req.cookies.id_token
 
   if (!accessToken && !refreshToken) {
-    return res.status(401).json({ error: 'No session' })
+    return res.status(401).json({
+      error: 'No session',
+      has_refresh_token: false
+    })
   }
 
   const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
@@ -45,6 +50,7 @@ export default async function handler(
   if (!idToken) {
     return res.status(401).json({
       error: 'Session verification required',
+      has_refresh_token: Boolean(refreshToken),
       refresh_required: Boolean(refreshToken)
     })
   }
@@ -90,12 +96,14 @@ export default async function handler(
           getOptionalStringClaim(payload, 'username')
       },
       authMeta,
+      has_refresh_token: Boolean(refreshToken),
       expires_in: expiresIn
     })
   } catch (error) {
     console.error('Session id_token verification failed:', error)
     return res.status(401).json({
       error: 'Session verification failed',
+      has_refresh_token: Boolean(refreshToken),
       refresh_required: Boolean(refreshToken)
     })
   }

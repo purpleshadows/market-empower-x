@@ -25,6 +25,13 @@ type SessionResponse = {
   authMeta?: Record<string, unknown>
   expires_in?: number
   refresh_required?: boolean
+  has_refresh_token?: boolean
+}
+
+type SessionVerificationResult = {
+  user: User | null
+  hasRefreshToken: boolean
+  refreshRequired: boolean
 }
 
 const getUserDataFromSessionResponse = (user: {
@@ -102,15 +109,28 @@ function isDefinitiveAuthFailure(status: number): boolean {
   return status === 400 || status === 401 || status === 403
 }
 
-export async function verifyAuthSession({
+export async function verifyAuthSessionDetailed({
   allowRefresh = true
 }: {
   allowRefresh?: boolean
-} = {}): Promise<User | null> {
+} = {}): Promise<SessionVerificationResult> {
   const { response, data } = await fetchSessionResponse()
+  const hasRefreshToken = Boolean(data.has_refresh_token)
 
   if (response.ok) {
-    return persistVerifiedSession(data)
+    return {
+      user: persistVerifiedSession(data),
+      hasRefreshToken,
+      refreshRequired: false
+    }
+  }
+
+  if (!allowRefresh && data.refresh_required && hasRefreshToken) {
+    return {
+      user: null,
+      hasRefreshToken,
+      refreshRequired: true
+    }
   }
 
   if (allowRefresh && data.refresh_required) {
@@ -123,7 +143,11 @@ export async function verifyAuthSession({
       const { response: retryResponse, data: retryData } =
         await fetchSessionResponse()
       if (retryResponse.ok) {
-        return persistVerifiedSession(retryData)
+        return {
+          user: persistVerifiedSession(retryData),
+          hasRefreshToken: Boolean(retryData.has_refresh_token),
+          refreshRequired: false
+        }
       }
 
       if (!isDefinitiveAuthFailure(retryResponse.status)) {
@@ -145,7 +169,20 @@ export async function verifyAuthSession({
   }
 
   clearStoredSessionData()
-  return null
+  return {
+    user: null,
+    hasRefreshToken,
+    refreshRequired: Boolean(data.refresh_required)
+  }
+}
+
+export async function verifyAuthSession({
+  allowRefresh = true
+}: {
+  allowRefresh?: boolean
+} = {}): Promise<User | null> {
+  const result = await verifyAuthSessionDetailed({ allowRefresh })
+  return result.user
 }
 
 export const useAuth = () => {

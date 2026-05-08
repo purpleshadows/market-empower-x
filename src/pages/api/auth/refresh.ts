@@ -67,6 +67,8 @@ export default async function handler(
     })
   }
 
+  res.setHeader('Cache-Control', 'no-store')
+
   try {
     if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
       return res.status(404).json({
@@ -80,8 +82,15 @@ export default async function handler(
       })
     }
 
-    const { refresh_token, id_token } = req.cookies
+    const { access_token, refresh_token, id_token } = req.cookies
     if (!refresh_token) {
+      if (access_token || id_token) {
+        return res.status(409).json({
+          error: 'refresh_token_unavailable',
+          message: 'Session cannot be refreshed because no refresh token exists'
+        })
+      }
+
       clearAuthCookies(res)
       return res.status(401).json({
         error: 'Refresh token required'

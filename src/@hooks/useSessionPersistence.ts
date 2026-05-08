@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { useAuth, verifyAuthSession } from './useAuth'
+import { useAuth, verifyAuthSessionDetailed } from './useAuth'
 
 const SESSION_REFRESH_INTERVAL_MS = 30000
 const DEFINITIVE_REFRESH_FAILURE_STATUSES = new Set([400, 401, 403])
@@ -10,7 +10,8 @@ type RefreshResult =
   | { status: 'retry'; reason: string }
 
 type SessionCheckResult =
-  | { status: 'valid' }
+  | { status: 'valid'; hasRefreshToken: boolean }
+  | { status: 'refresh_required' }
   | { status: 'logout'; reason: string }
   | { status: 'retry'; reason: string }
 
@@ -71,11 +72,21 @@ export function useSessionPersistence() {
 
   const checkSession = useCallback(async (): Promise<SessionCheckResult> => {
     try {
-      const verifiedUser = await verifyAuthSession({ allowRefresh: false })
-      if (!verifiedUser) {
+      const session = await verifyAuthSessionDetailed({ allowRefresh: false })
+      if (session.user) {
+        return {
+          status: 'valid',
+          hasRefreshToken: session.hasRefreshToken
+        }
+      }
+
+      if (session.refreshRequired && session.hasRefreshToken) {
+        return { status: 'refresh_required' }
+      }
+
+      if (!session.user) {
         return { status: 'logout', reason: 'session_invalid' }
       }
-      return { status: 'valid' }
     } catch {
       return { status: 'retry', reason: 'session_check_transient_error' }
     }
@@ -89,6 +100,22 @@ export function useSessionPersistence() {
       refreshInFlightRef.current = true
 
       try {
+        const initialSessionResult = await checkSession()
+
+        if (initialSessionResult.status === 'logout') {
+          clearLocalSessionOnce()
+          return
+        }
+
+        if (initialSessionResult.status === 'retry') return
+
+        if (
+          initialSessionResult.status === 'valid' &&
+          !initialSessionResult.hasRefreshToken
+        ) {
+          return
+        }
+
         const result = await refreshToken()
 
         if (result.status === 'logout') {
