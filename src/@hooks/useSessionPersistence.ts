@@ -1,16 +1,45 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAuth, verifyAuthSession } from './useAuth'
 
-export function useSessionPersistence() {
-  const { user, clearLocalSession } = useAuth()
+const SESSION_REFRESH_INTERVAL_MS = 30000
+const DEFINITIVE_REFRESH_FAILURE_STATUSES = new Set([400, 401, 403])
 
-  const refreshToken = useCallback(async (): Promise<{
-    success: boolean
-    expires_in?: number
-  } | null> => {
+type RefreshResult =
+  | { status: 'success'; expiresIn: number }
+  | { status: 'logout'; reason: string }
+  | { status: 'retry'; reason: string }
+
+type SessionCheckResult =
+  | { status: 'valid' }
+  | { status: 'logout'; reason: string }
+  | { status: 'retry'; reason: string }
+
+export function useSessionPersistence() {
+  const {
+    user,
+    isAuthenticated,
+    isSessionVerified,
+    authEnabled,
+    clearLocalSession
+  } = useAuth()
+  const logoutHandledRef = useRef(false)
+  const refreshInFlightRef = useRef(false)
+
+  useEffect(() => {
+    if (user) logoutHandledRef.current = false
+  }, [user])
+
+  const clearLocalSessionOnce = useCallback(() => {
+    if (logoutHandledRef.current) return
+    logoutHandledRef.current = true
+    clearLocalSession()
+  }, [clearLocalSession])
+
+  const refreshToken = useCallback(async (): Promise<RefreshResult> => {
     try {
       const response = await fetch('/api/auth/refresh', {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include'
       })
 
       if (response.ok) {
@@ -20,54 +49,77 @@ export function useSessionPersistence() {
             'token_expires_at',
             String(Date.now() + newExpiresIn * 1000)
           )
-          return { success: true, expires_in: newExpiresIn }
-        } else {
-          console.error(
-            'Token refresh response missing expires_in, logging out'
-          )
-          clearLocalSession()
-          return { success: false }
+          return { status: 'success', expiresIn: newExpiresIn }
         }
-      } else if (response.status !== 503 && response.status !== 504) {
-        console.error('Token refresh failed, logging out', response.status)
-        clearLocalSession()
-        return { success: false }
+
+        console.error('Token refresh response missing expires_in')
+        return { status: 'logout', reason: 'invalid_refresh_response' }
       }
 
-      return null
+      if (DEFINITIVE_REFRESH_FAILURE_STATUSES.has(response.status)) {
+        console.error('Token refresh failed definitively', response.status)
+        return { status: 'logout', reason: `refresh_${response.status}` }
+      }
+
+      console.error('Token refresh failed, will retry', response.status)
+      return { status: 'retry', reason: `refresh_${response.status}` }
     } catch (error) {
       console.error('Token refresh network error, will retry:', error)
-      return null
+      return { status: 'retry', reason: 'refresh_network_error' }
     }
-  }, [clearLocalSession])
+  }, [])
 
-  const checkSession = useCallback(async () => {
+  const checkSession = useCallback(async (): Promise<SessionCheckResult> => {
     try {
-      const verifiedUser = await verifyAuthSession()
+      const verifiedUser = await verifyAuthSession({ allowRefresh: false })
       if (!verifiedUser) {
-        clearLocalSession()
+        return { status: 'logout', reason: 'session_invalid' }
       }
+      return { status: 'valid' }
     } catch {
-      // network error — transient, don't logout
+      return { status: 'retry', reason: 'session_check_transient_error' }
     }
-  }, [clearLocalSession])
+  }, [])
 
   useEffect(() => {
-    if (!user) return
+    if (!authEnabled || !isAuthenticated || !isSessionVerified || !user) return
 
     const checkAndRefresh = async () => {
-      const result = await refreshToken()
+      if (refreshInFlightRef.current || logoutHandledRef.current) return
+      refreshInFlightRef.current = true
 
-      if (result?.success) {
-        await checkSession()
+      try {
+        const result = await refreshToken()
+
+        if (result.status === 'logout') {
+          clearLocalSessionOnce()
+          return
+        }
+
+        if (result.status !== 'success') return
+
+        const sessionResult = await checkSession()
+        if (sessionResult.status === 'logout') {
+          clearLocalSessionOnce()
+        }
+      } finally {
+        refreshInFlightRef.current = false
       }
     }
 
     checkAndRefresh()
-    const interval = setInterval(checkAndRefresh, 30000)
+    const interval = setInterval(checkAndRefresh, SESSION_REFRESH_INTERVAL_MS)
 
     return () => clearInterval(interval)
-  }, [user, refreshToken, checkSession])
+  }, [
+    authEnabled,
+    isAuthenticated,
+    isSessionVerified,
+    user,
+    refreshToken,
+    checkSession,
+    clearLocalSessionOnce
+  ])
 
   return null
 }

@@ -91,9 +91,15 @@ async function fetchSessionResponse(): Promise<{
   response: Response
   data: SessionResponse
 }> {
-  const response = await fetch('/api/auth/session')
+  const response = await fetch('/api/auth/session', {
+    credentials: 'include'
+  })
   const data = (await response.json().catch(() => ({}))) as SessionResponse
   return { response, data }
+}
+
+function isDefinitiveAuthFailure(status: number): boolean {
+  return status === 400 || status === 401 || status === 403
 }
 
 export async function verifyAuthSession({
@@ -109,7 +115,8 @@ export async function verifyAuthSession({
 
   if (allowRefresh && data.refresh_required) {
     const refreshResponse = await fetch('/api/auth/refresh', {
-      method: 'POST'
+      method: 'POST',
+      credentials: 'include'
     })
 
     if (refreshResponse.ok) {
@@ -118,7 +125,23 @@ export async function verifyAuthSession({
       if (retryResponse.ok) {
         return persistVerifiedSession(retryData)
       }
+
+      if (!isDefinitiveAuthFailure(retryResponse.status)) {
+        throw new Error(
+          `Session verification retry failed with status ${retryResponse.status}`
+        )
+      }
+    } else if (!isDefinitiveAuthFailure(refreshResponse.status)) {
+      throw new Error(
+        `Session refresh failed with status ${refreshResponse.status}`
+      )
     }
+  }
+
+  if (!isDefinitiveAuthFailure(response.status)) {
+    throw new Error(
+      `Session verification failed with status ${response.status}`
+    )
   }
 
   clearStoredSessionData()
@@ -293,6 +316,7 @@ export const useAuth = () => {
     user,
     isLoading: authEnabled && !isSessionVerified ? true : isLoading,
     isLogoutPending,
+    isSessionVerified,
     isAuthenticated: !!user,
     login,
     beginOidcFlow,
