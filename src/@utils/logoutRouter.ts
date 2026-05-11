@@ -36,10 +36,6 @@ export const getLogoutRedirect = () => {
   return `${window.location.origin}/auth/callback/logout`
 }
 
-export const getFederatedIdpEndSessionUrl = (): string => {
-  return getRuntimeConfig().NEXT_PUBLIC_FEDERATED_IDP_END_SESSION_URL || ''
-}
-
 export const clearFederatedStorage = () => {
   localStorage.removeItem('auth_meta')
 
