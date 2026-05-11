@@ -37,6 +37,11 @@ export type RuntimeConfig = {
   NEXT_PUBLIC_OIDC_SIGNUP_FLOW?: string
   NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB?: string
   NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS?: string
+  NEXT_PUBLIC_IMPRINT_URL?: string
+  NEXT_PUBLIC_TC_URL?: string
+  NEXT_PUBLIC_PP_URL?: string
+  NEXT_PUBLIC_CP_URL?: string
+  NEXT_PUBLIC_DPUA_URL?: string
 }
 
 declare global {
@@ -96,7 +101,12 @@ const runtimeConfig: RuntimeConfig = (() => {
     NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB:
       process.env.NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB,
     NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS:
-      process.env.NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS
+      process.env.NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS,
+    NEXT_PUBLIC_IMPRINT_URL: process.env.NEXT_PUBLIC_IMPRINT_URL,
+    NEXT_PUBLIC_TC_URL: process.env.NEXT_PUBLIC_TC_URL,
+    NEXT_PUBLIC_PP_URL: process.env.NEXT_PUBLIC_PP_URL,
+    NEXT_PUBLIC_CP_URL: process.env.NEXT_PUBLIC_CP_URL,
+    NEXT_PUBLIC_DPUA_URL: process.env.NEXT_PUBLIC_DPUA_URL
   }
 
   if (typeof window !== 'undefined' && window.__RUNTIME_CONFIG__) {
