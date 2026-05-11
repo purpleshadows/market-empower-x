@@ -5,6 +5,7 @@ import { buildAuthCookieStrings } from './_cookies'
 import { buildClearTransientCookieStrings } from './_transient'
 import { getOidcMetadata } from './_oidc'
 import { OIDC_REQUEST_TIMEOUT_MS } from './_constants'
+import { introspectAccessToken } from './_introspect'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
 
@@ -108,6 +109,28 @@ export default async function handler(
     getRequiredStringClaim(payload, 'email')
     getRequiredStringClaim(payload, 'name')
     getRequiredStringClaim(payload, 'iss')
+
+    if (typeof data.access_token !== 'string' || !data.access_token) {
+      console.error('Token exchange response missing access_token')
+      return failRedirect(res)
+    }
+
+    const introspection = await introspectAccessToken(
+      data.access_token,
+      issuer,
+      clientId,
+      clientSecret
+    )
+
+    if (introspection.status !== 'active') {
+      console.error('OIDC callback token introspection failed:', {
+        status: introspection.status
+      })
+      return failRedirect(
+        res,
+        introspection.status === 'inactive' ? 'access_denied' : 'server_error'
+      )
+    }
 
     const upstreamIdp =
       (typeof payload.upstream_idp === 'string' && payload.upstream_idp) ||

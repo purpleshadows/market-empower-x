@@ -80,6 +80,11 @@ const clearStoredSessionData = () => {
   localStorage.removeItem('auth_meta')
 }
 
+const clearStoredAuthState = () => {
+  clearStoredSessionData()
+  useAuthStore.getState().logout()
+}
+
 const hasStoredSessionData = () => {
   if (typeof window === 'undefined') return false
   return Boolean(localStorage.getItem('oidc_session'))
@@ -205,7 +210,7 @@ export async function verifyAuthSessionDetailed({
     )
   }
 
-  clearStoredSessionData()
+  clearStoredAuthState()
   if (hadStoredSession) notifySessionLost(definitiveFailureReason)
 
   return {
@@ -319,12 +324,21 @@ export const useAuth = () => {
       })
   }, [router, setLoading, setSessionVerified, applyVerificationResult])
 
-  const clearLocalSession = React.useCallback(() => {
-    clearOidcStorage()
-    setLogoutPending(false)
-    storeLogout()
-    router.replace('/auth/login')
-  }, [router, setLogoutPending, storeLogout])
+  const clearLocalSession = React.useCallback(
+    (redirectTo = '/auth/login') => {
+      clearOidcStorage()
+      setLogoutPending(false)
+      storeLogout()
+
+      if (redirectTo.startsWith('/api/')) {
+        window.location.href = redirectTo
+        return
+      }
+
+      router.replace(redirectTo)
+    },
+    [router, setLogoutPending, storeLogout]
+  )
 
   const markLogoutPending = React.useCallback(() => {
     setLogoutPending(true)

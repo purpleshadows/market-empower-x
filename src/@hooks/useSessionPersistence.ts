@@ -153,7 +153,7 @@ export function useSessionPersistence() {
       try {
         await disconnectWallets()
       } finally {
-        if (!cancelled) clearLocalSession()
+        if (!cancelled) clearLocalSession('/api/auth/logout')
       }
     }
 

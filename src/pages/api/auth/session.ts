@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { jwtVerify, type JWTPayload } from 'jose'
-import { clearAuthCookies, DEFAULT_ACCESS_TOKEN_MAX_AGE } from './_cookies'
+import { DEFAULT_ACCESS_TOKEN_MAX_AGE } from './_cookies'
 import { getOidcMetadata } from './_oidc'
 import { introspectAccessToken } from './_introspect'
 
@@ -85,10 +85,9 @@ export default async function handler(
         clientSecret
       )
       if (introspection.status === 'inactive') {
-        clearAuthCookies(res)
         return res.status(401).json({
           error: 'Session terminated',
-          has_refresh_token: false
+          has_refresh_token: Boolean(refreshToken)
         })
       }
 
