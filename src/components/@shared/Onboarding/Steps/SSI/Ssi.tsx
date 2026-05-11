@@ -4,13 +4,14 @@ import Image from 'next/image'
 import { OnboardingStep } from '../..'
 import StepHeader from '../../StepHeader'
 import content from '../../../../../../content/onboarding/steps/ssi.json'
+import { getRuntimeConfig } from '@utils/runtimeConfig'
 
 import styles from './index.module.css'
 
 export default function SSIWallet(): ReactElement {
   const { title, subtitle, body, image }: OnboardingStep = content
 
-  const ssiUiUrl = process.env.NEXT_PUBLIC_SSI_UI_URL
+  const ssiUiUrl = getRuntimeConfig().NEXT_PUBLIC_SSI_UI_URL
   const isValidUrl =
     typeof ssiUiUrl === 'string' && /^(https?:\/\/)/i.test(ssiUiUrl)
 

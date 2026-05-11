@@ -7,6 +7,7 @@ import StepHeader from '../StepHeader'
 import { useAccount, useChainId, usePublicClient } from 'wagmi'
 import content from '../../../../../content/onboarding/steps/connectAccount.json'
 import { useModal } from 'connectkit'
+import { getRuntimeConfig } from '@utils/runtimeConfig'
 
 export default function ConnectAccount(): ReactElement {
   const {
@@ -24,7 +25,7 @@ export default function ConnectAccount(): ReactElement {
 
   const [loading, setLoading] = useState(false)
   const [completed, setCompleted] = useState(false)
-  const isSSIEnabled = process.env.NEXT_PUBLIC_SSI_ENABLED === 'true'
+  const isSSIEnabled = getRuntimeConfig().NEXT_PUBLIC_SSI_ENABLED === 'true'
 
   const computedSubtitle = isSSIEnabled
     ? 'Now that you created an account with MetaMask, you are ready to connect to the Portal with both web3 and SSI wallets.'
