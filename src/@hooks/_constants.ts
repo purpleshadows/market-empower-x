@@ -19,6 +19,12 @@ export const RETRY_DELAY_MS = 30_000
  */
 export const SESSION_POLL_INTERVAL_MS = 120_000
 
+/**
+ * Fired in the browser when a session verification request proves that a
+ * previously known local session no longer exists on the server.
+ */
+export const AUTH_SESSION_LOST_EVENT = 'auth:session-lost'
+
 export const DEFINITIVE_REFRESH_FAILURE_STATUSES = new Set([400, 401, 403])
 
 /**

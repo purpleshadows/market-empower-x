@@ -6,6 +6,7 @@ import { useSsiWallet } from '@context/SsiWallet'
 import { disconnectFromWallet } from '@utils/wallet/ssiWallet'
 import { clearFederatedStorage } from '@utils/logoutRouter'
 import {
+  AUTH_SESSION_LOST_EVENT,
   REFRESH_LEAD_MS,
   RETRY_DELAY_MS,
   SESSION_POLL_INTERVAL_MS,
@@ -140,6 +141,37 @@ export function useSessionPersistence() {
       return { status: 'retry', reason: 'session_check_transient_error' }
     }
   }, [])
+
+  useEffect(() => {
+    if (!authEnabled) return
+
+    let cancelled = false
+
+    const completeSessionLoss = async () => {
+      if (logoutHandledRef.current) return
+      logoutHandledRef.current = true
+      try {
+        await disconnectWallets()
+      } finally {
+        if (!cancelled) clearLocalSession()
+      }
+    }
+
+    const handleSessionLost = () => {
+      if (cancelled || logoutHandledRef.current) return
+
+      completeSessionLoss().catch((error) => {
+        console.error('Session loss cleanup failed', error)
+      })
+    }
+
+    window.addEventListener(AUTH_SESSION_LOST_EVENT, handleSessionLost)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener(AUTH_SESSION_LOST_EVENT, handleSessionLost)
+    }
+  }, [authEnabled, disconnectWallets, clearLocalSession])
 
   useEffect(() => {
     if (!authEnabled || !isAuthenticated || !isSessionVerified || !user) return

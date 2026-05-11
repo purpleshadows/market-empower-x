@@ -11,6 +11,7 @@ import {
   type PendingAuthMode
 } from '@utils/authFlow'
 import {
+  AUTH_SESSION_LOST_EVENT,
   OIDC_LOGOUT_PENDING_KEY,
   OIDC_LOGOUT_STATE_KEY,
   OIDC_LOGOUT_STARTED_AT_KEY
@@ -79,6 +80,20 @@ const clearStoredSessionData = () => {
   localStorage.removeItem('auth_meta')
 }
 
+const hasStoredSessionData = () => {
+  if (typeof window === 'undefined') return false
+  return Boolean(localStorage.getItem('oidc_session'))
+}
+
+const notifySessionLost = (reason: string) => {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(
+    new CustomEvent(AUTH_SESSION_LOST_EVENT, {
+      detail: { reason }
+    })
+  )
+}
+
 const persistVerifiedSession = (data: SessionResponse) => {
   if (!data.user) {
     clearStoredSessionData()
@@ -127,8 +142,10 @@ export async function verifyAuthSessionDetailed({
 }: {
   allowRefresh?: boolean
 } = {}): Promise<SessionVerificationResult> {
+  const hadStoredSession = hasStoredSessionData()
   const { response, data } = await fetchSessionResponse()
   const hasRefreshToken = Boolean(data.has_refresh_token)
+  let definitiveFailureReason = `session_${response.status}`
 
   if (response.ok) {
     return {
@@ -171,10 +188,14 @@ export async function verifyAuthSessionDetailed({
           `Session verification retry failed with status ${retryResponse.status}`
         )
       }
+
+      definitiveFailureReason = `session_retry_${retryResponse.status}`
     } else if (!isDefinitiveAuthFailure(refreshResponse.status)) {
       throw new Error(
         `Session refresh failed with status ${refreshResponse.status}`
       )
+    } else {
+      definitiveFailureReason = `refresh_${refreshResponse.status}`
     }
   }
 
@@ -185,6 +206,8 @@ export async function verifyAuthSessionDetailed({
   }
 
   clearStoredSessionData()
+  if (hadStoredSession) notifySessionLost(definitiveFailureReason)
+
   return {
     user: null,
     hasRefreshToken,
