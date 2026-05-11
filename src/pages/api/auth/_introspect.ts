@@ -1,21 +1,11 @@
 /* eslint-disable camelcase */
-import { decodeJwt } from 'jose'
 
-type CacheEntry = {
-  active: true
-  expiresAt: number
-}
-
-/**
- * Local cache for tokens Authentik has already marked as active.
- *
- * Do not cache inactive tokens. If Authentik says a token is revoked, every
- * lambda should be able to see that as soon as it checks the token.
- */
-const introspectCache = new Map<string, CacheEntry>()
-
-const CACHE_TTL_MS = 120 * 1000
 const INTROSPECT_TIMEOUT_MS = 5000
+
+export type AccessTokenIntrospectionResult =
+  | { status: 'active' }
+  | { status: 'inactive' }
+  | { status: 'unknown'; reason: string }
 
 function getIntrospectUrl(issuer: string): string {
   if (issuer.includes('/application/o/')) {
@@ -25,44 +15,19 @@ function getIntrospectUrl(issuer: string): string {
   return `${issuer.replace(/\/$/, '')}/introspect/`
 }
 
-function getTokenExpiryMs(token: string): number | undefined {
-  try {
-    const { exp } = decodeJwt(token)
-    return typeof exp === 'number' ? exp * 1000 : undefined
-  } catch {
-    return undefined
-  }
-}
-
-function purgeExpired(now: number): void {
-  for (const [key, entry] of introspectCache) {
-    if (entry.expiresAt < now) introspectCache.delete(key)
-  }
-}
-
 /**
  * Asks Authentik whether this access token is still active.
  *
- * Active tokens are cached for a short time, but never past the JWT exp. That
- * keeps repeated API calls from hitting Authentik while still respecting token
- * expiry.
- *
- * If Authentik is unavailable or returns an unexpected response, keep the
- * request moving and log the failure. The token expiry still limits how long
- * that can last.
+ * Do not cache positive introspection responses. Session polling uses this as
+ * the live source of truth for revocations, so `active: false` must be observed
+ * on the next `/api/auth/session` check.
  */
-export async function isAccessTokenActive(
+export async function introspectAccessToken(
   accessToken: string,
   issuer: string,
   clientId: string,
   clientSecret: string
-): Promise<boolean> {
-  const now = Date.now()
-  purgeExpired(now)
-
-  const cached = introspectCache.get(accessToken)
-  if (cached && cached.expiresAt > now) return true
-
+): Promise<AccessTokenIntrospectionResult> {
   const introspectUrl = getIntrospectUrl(issuer)
 
   try {
@@ -90,14 +55,12 @@ export async function isAccessTokenActive(
         response.status === 404
       ) {
         console.error(
-          `INTROSPECT_CONFIG_ERROR status=${response.status} — check OIDC_CLIENT_SECRET, NEXT_PUBLIC_OIDC_ISSUER, and that the OIDC client is permitted to call /introspect/. Failing open.`
+          `INTROSPECT_CONFIG_ERROR status=${response.status} — check OIDC_CLIENT_SECRET, NEXT_PUBLIC_OIDC_ISSUER, and that the OIDC client is permitted to call /introspect/.`
         )
       } else {
-        console.error(
-          `Introspection HTTP ${response.status}; failing open for this request.`
-        )
+        console.error(`Introspection HTTP ${response.status}.`)
       }
-      return true
+      return { status: 'unknown', reason: `http_${response.status}` }
     }
 
     const data = (await response.json().catch(() => null)) as {
@@ -105,29 +68,13 @@ export async function isAccessTokenActive(
     } | null
 
     if (!data || typeof data.active !== 'boolean') {
-      console.error(
-        'Introspection response missing or malformed; failing open for this request.'
-      )
-      return true
+      console.error('Introspection response missing or malformed.')
+      return { status: 'unknown', reason: 'malformed_response' }
     }
 
-    if (!data.active) {
-      introspectCache.delete(accessToken)
-      return false
-    }
-
-    const tokenExp = getTokenExpiryMs(accessToken)
-    const cacheExpiresAt = Math.min(
-      now + CACHE_TTL_MS,
-      tokenExp ?? Number.POSITIVE_INFINITY
-    )
-    introspectCache.set(accessToken, {
-      active: true,
-      expiresAt: cacheExpiresAt
-    })
-    return true
+    return data.active ? { status: 'active' } : { status: 'inactive' }
   } catch (error) {
-    console.error('Introspection call threw; failing open:', error)
-    return true
+    console.error('Introspection call threw:', error)
+    return { status: 'unknown', reason: 'request_failed' }
   }
 }

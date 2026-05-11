@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { jwtVerify, type JWTPayload } from 'jose'
 import { clearAuthCookies, DEFAULT_ACCESS_TOKEN_MAX_AGE } from './_cookies'
 import { getOidcMetadata } from './_oidc'
-import { isAccessTokenActive } from './_introspect'
+import { introspectAccessToken } from './_introspect'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
 
@@ -76,18 +76,27 @@ export default async function handler(
     })
 
     // JWT verification only proves the token was issued by us. Introspection
-    // catches revocations that happened after the token was created.
-    // If Authentik is unavailable, _introspect.ts keeps the request moving.
+    // is the live source of truth for revocations after token issuance.
     if (accessToken) {
-      const active = await isAccessTokenActive(
+      const introspection = await introspectAccessToken(
         accessToken,
         issuer,
         clientId,
         clientSecret
       )
-      if (!active) {
+      if (introspection.status === 'inactive') {
         clearAuthCookies(res)
-        return res.status(401).json({ error: 'Session terminated' })
+        return res.status(401).json({
+          error: 'Session terminated',
+          has_refresh_token: false
+        })
+      }
+
+      if (introspection.status === 'unknown') {
+        return res.status(503).json({
+          error: 'Session status unavailable',
+          has_refresh_token: Boolean(refreshToken)
+        })
       }
     }
 
