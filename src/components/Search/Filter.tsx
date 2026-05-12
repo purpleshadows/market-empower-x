@@ -101,7 +101,7 @@ export default function Filter({
 
   async function applyFilter(filter: string[], filterId: string) {
     if (!addFiltersToUrl) return
-    let urlLocation = await addExistingParamsToUrl(location, [filterId])
+    let urlLocation = await addExistingParamsToUrl(location, [filterId, 'page'])
     if (filter.length > 0 && urlLocation.indexOf(filterId) === -1) {
       const parsedFilter = filter.join(',')
       urlLocation = `${urlLocation}&${filterId}=${parsedFilter}`
@@ -145,10 +145,10 @@ export default function Filter({
       setIgnorePurgatory(true)
 
     if (!addFiltersToUrl) return
-    const urlLocation = await addExistingParamsToUrl(
-      location,
-      Object.keys(clearedFilters)
-    )
+    const urlLocation = await addExistingParamsToUrl(location, [
+      ...Object.keys(clearedFilters),
+      'page'
+    ])
     router.push(urlLocation)
   }
 

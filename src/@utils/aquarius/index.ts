@@ -272,6 +272,128 @@ interface AquariusQueryResult {
   aggregations?: unknown
 }
 
+interface MetadataCacheQuery {
+  cacheUri: string
+  query: SearchQuery
+}
+
+const serviceEndpointFilterPath =
+  'credentialSubject.services.serviceEndpoint.keyword'
+
+function getSearchFilters(query: SearchQuery): unknown[] {
+  return Array.isArray(query?.query?.bool?.filter)
+    ? query.query.bool.filter
+    : []
+}
+
+function getServiceEndpointFilterValue(filter: unknown): unknown {
+  const typedFilter = filter as {
+    terms?: Record<string, unknown>
+    term?: Record<string, unknown>
+  }
+
+  return (
+    typedFilter?.terms?.[serviceEndpointFilterPath] ||
+    typedFilter?.term?.[serviceEndpointFilterPath]
+  )
+}
+
+function getServiceEndpointFilterValues(query: SearchQuery): string[] {
+  const filters = getSearchFilters(query)
+  const values = filters
+    .map((filter) => {
+      const filterValue = getServiceEndpointFilterValue(filter)
+
+      return Array.isArray(filterValue) ? filterValue : [filterValue]
+    })
+    .reduce((previous, current) => previous.concat(current), [])
+    .filter((value): value is string => typeof value === 'string')
+
+  return [...new Set(values)]
+}
+
+function replaceServiceEndpointFilter(
+  query: SearchQuery,
+  serviceEndpoint: string
+): SearchQuery {
+  return {
+    ...query,
+    query: {
+      ...query.query,
+      bool: {
+        ...query.query.bool,
+        filter: getSearchFilters(query).map((filter) => {
+          if (getServiceEndpointFilterValue(filter)) {
+            return getFilterTerm(serviceEndpointFilterPath, [serviceEndpoint])
+          }
+
+          return filter
+        })
+      }
+    }
+  }
+}
+
+function getMergedQueryFetchSize(query: SearchQuery): number {
+  const parsedFrom = Number(query.from)
+  const parsedSize = Number(query.size)
+  const page = Number.isFinite(parsedFrom) && parsedFrom > 0 ? parsedFrom : 1
+  const size = Number.isFinite(parsedSize) && parsedSize > 0 ? parsedSize : 21
+
+  return page * size
+}
+
+function prepareMergedCacheQuery(query: SearchQuery): SearchQuery {
+  return {
+    ...query,
+    from: 1,
+    size: getMergedQueryFetchSize(query)
+  }
+}
+
+function buildMetadataCacheQueries(
+  cacheUris: string[],
+  query: SearchQuery
+): MetadataCacheQuery[] {
+  const serviceEndpoints = getServiceEndpointFilterValues(query).map(
+    (serviceEndpoint) => serviceEndpoint.replace(/\/+$/, '')
+  )
+
+  if (serviceEndpoints.length === 0) {
+    return cacheUris.map((cacheUri) => ({ cacheUri, query }))
+  }
+
+  const matchingCacheUris = cacheUris.filter((cacheUri) =>
+    serviceEndpoints.includes(cacheUri)
+  )
+
+  if (matchingCacheUris.length === 1) {
+    const [cacheUri] = matchingCacheUris
+
+    return [
+      {
+        cacheUri,
+        query: replaceServiceEndpointFilter(query, cacheUri)
+      }
+    ]
+  }
+
+  const cacheQueries = matchingCacheUris.map((cacheUri) => ({
+    cacheUri,
+    query: replaceServiceEndpointFilter(
+      prepareMergedCacheQuery(query),
+      cacheUri
+    )
+  }))
+
+  return cacheQueries.length > 0
+    ? cacheQueries
+    : cacheUris.map((cacheUri) => ({
+        cacheUri,
+        query: prepareMergedCacheQuery(query)
+      }))
+}
+
 function getQueryResult(
   responseData: unknown
 ): AquariusQueryResult | undefined {
@@ -335,6 +457,9 @@ function transformMergedQueryResults(
   const parsedSize = Number(query.size)
   const from = Number.isFinite(parsedFrom) && parsedFrom > 0 ? parsedFrom : 0
   const size = Number.isFinite(parsedSize) && parsedSize > 0 ? parsedSize : 21
+  const requestedPage = from > 0 ? from : 1
+  const pageStart = (requestedPage - 1) * size
+  const pageEnd = pageStart + size
   const uniqueResults = new Map<string, Asset>()
 
   queryResults.forEach((queryResult) => {
@@ -347,14 +472,22 @@ function transformMergedQueryResults(
     Array.from(uniqueResults.values()),
     query.sort
   )
-  const totalResults = queryResults.reduce(
+  const rawResultsCount = queryResults.reduce(
+    (sum, queryResult) => sum + (queryResult?.results?.length || 0),
+    0
+  )
+  const reportedTotalResults = queryResults.reduce(
     (sum, queryResult) =>
       sum + (queryResult?.totalResults || queryResult?.results?.length || 0),
     0
   )
+  const totalResults =
+    rawResultsCount > results.length && results.length < size
+      ? (requestedPage - 1) * size + results.length
+      : reportedTotalResults
 
   return {
-    results,
+    results: results.slice(pageStart, pageEnd),
     page: from + 1,
     totalPages: Math.ceil(totalResults / size),
     totalResults,
@@ -393,10 +526,11 @@ export async function queryMetadata(
 ): Promise<PagedAssets> {
   const cacheUris = getMetadataCacheUris()
   if (cacheUris.length === 0) return
+  const cacheQueries = buildMetadataCacheQueries(cacheUris, query)
 
   const queryResults = (
     await Promise.all(
-      cacheUris.map((cacheUri) =>
+      cacheQueries.map(({ cacheUri, query }) =>
         postMetadataQuery(cacheUri, query, cancelToken)
       )
     )
@@ -406,7 +540,7 @@ export async function queryMetadata(
 
   if (queryResults.length === 0) return
 
-  return cacheUris.length === 1
+  return cacheQueries.length === 1
     ? transformQueryResult(queryResults[0], query.from, query.size)
     : transformMergedQueryResults(queryResults, query)
 }
