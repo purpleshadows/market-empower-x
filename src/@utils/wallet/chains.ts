@@ -64,7 +64,8 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
   // Convert wagmiChains module to array of Chain objects, excluding any
   // that share an ID with a custom chain so the custom definition (with
   // its approved RPC) is used instead of the wagmi-bundled public RPC.
-  const baseChains: Chain[] = (Object.values(wagmiChains) as unknown[]).filter(
+  const wagmiChainValues: unknown[] = Object.values(wagmiChains)
+  const baseChains = wagmiChainValues.filter(
     (chain): chain is Chain => isChain(chain) && !customChainIds.has(chain.id)
   )
 
