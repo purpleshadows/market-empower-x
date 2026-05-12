@@ -25,9 +25,34 @@ function getRequiredStringClaim(payload: JWTPayload, claim: string): string {
   return value
 }
 
+function getAppOrigin(): string | null {
+  const configuredAppUrl = process.env.NEXT_PUBLIC_APP_URL
+  if (configuredAppUrl) {
+    try {
+      return new URL(configuredAppUrl).origin
+    } catch {}
+  }
+
+  const redirectUri = process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI
+  if (redirectUri) {
+    try {
+      return new URL(redirectUri).origin
+    } catch {}
+  }
+
+  return null
+}
+
+function buildLoginRedirect(params: Record<string, string>): string {
+  const qs = new URLSearchParams(params).toString()
+  const path = `/auth/login${qs ? `?${qs}` : ''}`
+  const appOrigin = getAppOrigin()
+  return appOrigin ? `${appOrigin}${path}` : path
+}
+
 function failRedirect(res: NextApiResponse, reason = 'auth_failed') {
   res.setHeader('Set-Cookie', buildClearTransientCookieStrings())
-  return res.redirect(302, `/auth/login?error=${reason}`)
+  return res.redirect(302, buildLoginRedirect({ error: reason }))
 }
 
 export default async function handler(
@@ -145,9 +170,13 @@ export default async function handler(
 
     // Always return to /auth/login so the onboarding flow (wallet + SSI) can run.
     // The login page then redirects to callbackUrl when onboarding is complete.
-    const qs = new URLSearchParams({ hydrated: '1' })
-    if (callbackUrl) qs.set('callbackUrl', callbackUrl)
-    return res.redirect(302, `/auth/login?${qs.toString()}`)
+    return res.redirect(
+      302,
+      buildLoginRedirect({
+        hydrated: '1',
+        ...(callbackUrl ? { callbackUrl } : {})
+      })
+    )
   } catch (err) {
     console.error('OIDC callback error:', err)
     return failRedirect(res)
