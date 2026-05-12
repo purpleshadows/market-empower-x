@@ -43,6 +43,15 @@ const ethereumHoodi: Chain = {
 const customChains: Chain[] = [opSepolia, ethereumHoodi]
 const customChainIds = new Set(customChains.map((chain) => chain.id))
 
+function isChain(value: unknown): value is Chain {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'id' in value &&
+    typeof value.id === 'number'
+  )
+}
+
 /**
  * Returns wagmi-compatible chains filtered by allowed chain IDs.
  *
@@ -55,8 +64,8 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
   // Convert wagmiChains module to array of Chain objects, excluding any
   // that share an ID with a custom chain so the custom definition (with
   // its approved RPC) is used instead of the wagmi-bundled public RPC.
-  const baseChains: Chain[] = Object.values(wagmiChains).filter(
-    (chain) => !customChainIds.has(chain.id)
+  const baseChains = Object.values(wagmiChains).filter(
+    (chain): chain is Chain => isChain(chain) && !customChainIds.has(chain.id)
   )
 
   const allChains = [...baseChains, ...customChains]
