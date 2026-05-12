@@ -28,11 +28,9 @@ export const AUTH_SESSION_LOST_EVENT = 'auth:session-lost'
 export const DEFINITIVE_REFRESH_FAILURE_STATUSES = new Set([400, 401, 403])
 
 /**
- * LocalStorage keys for OIDC logout state management.
+ * SessionStorage key for OIDC logout state management.
  */
 export const OIDC_LOGOUT_PENDING_KEY = 'oidc_logout_pending'
-export const OIDC_LOGOUT_STATE_KEY = 'oidc_logout_state'
-export const OIDC_LOGOUT_STARTED_AT_KEY = 'oidc_logout_started_at'
 
 /**
  * Enterprise fee collector contract ABI for token validation.

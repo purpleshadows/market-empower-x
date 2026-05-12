@@ -14,8 +14,6 @@ export interface AuthPanelContent {
 }
 
 export const OIDC_LOGOUT_PENDING_KEY = 'oidc_logout_pending'
-export const OIDC_LOGOUT_STATE_KEY = 'oidc_logout_state'
-export const OIDC_LOGOUT_STARTED_AT_KEY = 'oidc_logout_started_at'
 export const OIDC_LOGOUT_RETURN_FALLBACK_MS = 1500
 
 export const authTabLabels: Record<AuthTab, string> = {

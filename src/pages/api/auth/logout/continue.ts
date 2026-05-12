@@ -58,16 +58,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const callbackUrl = `${getRequestOrigin(req)}/auth/callback/logout`
-  const vm2Params = new URLSearchParams({ client_id: clientId })
+  const oidcParams = new URLSearchParams({ client_id: clientId })
   const idTokenHint = req.cookies.logout_id_token || req.cookies.id_token
 
-  if (idTokenHint) vm2Params.set('id_token_hint', idTokenHint)
-  vm2Params.set('post_logout_redirect_uri', callbackUrl)
-  vm2Params.set('state', 'logout')
+  if (idTokenHint) oidcParams.set('id_token_hint', idTokenHint)
+  oidcParams.set('post_logout_redirect_uri', callbackUrl)
+  oidcParams.set('state', 'logout')
 
   clearLogoutCookies(res)
   return res.redirect(
     302,
-    `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
+    `${getEndSessionUrl(issuer)}?${oidcParams.toString()}`
   )
 }

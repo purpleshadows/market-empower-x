@@ -7,7 +7,6 @@ export default function LogoutCallback() {
 
   useEffect(() => {
     clearFederatedStorage()
-    sessionStorage.removeItem('logout_flow')
     localStorage.removeItem('oidc_session')
     localStorage.removeItem('token_expires_at')
     storeLogout()

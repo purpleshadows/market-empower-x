@@ -64,11 +64,11 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
   // Convert wagmiChains module to array of Chain objects, excluding any
   // that share an ID with a custom chain so the custom definition (with
   // its approved RPC) is used instead of the wagmi-bundled public RPC.
-  const baseChains = Object.values(wagmiChains).filter(
+  const baseChains: Chain[] = (Object.values(wagmiChains) as unknown[]).filter(
     (chain): chain is Chain => isChain(chain) && !customChainIds.has(chain.id)
   )
 
-  const allChains = [...baseChains, ...customChains]
+  const allChains: Chain[] = [...baseChains, ...customChains]
 
   const rpcMap = getNodeUriMap()
 
@@ -85,7 +85,7 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
   })
 
   // Apply env RPC overrides to chains that have one configured.
-  const mappedChains = allowedChains.map((chain) => {
+  const mappedChains: Chain[] = allowedChains.map((chain) => {
     const mappedRpc = rpcMap[chain.id.toString()]
     if (!mappedRpc) return chain
     return {

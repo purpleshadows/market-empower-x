@@ -63,7 +63,6 @@ export default async function handler(
     oidc_pkce_verifier: codeVerifier,
     oidc_state: state,
     oidc_nonce: nonce,
-    oidc_auth_mode: 'signup',
     ...(callbackUrl ? { oidc_callback_url: callbackUrl } : {})
   })
 

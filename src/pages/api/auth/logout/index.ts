@@ -17,13 +17,6 @@ function getRequestOrigin(req: NextApiRequest): string {
   return `${protocol}://${host}`
 }
 
-function isAllowedOrigin(req: NextApiRequest) {
-  const { origin } = req.headers
-  if (!origin) return true
-
-  return origin === getRequestOrigin(req)
-}
-
 function getEndSessionUrl(issuer: string) {
   return `${issuer.replace(/\/$/, '')}/end-session/`
 }
@@ -123,16 +116,18 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
       : Promise.resolve()
   ])
 
-  // Use /auth/callback/logout as the VM2 end-session return URL — this page is
-  // registered in the OIDC provider and handles the final redirect to market login.
+  // Use /auth/callback/logout as the end-session return URL — this page is
+  // registered in the OIDC provider and continues the final logout redirect.
   const callbackUrl = `${getRequestOrigin(req)}/auth/callback/logout`
 
-  const vm2Params = new URLSearchParams({ client_id: clientId })
+  const oidcParams = new URLSearchParams({ client_id: clientId })
   if (id_token || logout_id_token)
-    vm2Params.set('id_token_hint', id_token || logout_id_token)
-  vm2Params.set('post_logout_redirect_uri', callbackUrl)
-  vm2Params.set('state', 'logout')
-  const vm2EndSessionUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
+    oidcParams.set('id_token_hint', id_token || logout_id_token)
+  oidcParams.set('post_logout_redirect_uri', callbackUrl)
+  oidcParams.set('state', 'logout')
+  const oidcEndSessionUrl = `${getEndSessionUrl(
+    issuer
+  )}?${oidcParams.toString()}`
 
   const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL
   const isFederatedLogin = Boolean(
@@ -152,75 +147,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   }
 
   clearAuthCookies(res)
-  return res.redirect(302, vm2EndSessionUrl)
-}
-
-async function handlePost(req: NextApiRequest, res: NextApiResponse) {
-  if (!isAllowedOrigin(req)) {
-    return res.status(403).json({ error: 'Forbidden' })
-  }
-
-  const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
-  const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
-  const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
-
-  if (!clientId || !clientSecret || !issuer) {
-    console.error('Missing OIDC configuration for logout')
-    clearAuthCookies(res)
-    return res.status(500).json({ error: 'Server configuration error' })
-  }
-
-  const { access_token, refresh_token, id_token, login_source } = req.cookies
-  const { state, post_logout_redirect_uri, revoke_only } = req.body
-
-  const revokeUrl = getRevokeUrl(issuer)
-
-  await Promise.all([
-    access_token
-      ? revokeToken(
-          revokeUrl,
-          clientId,
-          clientSecret,
-          access_token,
-          'access_token'
-        )
-      : Promise.resolve(),
-    refresh_token
-      ? revokeToken(
-          revokeUrl,
-          clientId,
-          clientSecret,
-          refresh_token,
-          'refresh_token'
-        )
-      : Promise.resolve()
-  ])
-
-  const vm2Params = new URLSearchParams({ client_id: clientId })
-  if (id_token) vm2Params.set('id_token_hint', id_token)
-  if (post_logout_redirect_uri)
-    vm2Params.set('post_logout_redirect_uri', post_logout_redirect_uri)
-  if (state) vm2Params.set('state', state)
-  const vm2LogoutUrl = `${getEndSessionUrl(issuer)}?${vm2Params.toString()}`
-
-  const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL
-  const isFederatedLogin = Boolean(
-    login_source && federationEndSessionUrl && isFederatedSource(login_source)
-  )
-
-  const logoutUrl =
-    isFederatedLogin && post_logout_redirect_uri
-      ? `${federationEndSessionUrl}?${new URLSearchParams({
-          post_logout_redirect_uri: vm2LogoutUrl
-        }).toString()}`
-      : vm2LogoutUrl
-
-  if (revoke_only) {
-    return res.status(200).json({ logoutUrl })
-  }
-
-  clearAuthCookies(res)
-  return res.status(200).json({ logoutUrl })
+  return res.redirect(302, oidcEndSessionUrl)
 }
 
 export default async function handler(
@@ -232,8 +159,7 @@ export default async function handler(
   }
 
   if (req.method === 'GET') return handleGet(req, res)
-  if (req.method === 'POST') return handlePost(req, res)
 
-  res.setHeader('Allow', ['GET', 'POST'])
+  res.setHeader('Allow', ['GET'])
   return res.status(405).json({ error: 'Method not allowed' })
 }

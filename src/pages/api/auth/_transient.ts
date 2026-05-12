@@ -8,8 +8,7 @@ const TRANSIENT_NAMES = [
   'oidc_pkce_verifier',
   'oidc_state',
   'oidc_nonce',
-  'oidc_callback_url',
-  'oidc_auth_mode'
+  'oidc_callback_url'
 ] as const
 
 type TransientName = (typeof TRANSIENT_NAMES)[number]
@@ -41,10 +40,6 @@ export function setTransientCookies(
 ) {
   const strings = buildTransientCookieStrings(values)
   if (strings.length > 0) res.setHeader('Set-Cookie', strings)
-}
-
-export function clearTransientCookies(res: NextApiResponse) {
-  res.setHeader('Set-Cookie', buildClearTransientCookieStrings())
 }
 
 export function generateCodeVerifier(): string {

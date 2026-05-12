@@ -1,7 +1,7 @@
 import { createRemoteJWKSet } from 'jose'
 import { OIDC_DISCOVERY_PATH, OIDC_REQUEST_TIMEOUT_MS } from './_constants'
 
-export const oidcMetadataCache = new Map<
+const oidcMetadataCache = new Map<
   string,
   {
     issuer: string

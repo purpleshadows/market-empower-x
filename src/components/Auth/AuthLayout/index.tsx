@@ -38,7 +38,7 @@ export default function AuthLayout({
     setActiveTab(initialTab)
   }, [initialTab])
 
-  // ?loggedout=1 signals a clean logout completed via /api/auth/logout/callback
+  // ?loggedout=1 signals a clean logout completed via /api/auth/logout/continue
   useEffect(() => {
     if (!router.isReady || router.query.loggedout !== '1') return
     sessionStorage.removeItem(OIDC_LOGOUT_PENDING_KEY)
