@@ -21,15 +21,22 @@ type TokenEndpointResponse = TokenEndpointError & {
   expires_in?: number
 }
 
-function isAllowedOrigin(origin: string | undefined) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (!appUrl) return true
+function getHeaderValue(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] || '' : value || ''
+}
 
-  try {
-    return origin === new URL(appUrl).origin
-  } catch {
-    return origin === appUrl.replace(/\/$/, '')
-  }
+function getRequestOrigin(req: NextApiRequest): string {
+  const host = getHeaderValue(req.headers.host)
+  const forwardedProto = getHeaderValue(req.headers['x-forwarded-proto'])
+  const protocol = forwardedProto.split(',')[0]?.trim() || 'https'
+
+  return `${protocol}://${host}`
+}
+
+function isAllowedOrigin(req: NextApiRequest) {
+  const origin = getHeaderValue(req.headers.origin)
+  if (!origin) return true
+  return origin === getRequestOrigin(req)
 }
 
 function getErrorCode(data: TokenEndpointError): string | undefined {
@@ -74,7 +81,7 @@ export default async function handler(
       })
     }
 
-    if (!isAllowedOrigin(req.headers.origin)) {
+    if (!isAllowedOrigin(req)) {
       return res.status(403).json({
         error: 'Forbidden'
       })

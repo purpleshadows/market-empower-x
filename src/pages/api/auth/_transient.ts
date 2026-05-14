@@ -56,12 +56,5 @@ export function generateRandomString(): string {
 
 export function isSafeCallbackUrl(url: string): boolean {
   if (!url) return false
-  if (url.startsWith('/') && !url.startsWith('//')) return true
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-  if (!appUrl) return false
-  try {
-    return new URL(url).origin === new URL(appUrl).origin
-  } catch {
-    return false
-  }
+  return url.startsWith('/') && !url.startsWith('//')
 }
