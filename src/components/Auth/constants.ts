@@ -45,8 +45,7 @@ export const authLoginCopy = {
   title: 'Welcome back',
   subtitle: "Sign in to your organization's data marketplace",
   ssoLabel: 'Log in to OE Marketplace',
-  ssoLoadingLabel: 'Redirecting to login...',
-  demoNotice: 'Demo Mode: No real authentication required'
+  ssoLoadingLabel: 'Redirecting to login...'
 }
 
 export const authSignupCopy = {
