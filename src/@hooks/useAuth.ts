@@ -234,6 +234,8 @@ export const useAuth = () => {
   } = useAuthStore()
   const authEnabled = authConfig.enabled
   const router = useRouter()
+  const routerRef = React.useRef(router)
+  routerRef.current = router
 
   const applyVerificationResult = React.useCallback(
     (result: SessionVerificationResult | null) => {
@@ -330,9 +332,9 @@ export const useAuth = () => {
         return
       }
 
-      router.replace(redirectTo)
+      routerRef.current.replace(redirectTo)
     },
-    [router, setLogoutPending, storeLogout]
+    [setLogoutPending, storeLogout]
   )
 
   const markLogoutPending = React.useCallback(() => {
