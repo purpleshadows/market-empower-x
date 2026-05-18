@@ -35,7 +35,7 @@ function serializeSessionCookie(
 ): string {
   return `${name}=${encodeURIComponent(
     value
-  )}; Max-Age=${maxAge}; Secure; SameSite=Lax; Path=/`
+  )}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax; Path=/`
 }
 
 export function buildAuthCookieStrings(

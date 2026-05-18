@@ -71,13 +71,29 @@ export default async function handler(
 
   try {
     const metadata = await getOidcMetadata(issuer)
+    // Tolerate an expired id_token: access-token introspection below is the
+    // live source of truth for session validity. Signature/issuer/audience
+    // failures still bubble to the outer catch and 401 the session.
     const { payload } = await jwtVerify(idToken, metadata.jwks, {
       issuer: metadata.issuer,
       audience: clientId
+    }).catch((error) => {
+      const { code, payload: expiredPayload } = error as {
+        code?: string
+        payload?: JWTPayload
+      }
+      if (code !== 'ERR_JWT_EXPIRED' || !expiredPayload) throw error
+
+      console.warn(
+        'Session id_token expired; falling back to introspection. ' +
+          'If frequent, check that the IdP returns id_token on the refresh_token grant.'
+      )
+      return { payload: expiredPayload }
     })
 
     // JWT verification only proves the token was issued by us. Introspection
     // is the live source of truth for revocations after token issuance.
+    let accessTokenExp: number | undefined
     if (accessToken) {
       const introspection = await introspectAccessToken(
         accessToken,
@@ -98,10 +114,18 @@ export default async function handler(
           has_refresh_token: Boolean(refreshToken)
         })
       }
+
+      accessTokenExp = introspection.exp
     }
 
-    const expiresIn = payload.exp
-      ? Math.max(0, payload.exp - Math.floor(Date.now() / 1000))
+    // Session lifetime tracks the access token (what the SPA actually needs to
+    // call protected APIs), not the id_token. The id_token is only an
+    // authentication assertion at login time.
+    const now = Math.floor(Date.now() / 1000)
+    const expiresIn = accessTokenExp
+      ? Math.max(0, accessTokenExp - now)
+      : payload.exp
+      ? Math.max(0, payload.exp - now)
       : DEFAULT_ACCESS_TOKEN_MAX_AGE
 
     const authMeta = {

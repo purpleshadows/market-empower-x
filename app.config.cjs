@@ -225,10 +225,6 @@ module.exports = {
     getEnv('NEXT_PUBLIC_OIDC_CLIENT_ID') ||
     process.env.NEXT_PUBLIC_OIDC_CLIENT_ID ||
     null,
-  oidcClientSecret:
-    getEnv('NEXT_PUBLIC_OIDC_CLIENT_SECRET') ||
-    process.env.NEXT_PUBLIC_OIDC_CLIENT_SECRET ||
-    null,
   oidcRedirectUri:
     getEnv('NEXT_PUBLIC_OIDC_REDIRECT_URI') ||
     process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ||

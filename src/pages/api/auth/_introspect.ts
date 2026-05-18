@@ -3,7 +3,7 @@
 const INTROSPECT_TIMEOUT_MS = 5000
 
 export type AccessTokenIntrospectionResult =
-  | { status: 'active' }
+  | { status: 'active'; exp?: number }
   | { status: 'inactive' }
   | { status: 'unknown'; reason: string }
 
@@ -65,6 +65,7 @@ export async function introspectAccessToken(
 
     const data = (await response.json().catch(() => null)) as {
       active?: unknown
+      exp?: unknown
     } | null
 
     if (!data || typeof data.active !== 'boolean') {
@@ -72,7 +73,11 @@ export async function introspectAccessToken(
       return { status: 'unknown', reason: 'malformed_response' }
     }
 
-    return data.active ? { status: 'active' } : { status: 'inactive' }
+    if (!data.active) return { status: 'inactive' }
+
+    const exp =
+      typeof data.exp === 'number' && data.exp > 0 ? data.exp : undefined
+    return { status: 'active', exp }
   } catch (error) {
     console.error('Introspection call threw:', error)
     return { status: 'unknown', reason: 'request_failed' }

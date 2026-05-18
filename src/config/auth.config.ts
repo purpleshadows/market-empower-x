@@ -4,7 +4,6 @@ import {
   authProvider,
   oidcIssuer,
   oidcClientId,
-  oidcClientSecret,
   oidcRedirectUri,
   oidcSignupFlow
 } from 'app.config.cjs'
@@ -15,7 +14,6 @@ export interface AuthConfig {
   oidc: {
     issuer: string
     clientId: string
-    clientSecret: string
     redirectUri: string
     signupFlow: string
     scope: string
@@ -25,13 +23,6 @@ export interface AuthConfig {
 }
 
 const isServer = () => typeof window === 'undefined'
-
-export const getServerSideClientSecret = (): string => {
-  if (!isServer()) {
-    return ''
-  }
-  return oidcClientSecret || process.env.OIDC_CLIENT_SECRET || ''
-}
 
 export const authConfig = ((): AuthConfig => {
   const runtimeConfig = getRuntimeConfig()
@@ -66,7 +57,6 @@ export const authConfig = ((): AuthConfig => {
     oidc: {
       issuer,
       clientId,
-      clientSecret: getServerSideClientSecret(),
       redirectUri,
       signupFlow,
       scope:
@@ -76,10 +66,3 @@ export const authConfig = ((): AuthConfig => {
     }
   }
 })()
-
-export const getServerSideOidcConfig = () => {
-  return {
-    ...authConfig.oidc,
-    clientSecret: getServerSideClientSecret()
-  }
-}
