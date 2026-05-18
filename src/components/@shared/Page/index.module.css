@@ -1,0 +1,3 @@
+.contentContainer {
+  padding-bottom: calc(var(--spacer) * 2);
+}

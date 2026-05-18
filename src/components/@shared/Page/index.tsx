@@ -4,6 +4,7 @@ import Seo from './Seo'
 import Container from '@shared/atoms/Container'
 import { useUserPreferences } from '@context/UserPreferences'
 import ExternalContentWarning from '../ExternalContentWarning'
+import styles from './index.module.css'
 
 interface PageProps {
   children: ReactNode
@@ -56,7 +57,11 @@ export default function Page({
         className={isHome || fullWidth ? 'full-width' : ''}
         style={mainStyle}
       >
-        {isHome || fullWidth ? children : <Container>{children}</Container>}
+        {isHome || fullWidth ? (
+          children
+        ) : (
+          <Container className={styles.contentContainer}>{children}</Container>
+        )}
       </main>
     </>
   )
