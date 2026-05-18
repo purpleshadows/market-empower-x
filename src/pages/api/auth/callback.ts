@@ -112,6 +112,7 @@ export default async function handler(
       issuer: metadata.issuer,
       audience: clientId
     })
+    console.log('Full ID token payload:', JSON.stringify(payload, null, 2))
 
     if (payload.nonce !== expectedNonce) return failRedirect(res)
 
