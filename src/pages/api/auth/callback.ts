@@ -6,6 +6,7 @@ import { buildClearTransientCookieStrings } from './_transient'
 import { getOidcMetadata } from './_oidc'
 import { OIDC_REQUEST_TIMEOUT_MS } from './_constants'
 import { introspectAccessToken } from './_introspect'
+import { getLoginSource } from './_claims'
 import {
   authEnabled,
   oidcClientId,
@@ -112,7 +113,6 @@ export default async function handler(
       issuer: metadata.issuer,
       audience: clientId
     })
-    console.log('Full ID token payload:', JSON.stringify(payload, null, 2))
 
     if (payload.nonce !== expectedNonce) return failRedirect(res)
 
@@ -144,11 +144,7 @@ export default async function handler(
       )
     }
 
-    const upstreamIdp =
-      (typeof payload.upstream_idp === 'string' && payload.upstream_idp) ||
-      (typeof payload.last_idp === 'string' && payload.last_idp) ||
-      (typeof payload.idp === 'string' && payload.idp) ||
-      undefined
+    const upstreamIdp = getLoginSource(payload)
 
     res.setHeader('Set-Cookie', [
       ...buildAuthCookieStrings(data, upstreamIdp),

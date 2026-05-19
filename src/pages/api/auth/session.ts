@@ -4,17 +4,10 @@ import { jwtVerify, type JWTPayload } from 'jose'
 import { DEFAULT_ACCESS_TOKEN_MAX_AGE } from './_cookies'
 import { getOidcMetadata } from './_oidc'
 import { introspectAccessToken } from './_introspect'
+import { getLoginSource, getOptionalStringClaim } from './_claims'
 import { authEnabled, oidcClientId, oidcIssuer } from 'app.config.cjs'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
-
-function getOptionalStringClaim(
-  payload: JWTPayload,
-  claim: string
-): string | undefined {
-  const value = payload[claim]
-  return typeof value === 'string' ? value : undefined
-}
 
 export default async function handler(
   req: NextApiRequest,
@@ -130,16 +123,7 @@ export default async function handler(
 
     const authMeta = {
       main_oidc: getOptionalStringClaim(payload, 'iss') || issuer,
-      upstream_idp:
-        getOptionalStringClaim(payload, 'upstream_idp') ||
-        getOptionalStringClaim(payload, 'last_idp') ||
-        getOptionalStringClaim(payload, 'idp') ||
-        getOptionalStringClaim(payload, 'source') ||
-        getOptionalStringClaim(payload, 'provider') ||
-        (Array.isArray(payload.amr) && typeof payload.amr[0] === 'string'
-          ? payload.amr[0]
-          : undefined) ||
-        'unknown'
+      upstream_idp: getLoginSource(payload) || 'unknown'
     }
 
     return res.status(200).json({

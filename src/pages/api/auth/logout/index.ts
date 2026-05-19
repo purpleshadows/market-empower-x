@@ -1,7 +1,9 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { decodeJwt } from 'jose'
 import { buildClearAuthCookieStrings, clearAuthCookies } from '../_cookies'
 import { isFederatedSource } from '../_federated'
+import { getLoginSource } from '../_claims'
 import { authEnabled, oidcClientId, oidcIssuer } from 'app.config.cjs'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
@@ -21,6 +23,16 @@ function getRequestOrigin(req: NextApiRequest): string {
 
 function getEndSessionUrl(issuer: string) {
   return `${issuer.replace(/\/$/, '')}/end-session/`
+}
+
+function getLoginSourceFromIdToken(idToken?: string): string | undefined {
+  if (!idToken) return undefined
+
+  try {
+    return getLoginSource(decodeJwt(idToken))
+  } catch {
+    return undefined
+  }
 }
 
 function serializeFederatedLogoutContinueCookie(value: string, maxAge: number) {
@@ -109,8 +121,12 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse) {
   )}?${oidcParams.toString()}`
 
   const federationEndSessionUrl = process.env.OIDC_FEDERATION_END_SESSION_URL
+  const detectedLoginSource =
+    login_source || getLoginSourceFromIdToken(id_token)
   const isFederatedLogin = Boolean(
-    login_source && federationEndSessionUrl && isFederatedSource(login_source)
+    detectedLoginSource &&
+      federationEndSessionUrl &&
+      isFederatedSource(detectedLoginSource)
   )
 
   if (isFederatedLogin) {
