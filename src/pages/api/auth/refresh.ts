@@ -1,7 +1,70 @@
 /* eslint-disable camelcase */
 import type { NextApiRequest, NextApiResponse } from 'next'
+import {
+  clearAuthCookies,
+  getAccessTokenMaxAge,
+  setAuthCookies
+} from './_cookies'
+import { OIDC_REQUEST_TIMEOUT_MS } from './_constants'
+import {
+  authEnabled,
+  oidcClientId,
+  oidcIssuer,
+  oidcTokenUrl
+} from 'app.config.cjs'
 
 const OIDC_CLIENT_SECRET_ENV_KEY = 'OIDC_CLIENT_SECRET'
+
+type TokenEndpointError = {
+  error?: unknown
+  error_description?: unknown
+}
+
+type TokenEndpointResponse = TokenEndpointError & {
+  access_token?: string
+  refresh_token?: string
+  id_token?: string
+  expires_in?: number
+}
+
+function getHeaderValue(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] || '' : value || ''
+}
+
+function getRequestOrigin(req: NextApiRequest): string {
+  const host = getHeaderValue(req.headers.host)
+  const forwardedProto = getHeaderValue(req.headers['x-forwarded-proto'])
+  const protocol = forwardedProto.split(',')[0]?.trim() || 'https'
+
+  return `${protocol}://${host}`
+}
+
+function isAllowedOrigin(req: NextApiRequest) {
+  const origin = getHeaderValue(req.headers.origin)
+  if (!origin) return true
+  return origin === getRequestOrigin(req)
+}
+
+function getErrorCode(data: TokenEndpointError): string | undefined {
+  return typeof data.error === 'string' ? data.error : undefined
+}
+
+function getErrorDescription(data: TokenEndpointError): string | undefined {
+  return typeof data.error_description === 'string'
+    ? data.error_description
+    : undefined
+}
+
+function isDefinitiveRefreshFailure(
+  status: number,
+  data: TokenEndpointError
+): boolean {
+  return (
+    status === 401 ||
+    status === 403 ||
+    (status === 400 && getErrorCode(data) === 'invalid_grant')
+  )
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -15,25 +78,40 @@ export default async function handler(
     })
   }
 
+  res.setHeader('Cache-Control', 'no-store')
+
   try {
-    if (process.env.NEXT_PUBLIC_AUTH_ENABLED !== 'true') {
+    if (authEnabled !== 'true') {
       return res.status(404).json({
         error: 'Not found'
       })
     }
 
-    const { refresh_token } = req.body
+    if (!isAllowedOrigin(req)) {
+      return res.status(403).json({
+        error: 'Forbidden'
+      })
+    }
 
+    const { access_token, refresh_token, id_token } = req.cookies
     if (!refresh_token) {
-      return res.status(400).json({
+      if (access_token || id_token) {
+        return res.status(409).json({
+          error: 'refresh_token_unavailable',
+          message: 'Session cannot be refreshed because no refresh token exists'
+        })
+      }
+
+      clearAuthCookies(res)
+      return res.status(401).json({
         error: 'Refresh token required'
       })
     }
 
-    const clientId = process.env.NEXT_PUBLIC_OIDC_CLIENT_ID
+    const clientId = oidcClientId
     const clientSecret = process.env[OIDC_CLIENT_SECRET_ENV_KEY]
-    let tokenUrl = process.env.NEXT_PUBLIC_OIDC_TOKEN_URL
-    const issuer = process.env.NEXT_PUBLIC_OIDC_ISSUER
+    let tokenUrl = oidcTokenUrl
+    const issuer = oidcIssuer
 
     if (!tokenUrl && issuer) {
       if (issuer.includes('/application/o/')) {
@@ -63,21 +141,46 @@ export default async function handler(
         client_secret: clientSecret,
         refresh_token
       }),
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(OIDC_REQUEST_TIMEOUT_MS)
     })
 
-    const data = await response.json()
+    const data = (await response
+      .json()
+      .catch(() => ({}))) as TokenEndpointResponse
 
     if (!response.ok) {
       console.error('Token refresh error:', {
         status: response.status,
-        error: data.error,
-        description: data.error_description
+        error: getErrorCode(data),
+        description: getErrorDescription(data)
       })
-      return res.status(response.status).json(data)
+
+      if (isDefinitiveRefreshFailure(response.status, data)) {
+        clearAuthCookies(res)
+        return res.status(401).json({
+          error: getErrorCode(data) || 'invalid_grant',
+          message:
+            getErrorDescription(data) ||
+            'Refresh token is invalid or no longer accepted'
+        })
+      }
+
+      return res.status(response.status).json({
+        error: getErrorCode(data) || 'refresh_unavailable',
+        message:
+          getErrorDescription(data) ||
+          'Authentication server is temporarily unavailable'
+      })
     }
 
-    return res.status(200).json(data)
+    setAuthCookies(res, {
+      ...data,
+      id_token: data.id_token || id_token
+    })
+
+    return res.status(200).json({
+      expires_in: getAccessTokenMaxAge(data)
+    })
   } catch (error) {
     console.error('Refresh error:', error)
 

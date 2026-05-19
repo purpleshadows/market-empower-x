@@ -1,7 +1,20 @@
+import { getRuntimeConfig } from '@utils/runtimeConfig'
+
+const DEFAULT_MAX_LICENSE_FILE_SIZE_KB = 700
+
+export const getMaxLicenseFileSizeKB = (): number => {
+  const rawValue = getRuntimeConfig().NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB
+  const parsedValue = Number.parseInt(rawValue || '', 10)
+
+  return Number.isFinite(parsedValue) && parsedValue > 0
+    ? parsedValue
+    : DEFAULT_MAX_LICENSE_FILE_SIZE_KB
+}
+
 export const FILE_UPLOAD_CONFIG = {
-  MAX_LICENSE_FILE_SIZE_KB: process.env.NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB
-    ? parseInt(process.env.NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB, 10)
-    : 700,
+  get MAX_LICENSE_FILE_SIZE_KB() {
+    return getMaxLicenseFileSizeKB()
+  },
 
   ALLOWED_FILE_TYPES: [
     '.pdf',
@@ -43,11 +56,11 @@ export const FILE_UPLOAD_CONFIG = {
 } as const
 
 export const getMaxFileSizeBytes = (): number => {
-  return FILE_UPLOAD_CONFIG.MAX_LICENSE_FILE_SIZE_KB * 1024
+  return getMaxLicenseFileSizeKB() * 1024
 }
 
 export const getFormattedMaxFileSize = (): string => {
-  const sizeKB = FILE_UPLOAD_CONFIG.MAX_LICENSE_FILE_SIZE_KB
+  const sizeKB = getMaxLicenseFileSizeKB()
   if (sizeKB >= 1024) {
     return `${(sizeKB / 1024).toFixed(1)} MB`
   }

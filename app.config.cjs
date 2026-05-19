@@ -208,5 +208,38 @@ module.exports = {
   cookiePolicyUrl:
     getEnv('NEXT_PUBLIC_CP_URL') || process.env.NEXT_PUBLIC_CP_URL || '',
   dpuaUrl:
-    getEnv('NEXT_PUBLIC_DPUA_URL') || process.env.NEXT_PUBLIC_DPUA_URL || ''
+    getEnv('NEXT_PUBLIC_DPUA_URL') || process.env.NEXT_PUBLIC_DPUA_URL || '',
+  authEnabled:
+    getEnv('NEXT_PUBLIC_AUTH_ENABLED') ||
+    process.env.NEXT_PUBLIC_AUTH_ENABLED ||
+    'false',
+  authProvider:
+    getEnv('NEXT_PUBLIC_AUTH_PROVIDER') ||
+    process.env.NEXT_PUBLIC_AUTH_PROVIDER ||
+    null,
+  oidcIssuer:
+    getEnv('NEXT_PUBLIC_OIDC_ISSUER') ||
+    process.env.NEXT_PUBLIC_OIDC_ISSUER ||
+    null,
+  oidcClientId:
+    getEnv('NEXT_PUBLIC_OIDC_CLIENT_ID') ||
+    process.env.NEXT_PUBLIC_OIDC_CLIENT_ID ||
+    null,
+  oidcRedirectUri:
+    getEnv('NEXT_PUBLIC_OIDC_REDIRECT_URI') ||
+    process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ||
+    null,
+  oidcSignupFlow:
+    getEnv('NEXT_PUBLIC_OIDC_SIGNUP_FLOW') ||
+    process.env.NEXT_PUBLIC_OIDC_SIGNUP_FLOW ||
+    null,
+  oidcTokenUrl:
+    getEnv('NEXT_PUBLIC_OIDC_TOKEN_URL') ||
+    process.env.NEXT_PUBLIC_OIDC_TOKEN_URL ||
+    null,
+  federatedOidcIssuers: parseEnvArray(
+    getEnv('NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS') ||
+      process.env.NEXT_PUBLIC_FEDERATED_OIDC_ISSUERS,
+    []
+  )
 }

@@ -47,11 +47,6 @@ export default function LoginForm() {
           </button>
         )}
       </div>
-
-      <div className={styles.demoNotice}>
-        <span className={styles.demoDot}></span>
-        <span>{authLoginCopy.demoNotice}</span>
-      </div>
     </div>
   )
 }

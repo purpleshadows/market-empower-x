@@ -1,12 +1,11 @@
-import type { GetServerSideProps } from 'next'
-import { ReactElement } from 'react'
+import { ReactElement, useEffect } from 'react'
 import router, { useRouter } from 'next/router'
 import Login from '../../../components/Auth/Login'
 import Page from '../../../components/@shared/Page'
 import type { AuthFeature, AuthTab } from '../../../components/Auth/constants'
 import { authConfig } from '../../../config/auth.config'
 import content from '../../../../content/auth/login.json'
-// redeploy push
+
 export default function AuthLogin(): ReactElement {
   const pageRouter = useRouter()
   const { title, description, features } = content
@@ -15,6 +14,14 @@ export default function AuthLogin(): ReactElement {
     pageRouter.query.tab === 'signup'
       ? ('signup' as AuthTab)
       : ('login' as AuthTab)
+
+  useEffect(() => {
+    if (!authConfig.enabled) {
+      pageRouter.replace('/')
+    }
+  }, [pageRouter])
+
+  if (!authConfig.enabled) return null
 
   return (
     <Page
@@ -30,19 +37,4 @@ export default function AuthLogin(): ReactElement {
       />
     </Page>
   )
-}
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  if (!authConfig.enabled) {
-    return {
-      redirect: {
-        destination: '/',
-        permanent: false
-      }
-    }
-  }
-
-  return {
-    props: {}
-  }
 }

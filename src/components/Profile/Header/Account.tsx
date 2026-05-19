@@ -38,14 +38,11 @@ export default function Account({
   const normalizedUsername = user?.username?.trim().toLowerCase()
   const displayUsername =
     isOwnAuthenticatedProfile &&
+    debug === true &&
     user?.username &&
     normalizedUsername !== normalizedDisplayName &&
     normalizedUsername !== normalizedDisplayEmail
       ? user.username
-      : undefined
-  const displayUserId =
-    isOwnAuthenticatedProfile && debug && user?.id && user.id !== displayName
-      ? user.id
       : undefined
 
   return (
@@ -63,7 +60,6 @@ export default function Account({
           <p className={styles.username}>{displayUsername}</p>
         )}
         {displayEmail && <p className={styles.email}>{displayEmail}</p>}
-        {displayUserId && <p className={styles.userId}>{displayUserId}</p>}
 
         {accountId && (
           <code className={styles.accountId}>

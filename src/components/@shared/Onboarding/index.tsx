@@ -15,6 +15,7 @@ import useBalance from '@hooks/useBalance'
 import Faucet from './Steps/Faucet/Faucet'
 import SSI from './Steps/SSI/Ssi'
 import { getSupportedChainIds } from 'chains.config.cjs'
+import { getRuntimeConfig } from '@utils/runtimeConfig'
 
 export interface OnboardingStep {
   title: string
@@ -24,8 +25,6 @@ export interface OnboardingStep {
   buttonLabel?: string
   buttonSuccess?: string
 }
-const isSSIEnabled = process.env.NEXT_PUBLIC_SSI_ENABLED === 'true'
-
 const isMainnetChain = (chainId: number | undefined): boolean => {
   if (!chainId) return false
   const mainnetChains = [1, 10, 56, 137, 43114, 42161, 8453, 100]
@@ -46,6 +45,7 @@ export default function OnboardingSection(): ReactElement {
   const [onboardingCompleted, setOnboardingCompleted] = useState(false)
   const [navigationDirection, setNavigationDirection] =
     useState<NavigationDirections>()
+  const isSSIEnabled = getRuntimeConfig().NEXT_PUBLIC_SSI_ENABLED === 'true'
   const faucetStepLabel = isMainnetChain(chainId) ? 'Funds' : 'Faucet'
 
   const steps = [

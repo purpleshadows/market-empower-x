@@ -69,7 +69,7 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
     (chain): chain is Chain => isChain(chain) && !customChainIds.has(chain.id)
   )
 
-  const allChains = [...baseChains, ...customChains]
+  const allChains: Chain[] = [...baseChains, ...customChains]
 
   const rpcMap = getNodeUriMap()
 
@@ -86,7 +86,7 @@ export const getSupportedChains = (chainIdsSupported: number[]): Chain[] => {
   })
 
   // Apply env RPC overrides to chains that have one configured.
-  const mappedChains = allowedChains.map((chain) => {
+  const mappedChains: Chain[] = allowedChains.map((chain) => {
     const mappedRpc = rpcMap[chain.id.toString()]
     if (!mappedRpc) return chain
     return {

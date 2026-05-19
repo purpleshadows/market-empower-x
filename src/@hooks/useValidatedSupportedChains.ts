@@ -3,11 +3,10 @@ import { LoggerInstance } from '@oceanprotocol/lib'
 import { Contract, getAddress, JsonRpcProvider } from 'ethers'
 import { getAllowedErc20Map } from '@utils/runtimeConfig'
 import { getOceanConfig } from '@utils/ocean'
-
-const ENTERPRISE_FEE_COLLECTOR_ABI = [
-  'function isTokenAllowed(address) view returns (bool)'
-]
-const TOKEN_CHECK_TIMEOUT_MS = 5000
+import {
+  ENTERPRISE_FEE_COLLECTOR_ABI,
+  TOKEN_CHECK_TIMEOUT_MS
+} from './_constants'
 
 type AllowedChainTokens = {
   chainId: number
