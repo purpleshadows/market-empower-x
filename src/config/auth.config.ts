@@ -1,4 +1,12 @@
 import { getRuntimeConfig } from '@utils/runtimeConfig'
+import {
+  authEnabled,
+  authProvider,
+  oidcIssuer,
+  oidcClientId,
+  oidcRedirectUri,
+  oidcSignupFlow
+} from 'app.config.cjs'
 
 export interface AuthConfig {
   enabled: boolean
@@ -6,7 +14,6 @@ export interface AuthConfig {
   oidc: {
     issuer: string
     clientId: string
-    clientSecret: string
     redirectUri: string
     signupFlow: string
     scope: string
@@ -17,40 +24,31 @@ export interface AuthConfig {
 
 const isServer = () => typeof window === 'undefined'
 
-export const getServerSideClientSecret = (): string => {
-  if (!isServer()) {
-    return ''
-  }
-  return process.env.OIDC_CLIENT_SECRET || ''
-}
-
 export const authConfig = ((): AuthConfig => {
   const runtimeConfig = getRuntimeConfig()
 
   const enabled = isServer()
-    ? process.env.NEXT_PUBLIC_AUTH_ENABLED === 'true'
+    ? authEnabled === 'true'
     : runtimeConfig.NEXT_PUBLIC_AUTH_ENABLED === 'true'
 
   const provider = isServer()
-    ? process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'mock'
+    ? authProvider || 'mock'
     : runtimeConfig.NEXT_PUBLIC_AUTH_PROVIDER || 'mock'
 
   const issuer = isServer()
-    ? process.env.NEXT_PUBLIC_OIDC_ISSUER || ''
+    ? oidcIssuer || ''
     : runtimeConfig.NEXT_PUBLIC_OIDC_ISSUER || ''
 
   const clientId = isServer()
-    ? process.env.NEXT_PUBLIC_OIDC_CLIENT_ID || ''
+    ? oidcClientId || ''
     : runtimeConfig.NEXT_PUBLIC_OIDC_CLIENT_ID || ''
 
   const redirectUri = isServer()
-    ? process.env.NEXT_PUBLIC_OIDC_REDIRECT_URI ||
-      'http://localhost:8008/auth/callback'
-    : runtimeConfig.NEXT_PUBLIC_OIDC_REDIRECT_URI ||
-      'http://localhost:8008/auth/callback'
+    ? oidcRedirectUri || null
+    : runtimeConfig.NEXT_PUBLIC_OIDC_REDIRECT_URI || null
 
   const signupFlow = isServer()
-    ? process.env.NEXT_PUBLIC_OIDC_SIGNUP_FLOW || 'self-service-registration'
+    ? oidcSignupFlow || 'self-service-registration'
     : runtimeConfig.NEXT_PUBLIC_OIDC_SIGNUP_FLOW || 'self-service-registration'
 
   return {
@@ -59,19 +57,12 @@ export const authConfig = ((): AuthConfig => {
     oidc: {
       issuer,
       clientId,
-      clientSecret: getServerSideClientSecret(),
       redirectUri,
       signupFlow,
-      scope: 'openid profile email federated_identity',
+      scope:
+        'openid profile email offline_access federated_identity organizationId',
       responseType: 'code',
       pkceMethod: 'S256'
     }
   }
 })()
-
-export const getServerSideOidcConfig = () => {
-  return {
-    ...authConfig.oidc,
-    clientSecret: getServerSideClientSecret()
-  }
-}

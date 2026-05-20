@@ -13,6 +13,7 @@ import { useMarketMetadata } from '@context/MarketMetadata'
 import useEnterpriseFeeCollector from '@hooks/useEnterpriseFeeCollector'
 import useTokenApproval from '@hooks/useTokenApproval'
 import useAllowedTokenAddresses from '@hooks/useAllowedTokenAddresses'
+import { useWalletAuthSync } from '@hooks/useWalletAuthSync'
 import NetworkWarningModal from './NetworkWarningModal'
 import SsiWalletManager from '@components/Header/SsiWallet/SsiWalletManager'
 
@@ -33,6 +34,8 @@ export default function App({
   const { address, isConnected, chainId } = useAccount()
   const { switchChain, isPending } = useSwitchChain()
   const { isInPurgatory, purgatoryData } = useAccountPurgatory(address)
+
+  useWalletAuthSync()
 
   const router = useRouter()
   const isRoot = router.pathname === '/'

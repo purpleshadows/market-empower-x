@@ -6,28 +6,46 @@ import { useMarketMetadata } from '@context/MarketMetadata'
 // import Image from 'next/image'
 // import logo from '../../../public/images/ecosystem/ocean_enterprise_logo.png'
 import Logo from '@images/logo.svg'
-import XIcon from '@images/xIcon.svg'
+// import XIcon from '@images/xIcon.svg'
 import LinkedInIcon from '@images/linkedInIcon.svg'
 import MediumIcon from '@images/mediumIcon.svg'
+import YoutubeIcon from '@images/youtubeIcon.svg'
 
 export default function Footer(): ReactElement {
   const { siteContent } = useMarketMetadata()
   const { footer } = siteContent
-  const { copyright } = footer
+  const copyright = footer.copyright.replace(
+    /\b\d{4}\b/g,
+    String(new Date().getFullYear())
+  )
 
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
         <div className={styles.logoSection}>
           <Logo className={styles.logo} />
-          <div className={styles.socialLinks}>
+          <div className={styles.taglineContainer}>
+            <span className={styles.tagline}>
+              Developed by the Ocean Enterprise Collective. Learn more and join
+              us!
+            </span>
             <a
+              className={styles.websiteLink}
+              href="https://oceanenterprise.io"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              oceanenterprise.io
+            </a>
+          </div>
+          <div className={styles.socialLinks}>
+            {/* <a
               href="https://x.com/ocnenterprise"
               target="_blank"
               rel="noopener noreferrer"
             >
               <XIcon className={styles.socialIcon} />
-            </a>
+            </a> */}
             <a
               href="https://www.linkedin.com/company/ocean-enterprise-collective"
               target="_blank"
@@ -41,6 +59,13 @@ export default function Footer(): ReactElement {
               rel="noopener noreferrer"
             >
               <MediumIcon className={styles.socialIcon} />
+            </a>
+            <a
+              href="https://www.youtube.com/@OceanEnterpriseCollective"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <YoutubeIcon className={styles.socialIcon} />
             </a>
           </div>
         </div>

@@ -880,6 +880,38 @@ export interface IpfsUpload {
   metadataIPFSHash: string
 }
 
+export async function buildDdoIpfsUploadPayload(
+  asset: Asset,
+  metadata: string,
+  owner: Signer,
+  encryptAsset: boolean,
+  providerUrl: string
+): Promise<{ encryptedData: string }> {
+  const data = { encryptedData: metadata }
+
+  if (!encryptAsset) return data
+
+  let encryptedData: string
+  try {
+    encryptedData = await ProviderInstance.encrypt(
+      data,
+      asset.credentialSubject?.chainId,
+      providerUrl,
+      owner
+    )
+  } catch (error) {
+    LoggerInstance.error(
+      '[Provider Encrypt DDO IPFS Payload] Error:',
+      error instanceof Error ? error.message : error
+    )
+  }
+
+  if (!encryptedData)
+    throw new Error('No encrypted DDO received. Please try again.')
+
+  return { encryptedData }
+}
+
 /**
  * Deviates from JOSE by using the alg: ETH-EIP191 field.
  * Accordingly, a web3 wallet signature is to be used for verification.
@@ -959,10 +991,14 @@ export async function signAssetAndUploadToIpfs(
   const stringAsset = JSON.stringify(jwtVerifiableCredential)
   const bytes = Buffer.from(stringAsset)
   const metadata = hexlify(bytes)
-
-  const data = { encryptedData: metadata }
+  const data = await buildDdoIpfsUploadPayload(
+    asset,
+    metadata,
+    owner,
+    encryptAsset,
+    providerUrl
+  )
   const ipfsHash = await uploadToIPFS(data)
-
   const remoteAsset = {
     remote: {
       type: 'ipfs',
