@@ -6,7 +6,6 @@ import AssetTitle from '@shared/AssetListTitle'
 import Table, { TableOceanColumn } from '../atoms/Table'
 import Price from '../Price'
 import AssetType from '../AssetType'
-import { getServiceByName } from '@utils/ddo'
 import { AssetViewOptions } from './AssetViewSelector'
 import Time from '../atoms/Time'
 import Loader from '../atoms/Loader'
@@ -30,18 +29,9 @@ const columns: TableOceanColumn<AssetExtended>[] = [
   },
   {
     name: 'Type',
-    selector: (row) => {
-      const { metadata } = row
-      const isCompute = Boolean(getServiceByName(row, 'compute'))
-      const accessType = isCompute ? 'compute' : 'access'
-      return (
-        <AssetType
-          className={styles.typeLabel}
-          type={metadata.type}
-          accessType={accessType}
-        />
-      )
-    },
+    selector: (row) => (
+      <AssetType className={styles.typeLabel} type={row.metadata.type} />
+    ),
     maxWidth: '9rem'
   },
   {

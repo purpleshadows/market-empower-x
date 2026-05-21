@@ -1,5 +1,9 @@
-.icon {
+.icon,
+.icon path {
   fill: currentColor;
+}
+
+.icon {
   width: 1em;
   height: 1em;
   vertical-align: baseline;
@@ -7,16 +11,8 @@
   display: inline-block;
 }
 
-.accessLabel,
 .typeLabel {
   display: inline-block;
   text-transform: uppercase;
-  border-left: 1px solid var(--border-color);
-  padding-left: var(--sp-2_5);
   margin-left: calc(var(--spacer) / 4);
-}
-
-.accessLabel {
-  border-left: none;
-  margin-left: 0;
 }

@@ -53,5 +53,15 @@ export const customStyles: TableStyles = {
       fontSize: 'var(--font-size-small)',
       fontWeight: 'var(--font-weight-base)'
     }
+  },
+  expanderButton: {
+    style: {
+      '&:hover:not(:disabled)': {
+        backgroundColor: 'var(--surface-hover)'
+      },
+      '&:focus': {
+        backgroundColor: 'transparent'
+      }
+    }
   }
 }

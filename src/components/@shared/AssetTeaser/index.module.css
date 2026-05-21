@@ -1,6 +1,18 @@
 .teaser {
   max-width: 40rem;
   height: 100%;
+  position: relative;
+}
+
+.teaser .bookmark {
+  top: 6px;
+  right: 6px;
+  padding: 6px;
+}
+
+.teaser .bookmark svg {
+  width: 14px;
+  height: 14px;
 }
 
 .link {

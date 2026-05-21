@@ -21,6 +21,7 @@ interface UserPreferencesValue {
   bookmarks: string[]
   addBookmark: (did: string) => void
   removeBookmark: (did: string) => void
+  removeBookmarks: (dids: string[]) => void
   setPrivacyPolicySlug: (slug: string) => void
   setShowPPC: (value: boolean) => void
   allowExternalContent: boolean
@@ -128,13 +129,25 @@ function UserPreferencesProvider({
   }, [])
 
   function addBookmark(didToAdd: string): void {
-    const newPinned = [...bookmarks, didToAdd]
-    setBookmarks(newPinned)
+    setBookmarks((currentBookmarks: string[]) =>
+      currentBookmarks.includes(didToAdd)
+        ? currentBookmarks
+        : [...currentBookmarks, didToAdd]
+    )
   }
 
   function removeBookmark(didToAdd: string): void {
-    const newPinned = bookmarks.filter((did: string) => did !== didToAdd)
-    setBookmarks(newPinned)
+    setBookmarks((currentBookmarks: string[]) =>
+      currentBookmarks.filter((did: string) => did !== didToAdd)
+    )
+  }
+
+  function removeBookmarks(didsToRemove: string[]): void {
+    const didsToRemoveSet = new Set(didsToRemove)
+
+    setBookmarks((currentBookmarks: string[]) =>
+      currentBookmarks.filter((did: string) => !didsToRemoveSet.has(did))
+    )
   }
 
   // Bookmarks old data structure migration
@@ -198,6 +211,7 @@ function UserPreferencesProvider({
           setCurrency,
           addBookmark,
           removeBookmark,
+          removeBookmarks,
           setPrivacyPolicySlug,
           setShowPPC,
           allowExternalContent,
