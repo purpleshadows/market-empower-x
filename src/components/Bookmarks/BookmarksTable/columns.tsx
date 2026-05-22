@@ -39,6 +39,7 @@ export function buildBookmarkColumns(
         <AssetType
           className={styles.bookmarkType}
           type={row.credentialSubject.metadata.type}
+          variant="metadata"
         />
       ),
       width: '140px'

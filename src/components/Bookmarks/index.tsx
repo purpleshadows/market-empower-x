@@ -1,4 +1,5 @@
 import { useUserPreferences } from '@context/UserPreferences'
+import Link from 'next/link'
 import {
   ReactElement,
   useCallback,
@@ -150,9 +151,18 @@ export default function Bookmarks(): ReactElement {
             data={paginatedData}
             isLoading={isLoading}
             emptyMessage={
-              chainIds.length === 0
-                ? 'No network selected'
-                : 'Your bookmarks will appear here. Go to the [catalogue](/search?sort=indexedMetadata.event.block&sortOrder=desc) and save your favourite assets by clicking the bookmark icon on the asset card or from the asset details page.'
+              chainIds.length === 0 ? (
+                'No network selected'
+              ) : (
+                <>
+                  Your bookmarks will appear here. Go to the{' '}
+                  <Link href="/search?sort=indexedMetadata.event.block&sortOrder=desc">
+                    catalogue
+                  </Link>{' '}
+                  and save your favourite assets by clicking the bookmark icon
+                  on the asset card or from the asset details page.
+                </>
+              )
             }
             selectableRows
             selectableRowsHighlight

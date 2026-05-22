@@ -1,59 +1,86 @@
-import { ReactElement } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { LoggerInstance } from '@oceanprotocol/lib'
+import { ReactElement, useMemo } from 'react'
+import { useMarketMetadata } from '@context/MarketMetadata'
 import Price from '@shared/Price'
-import { useCancelToken } from '@hooks/useCancelToken'
-import {
-  getAccessDetails,
-  getAvailablePrice
-} from '@utils/accessDetailsAndPricing'
 import { secondsToString } from '@utils/ddo'
 import Download from '@images/download.svg'
 import Compute from '@images/compute.svg'
 import BranchArrow from '@images/arrow_branch.svg'
 import { AssetPrice } from 'src/@types/AssetPrice'
 import { AssetExtended } from 'src/@types/AssetExtended'
+import { getServiceStats, resolveServiceTokenSymbol } from '@utils/priceToken'
 import styles from '../Bookmarks.module.css'
+
+function getServicePrice(
+  asset: AssetExtended,
+  serviceIndex: number,
+  serviceId?: string,
+  tokenSymbolMap?: Record<string, string>
+): AssetPrice {
+  const stat = getServiceStats(asset, serviceIndex, serviceId)
+  const priceEntry = stat?.prices?.[0]
+  const accessDetail =
+    asset.accessDetails?.find(
+      (detail) =>
+        detail?.addressOrId &&
+        priceEntry?.exchangeId &&
+        detail?.addressOrId?.toLowerCase() ===
+          priceEntry.exchangeId.toLowerCase()
+    ) ||
+    asset.accessDetails?.find(
+      (detail) =>
+        detail?.datatoken?.address &&
+        stat?.datatokenAddress &&
+        detail?.datatoken?.address?.toLowerCase() ===
+          stat.datatokenAddress.toLowerCase()
+    ) ||
+    asset.accessDetails?.[serviceIndex]
+  const offchainStat =
+    asset.offchain?.stats?.services?.find(
+      (service) => service?.serviceId === serviceId
+    ) || asset.offchain?.stats?.services?.[serviceIndex]
+  const offchainPriceEntry = offchainStat?.prices?.[0]
+  const priceToken = priceEntry?.token
+  const tokenAddress =
+    accessDetail?.baseToken?.address ||
+    offchainPriceEntry?.token?.address ||
+    priceEntry?.baseToken?.address ||
+    (typeof priceToken === 'string' ? priceToken : priceToken?.address) ||
+    ''
+
+  return {
+    value: Number(
+      accessDetail?.price ?? offchainPriceEntry?.price ?? priceEntry?.price ?? 0
+    ),
+    tokenSymbol:
+      accessDetail?.baseToken?.symbol ||
+      offchainPriceEntry?.token?.symbol ||
+      resolveServiceTokenSymbol(
+        asset,
+        serviceIndex,
+        serviceId,
+        tokenSymbolMap
+      ) ||
+      stat?.price?.tokenSymbol ||
+      '',
+    tokenAddress
+  }
+}
 
 export default function ExpandedServices({
   data
 }: {
   data: AssetExtended
 }): ReactElement {
+  const { approvedBaseTokens } = useMarketMetadata()
   const services = data.credentialSubject?.services || []
-  const newCancelToken = useCancelToken()
-
-  const { data: prices } = useQuery({
-    queryKey: ['bookmarkServicePrices', data.id],
-    queryFn: async () => {
-      const chainId = data.credentialSubject?.chainId
-      const accessDetails = await Promise.all(
-        services.map(async (service) => {
-          try {
-            return await getAccessDetails(
-              chainId,
-              service,
-              '',
-              newCancelToken()
-            )
-          } catch (error) {
-            LoggerInstance.error(
-              'Bookmarks service price error:',
-              error instanceof Error ? error.message : String(error)
-            )
-            return null
-          }
-        })
-      )
-      return accessDetails.map((detail) =>
-        detail ? getAvailablePrice(detail) : ({} as AssetPrice)
-      )
-    },
-    enabled: services.length > 0,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false
-  })
+  const tokenSymbolMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    approvedBaseTokens?.forEach((token) => {
+      if (!token?.address || !token?.symbol) return
+      map[token.address.toLowerCase()] = token.symbol
+    })
+    return map
+  }, [approvedBaseTokens])
 
   if (!services.length) {
     return (
@@ -66,9 +93,16 @@ export default function ExpandedServices({
   return (
     <div className={styles.expanded}>
       <div className={styles.servicesCard}>
+        <div className={styles.expandedHeader}>
+          <div className={styles.expandedNameHeader}>Name</div>
+          <div className={styles.expandedType}>Service type</div>
+          <div className={styles.expandedDuration}>Duration</div>
+          <div className={styles.expandedPrice}>Price</div>
+        </div>
         {services.map((service, index) => {
           const isCompute = service.type === 'compute'
           const TypeIcon = isCompute ? Compute : Download
+          const price = getServicePrice(data, index, service.id, tokenSymbolMap)
 
           return (
             <div
@@ -96,11 +130,7 @@ export default function ExpandedServices({
                 {secondsToString(Number(service.timeout) || 0)}
               </div>
               <div className={styles.expandedPrice}>
-                {prices ? (
-                  <Price price={prices[index]} size="small" />
-                ) : (
-                  <span className={styles.pricePending} aria-hidden="true" />
-                )}
+                <Price price={price} size="small" />
               </div>
             </div>
           )

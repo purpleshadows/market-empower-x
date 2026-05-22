@@ -107,8 +107,34 @@
   margin-left: 8px;
 }
 
+.expandedHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: calc(var(--spacer) / 1.5);
+  padding: calc(var(--spacer) / 5) 0 calc(var(--spacer) / 4);
+  border-bottom: var(--border-size-sm) solid var(--navy-alpha-10);
+  color: var(--color-secondary);
+  font-size: var(--font-size-mini);
+  font-weight: var(--font-weight-bold);
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+
+.expandedHeader .expandedType,
+.expandedHeader .expandedDuration,
+.expandedHeader .expandedPrice {
+  transform: translateX(1.5rem);
+}
+
 .expandedRow:last-child {
   border-bottom: none;
+}
+
+.expandedNameHeader {
+  flex: 0 0 var(--service-name-width);
+  width: var(--service-name-width);
+  min-width: 15rem;
 }
 
 .expandedName {
@@ -153,22 +179,6 @@
   flex: 0 0 var(--service-price-width);
   width: var(--service-price-width);
   text-align: left;
-}
-
-.pricePending {
-  display: inline-block;
-  width: 3.5rem;
-  height: 0.85rem;
-  border-radius: 4px;
-  background: linear-gradient(
-      90deg,
-      var(--black-alpha-6) 25%,
-      var(--black-alpha-12) 37%,
-      var(--black-alpha-6) 63%
-    ),
-    var(--background-highlight);
-  background-size: 400% 100%;
-  animation: shimmer 1.2s ease-in-out infinite;
 }
 
 .expanderIcon {

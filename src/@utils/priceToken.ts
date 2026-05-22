@@ -5,12 +5,15 @@ type PriceToken = string | { symbol?: string; address?: string }
 
 export type ServicePriceEntry = {
   price?: string | number
+  exchangeId?: string
+  tokenSymbol?: string
   token?: PriceToken
   baseToken?: { symbol?: string; address?: string }
 }
 
 export type ServiceStatsEntry = {
   serviceId?: string
+  datatokenAddress?: string
   price?: { tokenSymbol?: string }
   prices?: ServicePriceEntry[]
 }
@@ -40,6 +43,7 @@ export function resolveServiceTokenSymbol(
   if (stat?.price?.tokenSymbol) return stat.price.tokenSymbol
 
   const priceEntry = stat?.prices?.[0]
+  if (priceEntry?.tokenSymbol) return priceEntry.tokenSymbol
   if (priceEntry?.baseToken?.symbol) return priceEntry.baseToken.symbol
   if (priceEntry?.baseToken?.address) {
     return tokenSymbolMap?.[priceEntry.baseToken.address.toLowerCase()]
