@@ -7,6 +7,7 @@ import NetworkName from '@shared/NetworkName'
 import styles from './index.module.css'
 import { getServiceByName } from '@utils/ddo'
 import { AssetExtended } from 'src/@types/AssetExtended'
+import Bookmark from '@components/Asset/AssetContent/Bookmark'
 
 declare type AssetTeaserProps = {
   asset: AssetExtended
@@ -84,6 +85,7 @@ export default function AssetTeaser({
           />
         </footer>
       </Link>
+      <Bookmark did={asset.id} className={styles.bookmark} />
     </article>
   )
 }
