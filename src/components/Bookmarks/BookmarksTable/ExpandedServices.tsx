@@ -8,7 +8,6 @@ import BranchArrow from '@images/arrow_branch.svg'
 import { AssetPrice } from 'src/@types/AssetPrice'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import { getServiceStats, resolveServiceTokenSymbol } from '@utils/priceToken'
-import Skeleton from '@shared/atoms/Skeleton'
 import styles from '../Bookmarks.module.css'
 
 function getServicePrice(
@@ -136,11 +135,7 @@ export default function ExpandedServices({
                 {secondsToString(Number(service.timeout) || 0)}
               </div>
               <div className={styles.expandedPrice}>
-                {prices ? (
-                  <Price price={prices[index]} size="small" />
-                ) : (
-                  <Skeleton width="3.5rem" height="0.85rem" />
-                )}
+                <Price price={prices} size="small" />
               </div>
             </div>
           )
