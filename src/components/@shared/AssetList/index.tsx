@@ -1,8 +1,10 @@
 import AssetTeaser from '@shared/AssetTeaser'
 import { ReactElement } from 'react'
+import Link from 'next/link'
 import Pagination from '@shared/Pagination'
+import Publisher from '@shared/Publisher'
+import NetworkName from '@shared/NetworkName'
 import styles from './index.module.css'
-import AssetTitle from '@shared/AssetListTitle'
 import Table, { TableOceanColumn } from '../atoms/Table'
 import Price from '../Price'
 import AssetType from '../AssetType'
@@ -11,74 +13,80 @@ import { AssetViewOptions } from './AssetViewSelector'
 import Time from '../atoms/Time'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import Alert from '../atoms/Alert'
-import AssetListSkeleton from './Skeleton'
+import AssetListSkeleton, { AssetListTableSkeleton } from './Skeleton'
 
 const columns: TableOceanColumn<AssetExtended>[] = [
   {
-    name: 'Dataset',
+    name: 'Asset',
     selector: (row) => {
-      const { metadata } = row
+      const name = row.credentialSubject?.metadata?.name
+      const owner = row.indexedMetadata?.nft?.owner
       return (
-        <div>
-          <AssetTitle title={metadata.name} asset={row} />
-          <p>{row.id}</p>
+        <div className={styles.listDatasetCell}>
+          <Link href={`/asset/${row.id}`} className={styles.listAssetName}>
+            {name || row.id}
+          </Link>
+          {owner && (
+            <span className={styles.listPublisher}>
+              <Publisher account={owner} minimal />
+            </span>
+          )}
         </div>
       )
     },
-    maxWidth: '35rem',
-    grow: 1
+    grow: 2,
+    minWidth: '12rem'
   },
   {
     name: 'Type',
     selector: (row) => {
-      const { metadata } = row
+      const metadata = row.credentialSubject?.metadata
       const isCompute = Boolean(getServiceByName(row, 'compute'))
-      const accessType = isCompute ? 'compute' : 'access'
       return (
         <AssetType
-          className={styles.typeLabel}
-          type={metadata.type}
-          accessType={accessType}
+          type={metadata?.type}
+          accessType={isCompute ? 'compute' : 'access'}
         />
       )
     },
+    maxWidth: '10rem'
+  },
+  {
+    name: 'Network',
+    selector: (row) => (
+      <NetworkName networkId={row.credentialSubject?.chainId} />
+    ),
     maxWidth: '9rem'
   },
   {
     name: 'Price',
     selector: (row) => {
+      const stat = row.indexedMetadata?.stats?.[0]
       return (
         <Price
           price={{
-            value: Number(row.indexedMetadata.stats[0].prices[0].price),
-            tokenSymbol: row.indexedMetadata.stats[0].symbol,
-            tokenAddress: row.indexedMetadata.stats[0].datatokenAddress
+            value: Number(stat?.prices?.[0]?.price ?? 0),
+            tokenSymbol: stat?.symbol ?? '',
+            tokenAddress: stat?.datatokenAddress ?? ''
           }}
           size="small"
         />
       )
     },
-    maxWidth: '7rem'
+    maxWidth: '8rem'
   },
   {
     name: 'Sales',
     selector: (row) => {
-      return (
-        <strong>
-          {row.indexedMetadata.stats[0].orders < 0
-            ? 'N/A'
-            : row.indexedMetadata.stats[0].orders}
-        </strong>
-      )
+      const orders = row.indexedMetadata?.stats?.[0]?.orders
+      return <span>{orders == null || orders < 0 ? '—' : orders}</span>
     },
-    maxWidth: '7rem'
+    maxWidth: '6rem'
   },
   {
     name: 'Published',
-    selector: (row) => {
-      return <Time date={row.indexedMetadata.nft.created} />
-    },
-    maxWidth: '7rem'
+    selector: (row) => <Time date={row.indexedMetadata?.nft?.created} />,
+    maxWidth: '8rem'
   }
 ]
 
@@ -93,7 +101,6 @@ declare type AssetListProps = {
   noPublisher?: boolean
   noDescription?: boolean
   noPrice?: boolean
-  showAssetViewSelector?: boolean
   defaultAssetView?: AssetViewOptions
   skeletonCount?: number
 }
@@ -121,47 +128,50 @@ export default function AssetList({
 
   const styleClasses = `${styles.assetList} ${className || ''}`
 
-  return isLoading ? (
-    <AssetListSkeleton
-      count={skeletonCount}
-      noPublisher={noPublisher}
-      noDescription={noDescription}
-    />
-  ) : (
-    <>
-      <div className={styleClasses}>
-        {assets?.length > 0 && assets[0] !== undefined ? (
-          <>
-            {activeAssetView === AssetViewOptions.List && (
-              <Table
-                columns={columns}
-                data={assets}
-                pagination={false}
-                paginationPerPage={assets?.length}
-                dense
-              />
-            )}
+  if (isLoading) {
+    return activeAssetView === AssetViewOptions.List ? (
+      <AssetListTableSkeleton />
+    ) : (
+      <AssetListSkeleton
+        count={skeletonCount}
+        noPublisher={noPublisher}
+        noDescription={noDescription}
+      />
+    )
+  }
 
-            {activeAssetView === AssetViewOptions.Grid &&
-              assets?.map((asset) => {
-                if (asset?.indexedMetadata && asset?.credentialSubject) {
-                  return (
-                    <AssetTeaser
-                      asset={asset}
-                      key={asset.id}
-                      noPublisher={noPublisher}
-                      noDescription={noDescription}
-                      noPrice={noPrice}
-                    />
-                  )
-                }
-                return null
-              })}
-          </>
-        ) : (
-          <Alert warning>No results found</Alert>
-        )}
-      </div>
+  if (!assets?.length || assets[0] === undefined) {
+    return <Alert warning>No results found</Alert>
+  }
+
+  return (
+    <>
+      {activeAssetView === AssetViewOptions.List ? (
+        <Table
+          columns={columns}
+          data={assets}
+          pagination={false}
+          paginationPerPage={assets.length}
+          dense
+        />
+      ) : (
+        <div className={styleClasses}>
+          {assets.map((asset) => {
+            if (asset?.indexedMetadata && asset?.credentialSubject) {
+              return (
+                <AssetTeaser
+                  asset={asset}
+                  key={asset.id}
+                  noPublisher={noPublisher}
+                  noDescription={noDescription}
+                  noPrice={noPrice}
+                />
+              )
+            }
+            return null
+          })}
+        </div>
+      )}
       {showPagination && (
         <Pagination
           totalPages={totalPages}

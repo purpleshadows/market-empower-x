@@ -1,6 +1,9 @@
 import { LoggerInstance } from '@oceanprotocol/lib'
 import { ReactElement, useEffect, useState } from 'react'
 import AssetList from '@shared/AssetList'
+import AssetViewSelector, {
+  AssetViewOptions
+} from '@shared/AssetList/AssetViewSelector'
 import { getPublishedAssets } from '@utils/aquarius'
 import styles from './PublishedList.module.css'
 import { useCancelToken } from '@hooks/useCancelToken'
@@ -22,6 +25,9 @@ export default function PublishedList({
   const [queryResult, setQueryResult] = useState<PagedAssets>()
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState<number>(1)
+  const [activeView, setActiveView] = useState<AssetViewOptions>(
+    AssetViewOptions.Grid
+  )
   const newCancelToken = useCancelToken()
   const filtersKey = JSON.stringify(filters || {})
   const supportedChainsKey = JSON.stringify(validatedSupportedChains || [])
@@ -88,6 +94,10 @@ export default function PublishedList({
         <Filter showPurgatoryOption={ownAccount} expanded />
       </div>
       <div className={styles.results}>
+        <AssetViewSelector
+          activeView={activeView}
+          onViewChange={setActiveView}
+        />
         <AssetList
           assets={queryResult?.results}
           isLoading={isLoading}
@@ -95,10 +105,11 @@ export default function PublishedList({
           page={queryResult?.page > 1 ? queryResult?.page - 1 : 1}
           totalPages={queryResult?.totalPages}
           onPageChange={(newPage) => {
+            setIsLoading(true)
             setPage(newPage)
           }}
           noPublisher
-          showAssetViewSelector
+          defaultAssetView={activeView}
         />
       </div>
     </div>
