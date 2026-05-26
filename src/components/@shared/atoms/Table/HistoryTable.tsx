@@ -177,7 +177,7 @@ export default function HistoryTable({
       <DataTable
         columns={columns}
         data={data}
-        pagination={pagination || data?.length >= 9}
+        pagination={!showPagination && (pagination || data?.length >= 9)}
         paginationPerPage={paginationPerPage || 10}
         noDataComponent={<Empty message={emptyMessage} />}
         progressPending={isLoading}
