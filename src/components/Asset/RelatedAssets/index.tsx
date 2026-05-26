@@ -108,6 +108,7 @@ export default function RelatedAssets(): ReactElement {
         noDescription
         noPublisher
         noPrice
+        skeletonCount={4}
       />
     </section>
   )

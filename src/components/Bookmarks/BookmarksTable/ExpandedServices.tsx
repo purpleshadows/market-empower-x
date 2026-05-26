@@ -8,6 +8,7 @@ import BranchArrow from '@images/arrow_branch.svg'
 import { AssetPrice } from 'src/@types/AssetPrice'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import { getServiceStats, resolveServiceTokenSymbol } from '@utils/priceToken'
+import Skeleton from '@shared/atoms/Skeleton'
 import styles from '../Bookmarks.module.css'
 
 function getServicePrice(
@@ -102,7 +103,12 @@ export default function ExpandedServices({
         {services.map((service, index) => {
           const isCompute = service.type === 'compute'
           const TypeIcon = isCompute ? Compute : Download
-          const price = getServicePrice(data, index, service.id, tokenSymbolMap)
+          const prices = getServicePrice(
+            data,
+            index,
+            service.id,
+            tokenSymbolMap
+          )
 
           return (
             <div
@@ -130,7 +136,11 @@ export default function ExpandedServices({
                 {secondsToString(Number(service.timeout) || 0)}
               </div>
               <div className={styles.expandedPrice}>
-                <Price price={price} size="small" />
+                {prices ? (
+                  <Price price={prices[index]} size="small" />
+                ) : (
+                  <Skeleton width="3.5rem" height="0.85rem" />
+                )}
               </div>
             </div>
           )

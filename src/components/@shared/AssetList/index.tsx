@@ -9,9 +9,9 @@ import AssetType from '../AssetType'
 import { getServiceByName } from '@utils/ddo'
 import { AssetViewOptions } from './AssetViewSelector'
 import Time from '../atoms/Time'
-import Loader from '../atoms/Loader'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import Alert from '../atoms/Alert'
+import AssetListSkeleton from './Skeleton'
 
 const columns: TableOceanColumn<AssetExtended>[] = [
   {
@@ -95,6 +95,7 @@ declare type AssetListProps = {
   noPrice?: boolean
   showAssetViewSelector?: boolean
   defaultAssetView?: AssetViewOptions
+  skeletonCount?: number
 }
 
 export default function AssetList({
@@ -108,7 +109,8 @@ export default function AssetList({
   noPublisher,
   noDescription,
   noPrice,
-  defaultAssetView
+  defaultAssetView,
+  skeletonCount = 21
 }: AssetListProps): ReactElement {
   const activeAssetView = defaultAssetView || AssetViewOptions.Grid
 
@@ -120,7 +122,11 @@ export default function AssetList({
   const styleClasses = `${styles.assetList} ${className || ''}`
 
   return isLoading ? (
-    <Loader />
+    <AssetListSkeleton
+      count={skeletonCount}
+      noPublisher={noPublisher}
+      noDescription={noDescription}
+    />
   ) : (
     <>
       <div className={styleClasses}>
