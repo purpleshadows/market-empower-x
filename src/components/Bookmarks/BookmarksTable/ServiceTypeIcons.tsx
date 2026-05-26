@@ -5,6 +5,12 @@ import Compute from '@images/compute.svg'
 import { Service } from 'src/@types/ddo/Service'
 import styles from '../Bookmarks.module.css'
 
+function getServiceTypesLabel(hasDownload: boolean, hasCompute: boolean) {
+  if (hasDownload && hasCompute) return 'Access and compute services'
+  if (hasDownload) return 'Access service'
+  return 'Compute service'
+}
+
 export function ServiceTypeIcons({
   services
 }: {
@@ -18,20 +24,16 @@ export function ServiceTypeIcons({
   }
 
   return (
-    <div className={styles.serviceTypes}>
+    <div
+      className={styles.serviceTypes}
+      role="img"
+      aria-label={getServiceTypesLabel(hasDownload, hasCompute)}
+    >
       {hasDownload && (
-        <Download
-          role="img"
-          aria-label="Download"
-          className={styles.serviceIcon}
-        />
+        <Download aria-hidden="true" className={styles.serviceIcon} />
       )}
       {hasCompute && (
-        <Compute
-          role="img"
-          aria-label="Compute"
-          className={styles.serviceIcon}
-        />
+        <Compute aria-hidden="true" className={styles.serviceIcon} />
       )}
     </div>
   )

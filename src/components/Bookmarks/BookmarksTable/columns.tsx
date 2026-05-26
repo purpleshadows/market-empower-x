@@ -19,12 +19,16 @@ export function buildBookmarkColumns(
       name: 'Name',
       selector: (row) => (
         <div className={styles.nameCell}>
-          <AssetTitle title={row.credentialSubject.metadata.name} asset={row} />
+          <AssetTitle
+            title={row.credentialSubject.metadata.name}
+            asset={row}
+            openInNewTab
+          />
           <Link
             className={styles.externalLink}
             href={`/asset/${row.id}`}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             aria-label="Open asset in a new tab"
           >
             <ExternalIcon />
