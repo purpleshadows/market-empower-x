@@ -4,23 +4,28 @@ import Link from 'next/link'
 import Pagination from '@shared/Pagination'
 import Publisher from '@shared/Publisher'
 import NetworkName from '@shared/NetworkName'
+import AssetType from '@shared/AssetType'
+import removeMarkdown from 'remove-markdown'
 import styles from './index.module.css'
 import Table, { TableOceanColumn } from '../atoms/Table'
-import Price from '../Price'
-import AssetType from '../AssetType'
-import { getServiceByName } from '@utils/ddo'
-import { AssetViewOptions } from './AssetViewSelector'
+import { AssetViewOptions } from 'src/@types/AssetView'
 import Time from '../atoms/Time'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import Alert from '../atoms/Alert'
 import AssetListSkeleton, { AssetListTableSkeleton } from './Skeleton'
+import { ServiceTypeIcons, ServicesColumnHeader } from './ServiceTypeIcons'
 
 const columns: TableOceanColumn<AssetExtended>[] = [
   {
     name: 'Asset',
-    selector: (row) => {
+    cell: (row) => {
       const name = row.credentialSubject?.metadata?.name
       const owner = row.indexedMetadata?.nft?.owner
+      const rawDescription = row.credentialSubject?.metadata?.description
+      const description = removeMarkdown(
+        rawDescription?.['@value'] ??
+          (typeof rawDescription === 'string' ? rawDescription : '')
+      )
       return (
         <div className={styles.listDatasetCell}>
           <Link href={`/asset/${row.id}`} className={styles.listAssetName}>
@@ -31,49 +36,42 @@ const columns: TableOceanColumn<AssetExtended>[] = [
               <Publisher account={owner} minimal />
             </span>
           )}
+          {description && (
+            <span className={styles.listDescription}>{description}</span>
+          )}
         </div>
       )
     },
     grow: 2,
-    minWidth: '12rem'
+    width: '600px'
   },
   {
     name: 'Type',
-    selector: (row) => {
-      const metadata = row.credentialSubject?.metadata
-      const isCompute = Boolean(getServiceByName(row, 'compute'))
-      return (
-        <AssetType
-          type={metadata?.type}
-          accessType={isCompute ? 'compute' : 'access'}
-        />
-      )
-    },
-    maxWidth: '10rem'
+    cell: (row) => (
+      <AssetType
+        type={row.credentialSubject?.metadata?.type}
+        variant="metadata"
+        className={styles.listTypeCell}
+      />
+    ),
+    width: '140px'
+  },
+  {
+    name: <ServicesColumnHeader />,
+    cell: (row) => (
+      <ServiceTypeIcons services={row.credentialSubject?.services} />
+    ),
+    width: '120px'
   },
   {
     name: 'Network',
-    selector: (row) => (
-      <NetworkName networkId={row.credentialSubject?.chainId} />
+    cell: (row) => (
+      <NetworkName
+        networkId={row.credentialSubject?.chainId}
+        className={styles.listNetworkCell}
+      />
     ),
     maxWidth: '9rem'
-  },
-  {
-    name: 'Price',
-    selector: (row) => {
-      const stat = row.indexedMetadata?.stats?.[0]
-      return (
-        <Price
-          price={{
-            value: Number(stat?.prices?.[0]?.price ?? 0),
-            tokenSymbol: stat?.symbol ?? '',
-            tokenAddress: stat?.datatokenAddress ?? ''
-          }}
-          size="small"
-        />
-      )
-    },
-    maxWidth: '8rem'
   },
   {
     name: 'Sales',
@@ -147,37 +145,49 @@ export default function AssetList({
   return (
     <>
       {activeAssetView === AssetViewOptions.List ? (
-        <Table
-          columns={columns}
-          data={assets}
-          pagination={false}
-          paginationPerPage={assets.length}
-          dense
-        />
-      ) : (
-        <div className={styleClasses}>
-          {assets.map((asset) => {
-            if (asset?.indexedMetadata && asset?.credentialSubject) {
-              return (
-                <AssetTeaser
-                  asset={asset}
-                  key={asset.id}
-                  noPublisher={noPublisher}
-                  noDescription={noDescription}
-                  noPrice={noPrice}
-                />
-              )
-            }
-            return null
-          })}
+        <div className={styles.listViewWrapper}>
+          <Table
+            className={styles.listTable}
+            columns={columns}
+            data={assets}
+            pagination={false}
+            paginationPerPage={assets.length}
+            dense
+          />
+          {showPagination && (
+            <Pagination
+              totalPages={totalPages}
+              currentPage={page}
+              onChangePage={handlePageChange}
+            />
+          )}
         </div>
-      )}
-      {showPagination && (
-        <Pagination
-          totalPages={totalPages}
-          currentPage={page}
-          onChangePage={handlePageChange}
-        />
+      ) : (
+        <>
+          <div className={styleClasses}>
+            {assets.map((asset) => {
+              if (asset?.indexedMetadata && asset?.credentialSubject) {
+                return (
+                  <AssetTeaser
+                    asset={asset}
+                    key={asset.id}
+                    noPublisher={noPublisher}
+                    noDescription={noDescription}
+                    noPrice={noPrice}
+                  />
+                )
+              }
+              return null
+            })}
+          </div>
+          {showPagination && (
+            <Pagination
+              totalPages={totalPages}
+              currentPage={page}
+              onChangePage={handlePageChange}
+            />
+          )}
+        </>
       )}
     </>
   )

@@ -28,7 +28,7 @@ export default function AssetType({
           <Algorithm
             role="img"
             aria-label="Algorithm"
-            className={styles.icon}
+            className={`${styles.icon} ${styles.algorithmIcon}`}
           />
         )}
         <div className={`${styles.typeLabel} ${styles.metadataTypeLabel}`}>

@@ -1,8 +1,5 @@
-import { ReactElement, useState, useEffect, useCallback, useMemo } from 'react'
+import { ReactElement, useState, useEffect, useCallback } from 'react'
 import AssetList from '@shared/AssetList'
-import AssetViewSelector, {
-  AssetViewOptions
-} from '@shared/AssetList/AssetViewSelector'
 import queryString from 'query-string'
 import Filter from './Filter'
 import Sort from './sort'
@@ -13,6 +10,7 @@ import { useRouter } from 'next/router'
 import { useDebouncedCallback } from 'use-debounce'
 import SearchBar from '@components/Header/SearchBar'
 import { useMarketMetadata } from '@context/MarketMetadata'
+import { useUserPreferences } from '@context/UserPreferences'
 
 export default function SearchPage({
   setTotalResults,
@@ -25,11 +23,9 @@ export default function SearchPage({
   const [parsed, setParsed] = useState<queryString.ParsedQuery<string>>()
   const { validatedSupportedChains, isValidatingSupportedChains } =
     useMarketMetadata()
+  const { assetView } = useUserPreferences()
   const [queryResult, setQueryResult] = useState<PagedAssets>()
   const [loading, setLoading] = useState<boolean>(true)
-  const [activeView, setActiveView] = useState<AssetViewOptions>(
-    AssetViewOptions.Grid
-  )
   const newCancelToken = useCancelToken()
 
   useEffect(() => {
@@ -95,10 +91,6 @@ export default function SearchPage({
         <div className={styles.searchContainer}>
           <SearchBar placeholder="Search for service offerings" />
         </div>
-        <AssetViewSelector
-          activeView={activeView}
-          onViewChange={setActiveView}
-        />
         <AssetList
           assets={queryResult?.results}
           showPagination
@@ -106,7 +98,7 @@ export default function SearchPage({
           page={queryResult?.page}
           totalPages={queryResult?.totalPages}
           onPageChange={updatePage}
-          defaultAssetView={activeView}
+          defaultAssetView={assetView}
         />
       </div>
     </div>

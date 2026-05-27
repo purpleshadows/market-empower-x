@@ -2,22 +2,21 @@ import { ReactElement } from 'react'
 import GridIcon from '@images/grid-view-icon.svg'
 import ListIcon from '@images/list-view-icon.svg'
 import styles from './AssetViewSelector.module.css'
-
-export enum AssetViewOptions {
-  Grid = 'grid',
-  List = 'list'
-}
+import { AssetViewOptions } from 'src/@types/AssetView'
 
 export default function AssetViewSelector({
   activeView,
-  onViewChange
+  onViewChange,
+  className
 }: {
   activeView: AssetViewOptions
   onViewChange: (view: AssetViewOptions) => void
+  className?: string
 }): ReactElement {
   return (
-    <div className={styles.viewSelectorContainer}>
+    <div className={`${styles.viewSelectorContainer} ${className || ''}`}>
       <button
+        type="button"
         className={`${styles.viewSelector} ${
           activeView === AssetViewOptions.Grid ? styles.selected : ''
         }`}
@@ -29,6 +28,7 @@ export default function AssetViewSelector({
         <GridIcon aria-hidden="true" />
       </button>
       <button
+        type="button"
         className={`${styles.viewSelector} ${
           activeView === AssetViewOptions.List ? styles.selected : ''
         }`}

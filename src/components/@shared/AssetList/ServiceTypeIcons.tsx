@@ -3,7 +3,7 @@ import Tooltip from '@shared/atoms/Tooltip'
 import Download from '@images/download.svg'
 import Compute from '@images/compute.svg'
 import { Service } from 'src/@types/ddo/Service'
-import styles from '../Bookmarks.module.css'
+import styles from './ServiceTypeIcons.module.css'
 
 function getServiceTypesLabel(hasDownload: boolean, hasCompute: boolean) {
   if (hasDownload && hasCompute) return 'Access and compute services'
@@ -20,7 +20,7 @@ export function ServiceTypeIcons({
   const hasCompute = services?.some((service) => service.type === 'compute')
 
   if (!hasDownload && !hasCompute) {
-    return <span className={styles.serviceTypesEmpty}>-</span>
+    return <span className={styles.empty}>-</span>
   }
 
   return (

@@ -9,6 +9,13 @@
   vertical-align: baseline;
   margin-bottom: -0.1em;
   display: inline-block;
+  flex-shrink: 0;
+}
+
+.algorithmIcon {
+  width: 0.9em;
+  height: 1.15em;
+  margin-bottom: -0.18em;
 }
 
 .accessLabel,

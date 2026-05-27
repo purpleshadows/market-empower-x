@@ -5,7 +5,6 @@ import Publisher from '@shared/Publisher'
 import AssetType from '@shared/AssetType'
 import NetworkName from '@shared/NetworkName'
 import styles from './index.module.css'
-import { getServiceByName } from '@utils/ddo'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import Bookmark from '@components/Asset/AssetContent/Bookmark'
 
@@ -22,8 +21,6 @@ export default function AssetTeaser({
   noDescription
 }: AssetTeaserProps): ReactElement {
   const { name, type, description } = asset.credentialSubject.metadata
-  const isCompute = Boolean(getServiceByName(asset, 'compute'))
-  const accessType = isCompute ? 'compute' : 'access'
   const owner = asset.indexedMetadata.nft?.owner
   const { orders } = asset.indexedMetadata.stats[0] || {}
 
@@ -34,7 +31,7 @@ export default function AssetTeaser({
           <AssetType
             className={styles.typeLabel}
             type={type}
-            accessType={accessType}
+            variant="metadata"
           />
         </aside>
         <header className={styles.header}>

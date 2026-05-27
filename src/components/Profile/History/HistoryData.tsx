@@ -303,14 +303,14 @@ export default function HistoryData({
         <Filter showPurgatoryOption={ownAccount} expanded showTime />
       </div>
       <div className={styles.tableContainer}>
-        {isTableLoading && !queryResult ? (
+        {isTableLoading ? (
           <HistorySkeleton />
         ) : (
           <HistoryTable
+            className={styles.historyTableWrapper}
             columns={columns}
             data={queryResult?.results || []}
             paginationPerPage={9}
-            isLoading={isTableLoading}
             emptyMessage={
               validatedSupportedChains.length === 0
                 ? 'No network selected'
