@@ -40,7 +40,8 @@ export const customStyles: TableStyles = {
       textTransform: 'uppercase',
       color: 'var(--color-secondary)',
       fontSize: 'var(--font-size-small)',
-      fontWeight: 'var(--font-weight-bold)'
+      fontWeight: 'var(--font-weight-bold)',
+      minWidth: '0 !important'
     }
   },
   cells: {

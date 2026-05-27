@@ -29,7 +29,7 @@ export default function AssetTeaser({
       <Link href={`/asset/${asset.id}`} className={styles.link}>
         <aside className={styles.detailLine}>
           <AssetType
-            className={styles.typeLabel}
+            className={styles.assetTypeLabel}
             type={type}
             variant="metadata"
           />

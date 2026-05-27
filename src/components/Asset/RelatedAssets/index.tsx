@@ -118,8 +118,6 @@ export default function RelatedAssets(): ReactElement {
         assets={relatedAssets}
         showPagination={false}
         isLoading={isLoading}
-        noDescription
-        noPublisher
         noPrice
         skeletonCount={4}
       />
