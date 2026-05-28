@@ -102,6 +102,7 @@ export default function PublishedList({
           }}
           noPublisher
           defaultAssetView={assetView}
+          skeletonCount={9}
         />
       </div>
     </div>

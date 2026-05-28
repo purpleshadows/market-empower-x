@@ -11,20 +11,24 @@ function getServiceTypesLabel(hasDownload: boolean, hasCompute: boolean) {
 }
 
 export function ServiceTypeIcons({
-  services
+  services,
+  hideEmpty,
+  className
 }: {
   services?: Service[]
+  hideEmpty?: boolean
+  className?: string
 }): ReactElement {
   const hasDownload = services?.some((service) => service.type === 'access')
   const hasCompute = services?.some((service) => service.type === 'compute')
 
   if (!hasDownload && !hasCompute) {
-    return <span className={styles.empty}>-</span>
+    return hideEmpty ? null : <span className={styles.empty}>-</span>
   }
 
   return (
     <div
-      className={styles.serviceTypes}
+      className={[styles.serviceTypes, className].filter(Boolean).join(' ')}
       role="img"
       aria-label={getServiceTypesLabel(hasDownload, hasCompute)}
     >

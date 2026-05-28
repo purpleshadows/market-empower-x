@@ -1,12 +1,10 @@
 import { ReactElement } from 'react'
-import Link from 'next/link'
 import { TableOceanColumn } from '@shared/atoms/Table'
 import AssetTitle from '@shared/AssetListTitle'
 import AssetType from '@shared/AssetType'
 import NetworkName from '@shared/NetworkName'
 import Time from '@shared/atoms/Time'
 import DeleteIcon from '@images/delete.svg'
-import ExternalIcon from '@images/external.svg'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import styles from '../Bookmarks.module.css'
 import {
@@ -27,15 +25,6 @@ export function buildBookmarkColumns(
             asset={row}
             openInNewTab
           />
-          <Link
-            className={styles.externalLink}
-            href={`/asset/${row.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Open asset in a new tab"
-          >
-            <ExternalIcon />
-          </Link>
         </div>
       ),
       grow: 1
