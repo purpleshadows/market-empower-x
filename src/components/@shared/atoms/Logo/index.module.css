@@ -1,8 +1,11 @@
 .logo {
   width: var(--menu-logo-size-width-sm);
-  height: var(--menu-logo-size-height-sm);
+  height: auto;
   margin: 0;
-  transition: width 0.3s ease, height 0.3s ease;
+  display: block;
+  transform: translateY(-0.45rem);
+  transform-origin: left top;
+  transition: width 0.3s ease, height 0.3s ease, transform 0.3s ease;
 }
 
 a > .logo:hover path {
@@ -12,19 +15,20 @@ a > .logo:hover path {
 @media screen and (min-width: 55rem) {
   .logo {
     width: var(--menu-logo-size-width-lg);
-    height: var(--menu-logo-size-height-lg);
+    height: auto;
   }
 }
 @media screen and (min-width: 768px) and (max-width: 1024px) {
   .logo {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 11rem;
+    height: auto;
+    transform: translateY(-0.35rem);
   }
 }
 
 @media screen and (min-width: 1024px) {
   .logo {
     width: var(--menu-logo-size-width-lg);
-    height: var(--menu-logo-size-height-lg);
+    height: auto;
   }
 }

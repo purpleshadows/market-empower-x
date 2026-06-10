@@ -3,10 +3,10 @@
 
 :root {
   /* Menubar */
-  --menu-logo-size-width-sm: 3rem;
-  --menu-logo-size-height-sm: 3rem;
-  --menu-logo-size-width-lg: 3.75rem;
-  --menu-logo-size-height-lg: 3.75rem;
+  --menu-logo-size-width-sm: 11rem;
+  --menu-logo-size-height-sm: auto;
+  --menu-logo-size-width-lg: 13rem;
+  --menu-logo-size-height-lg: auto;
   --menu-mobile-navigation-border-size: var(--border-size-sm);
   --menu-border-radius: var(--border-radius-sm);
   --menu-border-size: var(--border-size);

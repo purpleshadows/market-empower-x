@@ -29,7 +29,7 @@ body .radioWrap > label {
   margin-top: -2px;
   appearance: none;
   -webkit-appearance: none;
-  border: 1px solid #fdd655;
+  border: 1px solid var(--empower-gold-light);
   background: white;
   border-radius: 50%;
 }
@@ -47,14 +47,14 @@ body .radioWrap > label {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #fdd655;
+  background: var(--empower-gold-light);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.2s;
 }
 
 .radio:checked {
-  border-color: #fdd655;
+  border-color: var(--empower-gold-light);
   background: white;
 }
 

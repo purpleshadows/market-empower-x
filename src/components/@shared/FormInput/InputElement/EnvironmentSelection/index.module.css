@@ -30,11 +30,11 @@
 
 .environmentCard:hover {
   box-shadow: 1px 4px 8px 0 var(--black-alpha-15);
-  background: rgba(10, 75, 112, 0.04);
+  background: rgba(45, 138, 197, 0.04);
 }
 
 .environmentCard.selected {
-  background: rgba(10, 75, 112, 0.04);
+  background: rgba(45, 138, 197, 0.04);
   box-shadow: 0 4px 8px var(--navy-alpha-20);
 }
 

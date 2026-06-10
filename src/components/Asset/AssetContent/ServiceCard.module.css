@@ -19,7 +19,7 @@
   font-family: var(--font-family);
   font-weight: 700;
   font-size: 14px;
-  color: #303031;
+  color: var(--empower-charcoal);
   line-height: 150%;
 }
 .free {
@@ -52,7 +52,7 @@
   font-family: var(--font-family);
   font-weight: 700;
   font-size: 16px;
-  color: #303031;
+  color: var(--empower-charcoal);
   line-height: 180%;
 }
 .descriptionWrapper {
@@ -126,7 +126,7 @@
   font-size: 14px;
   line-height: 157%;
   text-align: center;
-  color: #0a4b70;
+  color: var(--empower-charcoal);
   border-radius: 20px;
   padding: 2px 12px;
   width: 66px;
@@ -134,11 +134,11 @@
   box-shadow: 1px 2px 8px 0 var(--black-alpha-15);
   background: linear-gradient(
     135deg,
-    #fdd655 0%,
-    rgba(253, 214, 85, 0.8) 27.47%,
-    rgba(253, 214, 85, 0.7) 43.49%,
-    rgba(253, 214, 85, 0.8) 55.43%,
-    #fdd655 100%
+    var(--empower-gold-light) 0%,
+    rgba(194, 172, 112, 0.8) 27.47%,
+    rgba(194, 172, 112, 0.7) 43.49%,
+    rgba(194, 172, 112, 0.8) 55.43%,
+    var(--empower-gold-light) 100%
   );
   border: none;
   pointer-events: auto;

@@ -90,7 +90,7 @@
 }
 
 .didButton:hover {
-  color: #303031;
+  color: var(--empower-charcoal);
   text-decoration: underline;
 }
 
@@ -107,7 +107,7 @@
   font-family: var(--font-family);
   font-weight: 700;
   font-size: 14px;
-  color: #303031;
+  color: var(--empower-charcoal);
   margin: 0;
   min-width: 0;
 }

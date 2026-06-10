@@ -6,7 +6,7 @@
 .panelColumn h3 {
   font-weight: 700;
   font-size: 18px;
-  color: #303031;
+  color: var(--empower-charcoal);
 }
 .panelColumn label {
   font-weight: 700;
@@ -169,7 +169,7 @@
   font-size: 14px;
   line-height: 114%;
   text-align: center;
-  color: #0a4b70;
+  color: var(--empower-charcoal);
   box-shadow: 1px 2px 8px 0 var(--black-alpha-15);
   background: rgba(48, 48, 49, 0.12);
 }
@@ -183,27 +183,27 @@
   font-size: 14px;
   line-height: 114%;
   text-align: center;
-  color: #0a4b70;
+  color: var(--empower-charcoal);
   box-shadow: 1px 2px 8px 0 var(--black-alpha-15);
   background: linear-gradient(
     135deg,
-    #fdd655 0%,
-    rgba(253, 214, 85, 0.8) 27.47%,
-    rgba(253, 214, 85, 0.7) 43.49%,
-    rgba(253, 214, 85, 0.8) 55.43%,
-    #fdd655 100%
+    var(--empower-gold-light) 0%,
+    rgba(194, 172, 112, 0.8) 27.47%,
+    rgba(194, 172, 112, 0.7) 43.49%,
+    rgba(194, 172, 112, 0.8) 55.43%,
+    var(--empower-gold-light) 100%
   );
 }
 
 .inputField {
-  border: 1px solid rgba(10, 75, 112, 0.5);
+  border: 1px solid rgba(45, 138, 197, 0.5);
   border-radius: 20px;
   padding: 10px 30px;
   width: 500px;
   height: 40px;
   font-weight: 400;
   font-size: 14px;
-  color: #303031;
+  color: var(--empower-charcoal);
   font-family: var(--font-family-base);
   box-shadow: none;
   background: var(--background-content);
@@ -236,11 +236,11 @@
     height: 50px;
     background: linear-gradient(
       135deg,
-      #1f2c50 0%,
+      var(--empower-ink) 0%,
       var(--navy-640) 27.47%,
       var(--navy-620) 43.49%,
       var(--navy-alpha-94) 55.43%,
-      #1e2e52 100%
+      var(--empower-slate) 100%
     );
   }
   .inputField {
@@ -329,11 +329,11 @@
     height: 50px;
     background: linear-gradient(
       135deg,
-      #1f2c50 0%,
+      var(--empower-ink) 0%,
       var(--navy-640) 27.47%,
       var(--navy-620) 43.49%,
       var(--navy-alpha-94) 55.43%,
-      #1e2e52 100%
+      var(--empower-slate) 100%
     );
   }
 

@@ -325,7 +325,7 @@
   font-weight: 400;
   font-size: 14px;
   text-transform: uppercase;
-  color: #303031;
+  color: var(--empower-charcoal);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -431,7 +431,7 @@
 .errorMessage {
   padding: 0.5rem;
   border: 1px solid #e7d33c;
-  background-color: rgba(253, 214, 85, 0.15);
+  background-color: rgba(194, 172, 112, 0.15);
   border-radius: 8px;
   font-size: 0.9rem;
 }

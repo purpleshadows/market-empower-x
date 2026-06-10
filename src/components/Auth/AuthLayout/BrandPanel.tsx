@@ -1,4 +1,4 @@
-import Logo from '@images/logo.svg'
+import Logo from '@images/logo-white.svg'
 import { authBrandDefaults, type AuthPanelContent } from '../constants'
 import { BrandPanelIcon, BrandPanelWaves } from './BrandPanelArtwork'
 import styles from './BrandPanel.module.css'

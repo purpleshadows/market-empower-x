@@ -36,7 +36,7 @@
 }
 
 .link:hover {
-  color: #fdd655;
+  color: var(--empower-gold-light);
   text-decoration: underline;
 }
 

@@ -6,10 +6,17 @@
   justify-content: space-between;
   background: radial-gradient(
       circle at 50% 18%,
-      rgba(97, 165, 194, 0.2) 0%,
-      rgba(97, 165, 194, 0) 30%
+      rgba(244, 251, 253, 0.42) 0%,
+      rgba(244, 251, 253, 0) 30%
     ),
-    linear-gradient(180deg, #24456c 0%, #165781 38%, #1b4d73 68%, #233a5d 100%);
+    linear-gradient(
+      135deg,
+      #2d8ac5 0%,
+      #3696c7 34%,
+      #48a3cc 62%,
+      #6eb5d3 84%,
+      #a7d2df 100%
+    );
   position: relative;
   overflow: hidden;
   padding: 40px 36px;
@@ -62,7 +69,7 @@
 
 /* ── Logo ── */
 .logoWrapper svg {
-  width: 88px;
+  width: 240px;
   height: auto;
 }
 
@@ -151,7 +158,7 @@
   }
 
   .logoWrapper svg {
-    width: 112px;
+    width: 300px;
   }
 
   .title {
@@ -209,7 +216,7 @@
   }
 
   .logoWrapper svg {
-    width: 84px;
+    width: 220px;
   }
 
   .title {
@@ -298,7 +305,7 @@
   }
 
   .logoWrapper svg {
-    width: 76px;
+    width: 200px;
   }
 
   .title {
