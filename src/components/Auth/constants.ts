@@ -28,12 +28,15 @@ export const authBrandDefaults: {
   trustLabel: string
   trustBadges: string[]
 } = {
-  title: 'Ocean Enterprise Marketplace',
+  title: 'Empower-X Marketplace',
   description:
-    'Discover, publish and manage data, software and AI services with enterprise-grade governance and trusted access control.',
+    'Discover, publish and manage data, software and AI services inside your own Ocean-powered dataspace.',
   features: [
     { icon: 'marketplace', text: 'Publish and discover service offerings' },
-    { icon: 'access', text: 'Control access with verified credentials' },
+    {
+      icon: 'access',
+      text: 'Keep catalogue discovery scoped to your dataspace'
+    },
     { icon: 'interop', text: 'Standardized, interoperable metadata' },
     { icon: 'compute', text: 'Private computation with Compute-to-Data' }
   ],
@@ -44,14 +47,14 @@ export const authBrandDefaults: {
 export const authLoginCopy = {
   title: 'Welcome back',
   subtitle: "Sign in to your organization's data marketplace",
-  ssoLabel: 'Log in to OE Marketplace',
+  ssoLabel: 'Log in to Empower-X Marketplace',
   ssoLoadingLabel: 'Redirecting to login...'
 }
 
 export const authSignupCopy = {
   title: 'Get started',
   subtitle: "Create your organization's marketplace account",
-  ssoLabel: 'Sign-up to OE Marketplace',
+  ssoLabel: 'Sign up to Empower-X Marketplace',
   ssoLoadingLabel: 'Redirecting to signup...',
   termsIntro: 'By creating an account, you agree to our',
   termsLabel: 'Terms of Service',

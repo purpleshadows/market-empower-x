@@ -5,12 +5,8 @@
   transition: width 0.3s ease, height 0.3s ease;
 }
 
-.logo path {
-  fill: white;
-}
-
 a > .logo:hover path {
-  /* fill: var(--menu-logo-color-hover); */
+  opacity: 0.88;
 }
 
 @media screen and (min-width: 55rem) {
@@ -21,8 +17,8 @@ a > .logo:hover path {
 }
 @media screen and (min-width: 768px) and (max-width: 1024px) {
   .logo {
-    width: 150px;
-    height: 50px;
+    width: 3.25rem;
+    height: 3.25rem;
   }
 }
 

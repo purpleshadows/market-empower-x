@@ -13,6 +13,8 @@ import { useState, useEffect, ReactNode, ReactElement } from 'react'
 import { LoggerInstance } from '@oceanprotocol/lib'
 import { getOceanConfig } from '@utils/ocean'
 import { useChainId } from 'wagmi'
+import { getAllowedErc20ChainIds } from '@utils/runtimeConfig'
+import { getSupportedChainIds } from 'chains.config.cjs'
 
 function createUrqlClient(subgraphUri: string) {
   // Cast to the local Exchange type to avoid duplicate @urql/core instances in type checking.
@@ -21,6 +23,23 @@ function createUrqlClient(subgraphUri: string) {
     url: `${subgraphUri}/subgraphs/name/oceanprotocol/ocean-subgraph`,
     exchanges: [dedupExchange, refocus, fetchExchange]
   })
+}
+
+function getConfiguredOceanNetwork(preferredChainId?: number) {
+  const candidates = [
+    preferredChainId,
+    ...getAllowedErc20ChainIds(),
+    ...getSupportedChainIds()
+  ]
+    .filter((chainId): chainId is number => typeof chainId === 'number')
+    .filter((chainId, index, chainIds) => chainIds.indexOf(chainId) === index)
+
+  for (const chainId of candidates) {
+    const oceanConfig = getOceanConfig(chainId)
+    if (oceanConfig?.nodeUri) return { chainId, oceanConfig }
+  }
+
+  return null
 }
 
 export default function UrqlClientProvider({
@@ -37,14 +56,21 @@ export default function UrqlClientProvider({
       return
     }
 
-    const oceanConfig = getOceanConfig(chainId)
+    const configuredNetwork = getConfiguredOceanNetwork(chainId)
 
-    if (!oceanConfig?.nodeUri) {
-      LoggerInstance.error(`[URQL] No nodeUri defined for chain ${chainId}.`)
+    if (!configuredNetwork) {
+      LoggerInstance.error('[URQL] No configured Ocean network found.')
       return
     }
 
-    const newClient = createUrqlClient(oceanConfig.nodeUri)
+    if (configuredNetwork.chainId !== chainId) {
+      LoggerInstance.warn(
+        `[URQL] Falling back from chain ${chainId} to configured chain ` +
+          `${configuredNetwork.chainId}.`
+      )
+    }
+
+    const newClient = createUrqlClient(configuredNetwork.oceanConfig.nodeUri)
     setClient(newClient)
   }, [chainId]) // re-run when chain changes
 

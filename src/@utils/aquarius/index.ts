@@ -43,12 +43,25 @@ export function getFilterTerm(
 ): FilterTerm {
   const isArray = Array.isArray(value)
   const useKey = key === 'term' ? (isArray ? 'terms' : 'term') : key
-  return {
+  const filter = {
     [useKey]: {
       [filterField]: value
     }
   }
+
+  if (filterField.startsWith('credentialSubject.services.')) {
+    return {
+      nested: {
+        path: 'credentialSubject.services',
+        query: filter
+      }
+    } as unknown as FilterTerm
+  }
+
+  return filter
 }
+
+const serviceEndpointFilterPath = 'credentialSubject.services.serviceEndpoint'
 
 function getRangeFilterTerm(filterField: string, gteValue: string): FilterTerm {
   return {
@@ -70,7 +83,7 @@ export function parseFilters(
     filterSet: 'credentialSubject.metadata.tags.keyword',
     filterTime: 'credentialSubject.metadata.created',
     assetState: 'indexedMetadata.nft.state',
-    nodeUriIndex: 'credentialSubject.services.serviceEndpoint.keyword'
+    nodeUriIndex: serviceEndpointFilterPath
   }
   if (filtersList) {
     const filterTerms = Object.keys(filtersList)?.map((key) => {
@@ -140,9 +153,7 @@ function getDataspaceFilterTerm(): FilterTerm | undefined {
 function hasServiceEndpointFilter(filters?: FilterTerm[]): boolean {
   return (
     filters?.some((filter) =>
-      JSON.stringify(filter).includes(
-        'credentialSubject.services.serviceEndpoint.keyword'
-      )
+      JSON.stringify(filter).includes(serviceEndpointFilterPath)
     ) || false
   )
 }
@@ -188,14 +199,7 @@ export function generateBaseQuery(
             }
           },
           ...(shouldApplyDefaultNodeFilter
-            ? [
-                {
-                  terms: {
-                    'credentialSubject.services.serviceEndpoint.keyword':
-                      nodeUriIndex
-                  }
-                }
-              ]
+            ? [getFilterTerm(serviceEndpointFilterPath, nodeUriIndex)]
             : []),
           ...(dataspaceFilterTerm ? [dataspaceFilterTerm] : [])
         ]
@@ -277,9 +281,6 @@ interface MetadataCacheQuery {
   query: SearchQuery
 }
 
-const serviceEndpointFilterPath =
-  'credentialSubject.services.serviceEndpoint.keyword'
-
 function getSearchFilters(query: SearchQuery): unknown[] {
   return Array.isArray(query?.query?.bool?.filter)
     ? query.query.bool.filter
@@ -290,11 +291,17 @@ function getServiceEndpointFilterValue(filter: unknown): unknown {
   const typedFilter = filter as {
     terms?: Record<string, unknown>
     term?: Record<string, unknown>
+    nested?: {
+      query?: unknown
+    }
   }
 
   return (
     typedFilter?.terms?.[serviceEndpointFilterPath] ||
-    typedFilter?.term?.[serviceEndpointFilterPath]
+    typedFilter?.term?.[serviceEndpointFilterPath] ||
+    (typedFilter?.nested?.query
+      ? getServiceEndpointFilterValue(typedFilter.nested.query)
+      : undefined)
   )
 }
 

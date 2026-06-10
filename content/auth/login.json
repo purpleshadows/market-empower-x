@@ -1,6 +1,6 @@
 {
-  "title": "Ocean Enterprise Marketplace",
-  "description": "Discover, publish and manage data, software and AI services with enterprise-grade governance and trusted access control.",
+  "title": "Empower-X Marketplace",
+  "description": "Discover, publish and manage data, software and AI services inside your own Ocean-powered dataspace.",
   "features": [
     {
       "icon": "marketplace",
@@ -8,7 +8,7 @@
     },
     {
       "icon": "access",
-      "text": "Control access with verified credentials"
+      "text": "Keep catalogue discovery scoped to your dataspace"
     },
     {
       "icon": "interop",

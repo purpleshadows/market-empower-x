@@ -15,6 +15,7 @@ import {
 import { getOceanConfig } from '../ocean'
 import { getSupportedChains } from './chains'
 import { getAllowedErc20ChainIds, getRuntimeConfig } from '../runtimeConfig'
+import { getSupportedChainIds } from 'chains.config.cjs'
 
 export async function getDummySigner(chainId: number): Promise<Wallet> {
   const config = getOceanConfig(chainId)
@@ -40,8 +41,14 @@ function getWagmiChains(): readonly [Chain, ...Chain[]] {
   }
 
   if (baseChains.length === 0) {
-    // Keep builds and server rendering resilient when runtime env is not
-    // available yet. The client can still receive the real runtime config.
+    const fallbackChains = getSupportedChains(getSupportedChainIds())
+    if (fallbackChains.length > 0) {
+      return fallbackChains as unknown as readonly [Chain, ...Chain[]]
+    }
+
+    // Keep builds and server rendering resilient if no supported runtime chain
+    // can be derived. UrqlProvider has its own fallback and will not blank.
+    LoggerInstance.warn('[chains] Falling back to local chain 1337.')
     return [localhost]
   }
 

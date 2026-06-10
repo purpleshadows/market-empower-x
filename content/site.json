@@ -1,8 +1,8 @@
 {
-  "siteTitle": "Ocean Protocol Enterprise",
-  "siteTagline": "Publish, find, compare, manage and monetize proprietary data & AI products in a secure,",
-  "taglineContinuation": "Continuted",
-  "siteUrl": "https://enterprise.oceanprotocol.com",
+  "siteTitle": "Empower-X Marketplace",
+  "siteTagline": "Publish and discover data products in a private Ocean-powered dataspace.",
+  "taglineContinuation": "Built for trusted teams.",
+  "siteUrl": "http://localhost:8008",
   "siteImage": "/share.png",
   "copyright": "All Rights Reserved. Powered by [Ocean Protocol](https://oceanprotocol.com).",
   "menu": [
@@ -24,10 +24,10 @@
   "warning": {
     "ctd": "Please note that Compute-to-Data is still in beta phase."
   },
-  "siteDescription": "A decentralized data marketplace powered by Ocean Protocol.",
+  "siteDescription": "A personal Ocean-powered marketplace scoped to a private dataspace.",
   "footer": {
-    "subtitle": "The enterprise data market",
-    "copyright": "© Ocean Enterprise 2025",
+    "subtitle": "Private dataspace market",
+    "copyright": "Copyright 2026 Empower-X Marketplace",
     "privacyTitle": "Privacy",
     "content": [
       {
@@ -39,15 +39,15 @@
           },
           {
             "name": "GitHub",
-            "link": "https://github.com/OceanProtocolEnterprise"
+            "link": "https://github.com/OceanProtocolEnterprise/market"
           },
           {
             "name": "Docs",
             "link": "https://docs.oceanenterprise.io/"
           },
           {
-            "name": "Medium",
-            "link": "https://medium.com/ocean-enterprise-collective"
+            "name": "Ocean Protocol",
+            "link": "https://oceanprotocol.com"
           }
         ]
       },

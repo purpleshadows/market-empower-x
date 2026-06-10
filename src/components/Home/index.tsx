@@ -109,13 +109,11 @@ function HeroSection({
           <Menu />
         </header>
         <div className={styles.textContent}>
-          <h1 className={styles.title}>
-            Ocean Enterprise Demonstration Marketplace
-          </h1>
+          <h1 className={styles.title}>Empower-X Marketplace</h1>
           <div className={styles.subtitle}>
             <p>
-              Publish, find, compare, manage and monetize proprietary data & AI
-              products in a secure, trusted and compliant environment
+              Publish and discover data products inside your own private
+              Ocean-powered dataspace.
             </p>
           </div>
           <div className={styles.ctaContainer}>

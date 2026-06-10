@@ -28,7 +28,7 @@ import { FormFileData } from 'src/@types/S3File'
 import { StorageType } from './provider'
 
 export function isValidDid(did: string): boolean {
-  const regex = /^did:ope:[A-Za-z0-9]{64}$/
+  const regex = /^did:op(?:e)?:[A-Za-z0-9]{64}$/
   return regex.test(did)
 }
 

@@ -1,0 +1,74 @@
+
+walt.id backend = http://localhost:7001
+issuer backend (no web) = http://localhost:7002
+walt.id verifier = http://localhost:7003
+walt.id front web app = http://localhost:7101
+walt.id web portal (verifier?) = http://localhost:7102
+walt.id credentials (docs?) = http://localhost:7103
+dev walt.id SSI = http://localhost:7104
+vault (no web) = http://localhost:8200/
+opa server = http://localhost:8181/
+
+# secrets
+
+Piñata:
+API Key: 761a651afd64805b53d4
+API Secret: 297a1dc8ea6cd6eee1c337bb1b8adc9be57f27cb6b1971766b1b0300af790167
+JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIzNjFjOGQwNi1iMzE0LTQxYTMtYmM5Yy01N2FhZjAwMWYxNWUiLCJlbWFpbCI6ImluZm9AemVydGlmaWVyLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI3NjFhNjUxYWZkNjQ4MDViNTNkNCIsInNjb3BlZEtleVNlY3JldCI6IjI5N2ExZGM4ZWE2Y2Q2ZWVlMWMzMzdiYjFiOGFkYzliZTU3ZjI3Y2I2YjE5NzE3NjZiMWIwMzAwYWY3OTAxNjciLCJleHAiOjE4MDk2NzE1Mjd9.EUOOk_xBUngYBib1ZjsKebglcfN3tYvxFSzkqi1nJ4g
+
+alchemy:
+wBGSSH-a8vkxiqG3MGY_K
+
+node ip: 46.253.33.63
+
+Policy: https://zertifier.com/politica_privacitat.html
+Terms & conditions: https://zertifier.com/terms-conditions.html
+ilya wallet: 0x5a43ad449987600408f1e3fC90d397EC0266889B
+IP admincock: 192.168.130.61
+node private key: 0x94d75285ad2eb0abb23ddd804bb2353e5c7e60d37bbeea3ac71575255e7d0d1d
+startingBlock: 10806864 (you want the first block you start publishing asset)
+sepolia fee token: 0x1B083D8584dd3e6Ff37d04a6e7e82b5F622f3985
+policy_server: http://policy-server:3000 (if in the same docker machine - container name)
+new piñata creds: API Key: 963f657a87fbc7128de5
+API Secret: b4b8ac4e64d3a27db35e2f9593537c038120d5a9bc740846cf7c21fd0c85a323
+JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIzNjFjOGQwNi1iMzE0LTQxYTMtYmM5Yy01N2FhZjAwMWYxNWUiLCJlbWFpbCI6ImluZm9AemVydGlmaWVyLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiI5NjNmNjU3YTg3ZmJjNzEyOGRlNSIsInNjb3BlZEtleVNlY3JldCI6ImI0YjhhYzRlNjRkM2EyN2RiMzVlMmY5NTkzNTM3YzAzODEyMGQ1YTliYzc0MDg0NmNmN2MyMWZkMGM4NWEzMjMiLCJleHAiOjE4MTAyNzY3NTN9.JNOJeobSlrKC5oZAB4V3L4vG7w1qxLBKEQ6_4bPw9QU
+wallet gmail: dev@zertifier.com Z3rtiDevs_2025
+
+
+
+# Services docker 
+# infrastructure
+http://nginx-nginx-pm-1:80 / :81 / :443
+http://arcane:3552
+# oe node
+http://oe-node:8000 / :9000 / :9001 / :9002 / :9003 / :9005
+http://elasticsearch:9200 / :9300
+# market
+http://ocean-market:8008
+# SSI
+http://opa-server:8181
+http://policy-server:8001 / :8000
+http://policy-server-proxy:8002 / :8000
+http://docker-compose-waltid-demo-wallet-1:7101
+http://docker-compose-waltid-dev-wallet-1:7104
+http://docker-compose-verifier-api-1 (no ports)
+http://docker-compose-wallet-api-1 (no ports)
+http://docker-compose-web-portal-1:7102
+http://docker-compose-vc-repo-1:3000
+http://docker-compose-issuer-api-1:7002
+http://docker-compose-postgres-1:5432
+http://docker-compose-caddy-1:7001 / :7002 / :7003 / :7101 / :7102 / :7103 / :7104 / :8080 / :80 / :443 / :443(udp) / :2019
+
+
+
+WALLET_BACKEND_PORT=7001
+ISSUER_API_PORT=7002
+VERIFIER_API_PORT=7003
+DEMO_WALLET_FRONTEND_PORT=7101
+WEB_PORTAL_PORT=7102
+VC_REPO_PORT=7103
+DEV_WALLET_FRONTEND_PORT=7104
+VAULT_PORT=8200
+OPA_SERVER_PORT=8181
+
+

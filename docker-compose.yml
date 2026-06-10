@@ -1,7 +1,9 @@
-version: '3.8'
 services:
   ocean-market:
-    image: oceanenterprise/market:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: personal-data-market:local
     container_name: ocean-market
     ports:
       - '8008:8008'
