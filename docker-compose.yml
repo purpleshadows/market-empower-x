@@ -3,10 +3,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: personal-data-market:local
+    image: purpleshadows/market-empower-x:latest
     container_name: ocean-market
     ports:
-      - '8008:8008'
+      - '8008:0802'
     env_file:
       - .env
     environment:
