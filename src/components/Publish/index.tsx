@@ -192,7 +192,7 @@ export default function PublishPage({
     ddo: Asset,
     ipfsUpload: IpfsUpload,
     erc721Address: string
-  ): Promise<{ did: string }> {
+  ): Promise<{ did: string; txHash: string }> {
     setFeedback((prevState) => ({
       ...prevState,
       '3': {
@@ -229,7 +229,7 @@ export default function PublishPage({
 
       // Set metadata for the NFT
       const nft = new Nft(signer, ddo.credentialSubject.chainId)
-      await nft.setMetadata(
+      const setMetadataTx = await nft.setMetadata(
         erc721Address,
         userAddress,
         0,
@@ -239,18 +239,41 @@ export default function PublishPage({
         ipfsUpload.metadataIPFS,
         ipfsUpload.metadataIPFSHash
       )
+      const txHash = setMetadataTx?.hash
 
-      LoggerInstance.log('Version 5.0.0 Asset published. ID:', ddo.id)
+      if (!txHash) {
+        throw new Error('No metadata transaction received. Please try again.')
+      }
 
       setFeedback((prevState) => ({
         ...prevState,
         '3': {
           ...prevState['3'],
-          status: 'success'
+          status: 'active',
+          txHash
         }
       }))
 
-      return { did: ddo.id }
+      if (typeof setMetadataTx.wait === 'function') {
+        const receipt = await setMetadataTx.wait()
+        if (receipt?.status === 0) {
+          throw new Error('Metadata transaction failed. Please try again.')
+        }
+      }
+
+      LoggerInstance.log('Version 5.0.0 Asset published. ID:', ddo.id)
+      LoggerInstance.log('[publish] setMetadata tx', txHash)
+
+      setFeedback((prevState) => ({
+        ...prevState,
+        '3': {
+          ...prevState['3'],
+          status: 'success',
+          txHash
+        }
+      }))
+
+      return { did: ddo.id, txHash }
     } catch (error) {
       LoggerInstance.error('[publish] error', error.message)
       setFeedback((prevState) => ({
