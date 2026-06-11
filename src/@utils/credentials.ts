@@ -1,8 +1,15 @@
 import {
+  AddressCredentialValue,
   Credential,
   CredentialAddressBased,
   CredentialPolicyBased
 } from 'src/@types/ddo/Credentials'
+
+export function getCredentialAddressValue(
+  value: AddressCredentialValue
+): string {
+  return typeof value === 'string' ? value : value?.address || ''
+}
 
 export function isCredentialAddressBased(
   credential: CredentialAddressBased | CredentialPolicyBased

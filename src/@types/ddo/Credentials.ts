@@ -9,9 +9,11 @@ export interface Address {
   address: string
 }
 
+export type AddressCredentialValue = string | Address
+
 export interface CredentialAddressBased {
   type: 'address'
-  values: Address[]
+  values: AddressCredentialValue[]
 }
 
 export interface CredentialPolicyBased {

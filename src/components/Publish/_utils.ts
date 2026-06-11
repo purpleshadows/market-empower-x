@@ -462,29 +462,17 @@ export function generateCredentials(
   }
 
   if (updatedCredentials?.allow?.length > 0) {
-    const newList = updatedCredentials?.allow?.map((address: string) => {
-      return {
-        address
-      }
-    })
-
     const newAllowList: CredentialAddressBased = {
       type: 'address',
-      values: newList
+      values: updatedCredentials.allow
     }
     newCredentials.allow.push(newAllowList)
   }
 
   if (updatedCredentials?.deny?.length > 0) {
-    const newList = updatedCredentials?.deny?.map((address: string) => {
-      return {
-        address
-      }
-    })
-
     const newDenyList: CredentialAddressBased = {
       type: 'address',
-      values: newList
+      values: updatedCredentials.deny
     }
     newCredentials.deny.push(newDenyList)
   }

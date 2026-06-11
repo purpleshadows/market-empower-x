@@ -17,6 +17,7 @@ import {
 } from '../assetConverter'
 import addressConfig from '../../../address.config.cjs'
 import { isValidDid } from '@utils/ddo'
+import { getCredentialAddressValue } from '@utils/credentials'
 import { Filters } from '@context/Filter'
 import { filterSets } from '@components/Search/Filter'
 import { Asset } from 'src/@types/Asset'
@@ -734,11 +735,12 @@ function isAccountAllowed(ddo: any, accountId: string): boolean {
     if (!allowList || allowList.length === 0) return true
     return allowList.some((allowEntry) => {
       if (allowEntry.type !== 'address' || !allowEntry.values) return false
-      return allowEntry.values.some(
-        (val) =>
-          val.address === '*' ||
-          val.address.toLowerCase() === accountId.toLowerCase()
-      )
+      return allowEntry.values.some((val) => {
+        const address = getCredentialAddressValue(val)
+        return (
+          address === '*' || address?.toLowerCase() === accountId.toLowerCase()
+        )
+      })
     })
   }
 
@@ -746,11 +748,12 @@ function isAccountAllowed(ddo: any, accountId: string): boolean {
     if (!denyList || denyList.length === 0) return false
     return denyList.some((denyEntry) => {
       if (denyEntry.type !== 'address' || !denyEntry.values) return false
-      return denyEntry.values.some(
-        (val) =>
-          val.address === '*' ||
-          val.address.toLowerCase() === accountId.toLowerCase()
-      )
+      return denyEntry.values.some((val) => {
+        const address = getCredentialAddressValue(val)
+        return (
+          address === '*' || address?.toLowerCase() === accountId.toLowerCase()
+        )
+      })
     })
   }
 
@@ -769,7 +772,9 @@ function isAccountAllowed(ddo: any, accountId: string): boolean {
     ddo.credentials.allow.some(
       (entry: any) =>
         entry.type === 'address' &&
-        entry.values?.some((v: any) => v.address === '*')
+        entry.values?.some(
+          (value: any) => getCredentialAddressValue(value) === '*'
+        )
     )
   for (const service of services) {
     const serviceAllow = service.credentials?.allow

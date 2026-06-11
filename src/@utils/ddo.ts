@@ -18,7 +18,10 @@ import {
 import { Asset } from 'src/@types/Asset'
 import { Service } from 'src/@types/ddo/Service'
 import { Option } from 'src/@types/ddo/Option'
-import { isCredentialAddressBased } from './credentials'
+import {
+  getCredentialAddressValue,
+  isCredentialAddressBased
+} from './credentials'
 import {
   CredentialAddressBased,
   Credential,
@@ -247,11 +250,16 @@ function findCredential(
     if (Array.isArray(credential?.values)) {
       if (credential.values.length > 0) {
         const credentialType = String(credential?.type)?.toLowerCase()
-        const credentialValues = credential.values.map((v) => v.address)
+        const credentialValues = credential.values.map(
+          getCredentialAddressValue
+        )
+        const consumerAddress = getCredentialAddressValue(
+          consumerCredentials.values[0]
+        )
         const result =
           credentialType === consumerCredentials.type &&
           (credentialValues.includes('*') ||
-            credentialValues.includes(consumerCredentials.values[0].address))
+            credentialValues.includes(consumerAddress))
         return result
       }
     }

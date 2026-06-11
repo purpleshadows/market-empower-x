@@ -11,6 +11,7 @@ import { Metadata } from 'src/@types/ddo/Metadata'
 import { Credential, isVpValue } from 'src/@types/ddo/Credentials'
 import { Compute, Service } from 'src/@types/ddo/Service'
 import {
+  getCredentialAddressValue,
   isCredentialAddressBased,
   isCredentialPolicyBased
 } from '@utils/credentials'
@@ -145,7 +146,7 @@ function generateCredentials(
   let allowAddresses = []
   credentials.allow?.forEach((allowCredential) => {
     if (isCredentialAddressBased(allowCredential)) {
-      const addresses = allowCredential.values.map((item) => item.address)
+      const addresses = allowCredential.values.map(getCredentialAddressValue)
       allowAddresses = [...allowAddresses, ...addresses]
     }
   })
@@ -155,7 +156,7 @@ function generateCredentials(
   let denyAddresses = []
   credentials.deny?.forEach((denyCredential) => {
     if (isCredentialAddressBased(denyCredential)) {
-      const addresses = denyCredential.values.map((item) => item.address)
+      const addresses = denyCredential.values.map(getCredentialAddressValue)
       denyAddresses = [...denyAddresses, ...addresses]
     }
   })
