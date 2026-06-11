@@ -267,13 +267,13 @@
 }
 
 .bookmarks :global(input[type='checkbox']:hover) {
-  border-color: var(--clr-navy);
+  border-color: var(--color-primary);
 }
 
 .bookmarks :global(input[type='checkbox']:checked),
 .bookmarks :global(input[type='checkbox']:indeterminate) {
-  border-color: var(--clr-navy);
-  background: var(--clr-navy);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 .bookmarks :global(input[type='checkbox']:checked)::after {

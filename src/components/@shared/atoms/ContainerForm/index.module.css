@@ -65,8 +65,8 @@
 }
 
 .container.accent input[type='checkbox']:checked {
-  border-color: var(--clr-amber);
-  background: var(--clr-amber);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 .container.accent input[type='checkbox']:checked::after {
