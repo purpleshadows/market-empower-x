@@ -1,4 +1,8 @@
-import { allowFixedPricing } from '../../../app.config.cjs'
+import {
+  allowFixedPricing,
+  customProviderUrl,
+  defaultProductionNodeUrl
+} from '../../../app.config.cjs'
 import {
   FormPublishData,
   MetadataAlgorithmContainer,
@@ -113,9 +117,9 @@ export const initialValues: FormPublishData = {
       timeout: '',
       access: 'access',
       providerUrl: {
-        url: 'https://provider.mainnet.oceanprotocol.com',
+        url: customProviderUrl || defaultProductionNodeUrl,
         valid: true,
-        custom: false
+        custom: Boolean(customProviderUrl)
       },
       computeOptions,
       usesConsumerParameters: false,

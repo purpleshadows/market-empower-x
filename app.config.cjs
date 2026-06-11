@@ -23,7 +23,11 @@ const parseEnvArray = (value, fallback) => {
   }
 }
 
+const defaultProductionNodeUrl = 'https://node.zdevutils.com/'
+
 module.exports = {
+  defaultProductionNodeUrl,
+
   // URIs of metadata cache instances queried by the marketplace.
   // While ocean.js includes this value for each network as part of its ConfigHelper,
   // the marketplace queries the configured list for multi-node search.
@@ -33,7 +37,7 @@ module.exports = {
   metadataCacheUri: parseEnvArray(
     getEnv('NEXT_PUBLIC_METADATACACHE_URI') ||
       process.env.NEXT_PUBLIC_METADATACACHE_URI,
-    ['https://ocean-node-vm3.oceanenterprise.io']
+    [defaultProductionNodeUrl]
   ),
 
   nodeUri:
@@ -42,7 +46,9 @@ module.exports = {
     'https://eth-sepolia-testnet.api.pocket.network',
 
   customProviderUrl:
-    getEnv('NEXT_PUBLIC_PROVIDER_URL') || process.env.NEXT_PUBLIC_PROVIDER_URL,
+    getEnv('NEXT_PUBLIC_PROVIDER_URL') ||
+    process.env.NEXT_PUBLIC_PROVIDER_URL ||
+    defaultProductionNodeUrl,
 
   defaultDatatokenCap:
     '115792089237316195423570985008687907853269984665640564039457',
@@ -188,7 +194,7 @@ module.exports = {
     [
       getEnv('NEXT_PUBLIC_PROVIDER_URL') ||
         process.env.NEXT_PUBLIC_PROVIDER_URL ||
-        'https://ocean-node-vm3.oceanenterprise.io'
+        defaultProductionNodeUrl
     ]
   ),
 
