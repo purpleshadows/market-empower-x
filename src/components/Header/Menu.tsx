@@ -102,7 +102,6 @@ export default function Menu(): ReactElement {
         <Link href="/" className={styles.logo}>
           <Logo />
         </Link>
-        <div className={styles.demoText}>Private Dataspace</div>
 
         {/* <ul className={styles.navigation}>
         {siteContent?.menu.map((item: MenuItem) => (
