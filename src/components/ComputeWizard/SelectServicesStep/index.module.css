@@ -190,13 +190,21 @@
   height: 16px;
   appearance: none;
   -webkit-appearance: none;
-  border: 1px solid var(--neutral-225);
+  border: 2px solid var(--border-navy-soft);
+  background: var(--brand-white);
   position: relative;
 }
 
+.checkboxInput:hover,
+.checkboxInput:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--navy-alpha-20);
+  outline: 0;
+}
+
 .checkboxInput:checked {
-  background-color: var(--empower-gold-light);
-  border-color: var(--empower-gold-light);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .checkboxInput:checked::after {

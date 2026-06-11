@@ -29,13 +29,13 @@ body .radioWrap > label {
   margin-top: -2px;
   appearance: none;
   -webkit-appearance: none;
-  border: 1px solid var(--empower-gold-light);
+  border: 1px solid var(--border-navy-soft);
   background: white;
   border-radius: 50%;
 }
 
 .radio:focus {
-  box-shadow: 0 0 0 2px var(--yellow-alpha-30);
+  box-shadow: 0 0 0 2px var(--navy-alpha-20);
 }
 
 .radio::after {
@@ -47,14 +47,14 @@ body .radioWrap > label {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: var(--empower-gold-light);
+  background: var(--color-primary);
   border-radius: 50%;
   opacity: 0;
   transition: opacity 0.2s;
 }
 
 .radio:checked {
-  border-color: var(--empower-gold-light);
+  border-color: var(--color-primary);
   background: white;
 }
 
@@ -77,11 +77,17 @@ body .radioWrap > label {
 
 .checkbox {
   border-radius: 2px;
+  border: 2px solid var(--border-navy-soft);
+  background: var(--brand-white);
 }
 
 .radio:focus,
 .checkbox:focus {
-  box-shadow: 0 0 0 var(--input-selected-background);
+  box-shadow: 0 0 0 2px var(--navy-alpha-20);
+}
+
+.checkbox:hover {
+  border-color: var(--color-primary);
 }
 
 .checkbox::after {
@@ -106,8 +112,8 @@ body .radioWrap > label {
 }
 
 .checkbox:checked {
-  border-color: var(--input-selected-background);
-  background: var(--input-selected-background);
+  border-color: var(--color-primary);
+  background: var(--color-primary);
 }
 
 .checkbox:checked::after {

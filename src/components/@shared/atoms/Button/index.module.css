@@ -1,5 +1,5 @@
 .button {
-  border: 0;
+  border: 1px solid var(--border-navy-soft);
   cursor: pointer;
   outline: 0;
   margin: 0;
@@ -14,7 +14,8 @@
   transition: 0.2s ease-out;
   color: var(--clr-navy);
   background: var(--button-background);
-  box-shadow: 0 9px 18px 0 var(--black-alpha-10);
+  box-shadow: 0 9px 18px 0 var(--black-alpha-10),
+    0 0 0 1px var(--navy-alpha-5);
   user-select: none;
   text-align: center;
 }
@@ -47,9 +48,10 @@
 .primary:active {
   background: var(--button-primary-background);
   color: var(--empower-charcoal);
-  border: 1px solid rgba(45, 138, 197, 0.22);
+  border: 1px solid rgba(45, 138, 197, 0.42);
   border-radius: 20px;
-  box-shadow: 1px 2px 8px var(--black-alpha-10);
+  box-shadow: 1px 3px 10px var(--black-alpha-10),
+    0 0 0 1px var(--navy-alpha-10);
   font-family: 'Helvetica';
   font-weight: 700;
   font-size: 14px;
@@ -59,7 +61,8 @@
 
 .primary:hover,
 .primary:focus {
-  opacity: 0.9;
+  background: var(--button-hover-background);
+  opacity: 1;
 }
 
 .ghost,
@@ -90,7 +93,7 @@ body .accent {
   min-width: auto;
   background: var(--gradient-accent);
   color: var(--clr-navy);
-  border: 1px solid rgba(45, 138, 197, 0.18);
+  border: 1px solid rgba(45, 138, 197, 0.42);
   border-radius: var(--radius-xl) !important;
   font-family: var(--font-family-base);
   font-weight: var(--text-weight-bold);
@@ -156,9 +159,10 @@ body .accent:focus {
   width: fit-content;
   height: 32px;
   background: var(--gradient-accent);
-  box-shadow: 1px 2px 8px var(--box-shadow-color);
+  box-shadow: 1px 3px 10px var(--black-alpha-10),
+    0 0 0 1px var(--navy-alpha-10);
   border-radius: 20px;
-  border: 1px solid rgba(45, 138, 197, 0.22);
+  border: 1px solid rgba(45, 138, 197, 0.42);
   cursor: pointer;
   font-family: 'Helvetica';
   font-style: normal;
@@ -172,7 +176,7 @@ body .accent:focus {
 }
 
 .gradient:hover {
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .button.outlined,
@@ -215,14 +219,14 @@ body .accent:focus {
 .gradient {
   background: var(--gradient-accent);
   color: var(--empower-charcoal);
-  border: 1px solid rgba(45, 138, 197, 0.22);
+  border: 1px solid rgba(45, 138, 197, 0.42);
   border-radius: 20px;
 }
 
 .gradient:hover,
 .gradient:focus {
-  background: var(--empower-gold-light);
-  opacity: 0.9;
+  background: var(--button-hover-background);
+  opacity: 1;
 }
 
 .outlined,
@@ -278,11 +282,11 @@ body .accent:focus {
 .secondary:hover,
 .secondary:focus,
 .secondary:active {
-  background: var(--clr-slate-12);
+  background: var(--navy-alpha-10);
   color: var(--empower-charcoal);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
-  border: none;
+  border: 1px solid var(--border-navy-soft);
   padding: 4px 20px;
   min-width: 79px;
   height: var(--field-height);
@@ -291,4 +295,9 @@ body .accent:focus {
   font-size: 14px;
   line-height: 114%;
   text-transform: none;
+}
+
+.secondary:hover,
+.secondary:focus {
+  background: var(--button-hover-background);
 }

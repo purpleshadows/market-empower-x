@@ -29,7 +29,7 @@
 
   --brand-grey: #486a7a;
   --brand-grey-light: #7f99a6;
-  --brand-grey-lighter: #dbe8ed;
+  --brand-grey-lighter: #c9dee8;
   --brand-grey-dimmed: #f5fafb;
 
   --brand-alert-green: #5fb359;
@@ -95,13 +95,13 @@
   --gradient-accent: linear-gradient(
       135deg,
       #ffffff 0%,
-      #f7fafb 38%,
-      #e6eef2 100%
+      #f2f9fc 38%,
+      #dbeef6 100%
     ),
-    #f7fafb;
+    #f2f9fc;
 
   /* Component tokens */
-  --checkbox-selected-background: var(--ocean-orange-color);
+  --checkbox-selected-background: var(--color-primary);
   --bookmark-icon-fill-color: var(--clr-slate-70);
   --bookmark-icon-selected-fill-color: var(--ocean-orange-color);
   --link-font-color: var(--color-highlight);
@@ -122,19 +122,19 @@
   --input-font-color: var(--font-color-heading);
   --input-placeholder-font-color: var(--brand-grey);
   --input-disabled-font-color: var(--font-color-light);
-  --input-border-color: var(--brand-grey-lighter);
+  --input-border-color: #9ec5d8;
   --input-background: var(--brand-white);
   --input-background-highlight: var(--background-highlight);
   --input-selected-background: var(--checkbox-selected-background);
-  --input-selected-border-color: var(--font-color-heading);
+  --input-selected-border-color: var(--color-primary);
   --input-error-text-color: var(--brand-error-red);
   --input-error-border-color: rgba(255, 54, 13, 0.5);
 
   --button-font-color: var(--empower-charcoal);
-  --button-background: var(--empower-gold);
+  --button-background: #eef7fb;
   --button-hover-font-color: var(--empower-charcoal);
-  --button-hover-background: var(--empower-gold-light);
-  --button-active-background: var(--empower-gold-light);
+  --button-hover-background: #dbeef6;
+  --button-active-background: #c9e3ef;
   --button-primary-background: var(--gradient-accent);
   --button-ghost-font-color: var(--color-primary);
   --button-ghost-background: var(--brand-white);

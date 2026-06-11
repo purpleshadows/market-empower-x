@@ -184,6 +184,11 @@ textarea {
   background: white;
 }
 
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--color-primary);
+}
+
 input[type='text']:focus-visible,
 input[type='email']:focus-visible,
 input[type='password']:focus-visible,
