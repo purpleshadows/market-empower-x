@@ -66,12 +66,7 @@ export default function SearchPage({
   }, [parsed, queryResult, updatePage])
 
   useEffect(() => {
-    if (
-      !parsed ||
-      isValidatingSupportedChains ||
-      validatedSupportedChains.length === 0
-    )
-      return
+    if (!parsed || isValidatingSupportedChains) return
 
     fetchAssets(parsed, validatedSupportedChains)
   }, [

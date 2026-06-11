@@ -178,7 +178,7 @@ export function generateBaseQuery(
         ...baseQueryParams.nestedQuery,
         filter: [
           ...(baseQueryParams.filters || []),
-          ...(baseQueryParams.chainIds
+          ...(baseQueryParams.chainIds?.length > 0
             ? [
                 getFilterTerm(
                   'credentialSubject.chainId',

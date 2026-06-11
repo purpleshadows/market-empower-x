@@ -311,11 +311,7 @@ export default function HistoryData({
             columns={columns}
             data={queryResult?.results || []}
             paginationPerPage={9}
-            emptyMessage={
-              validatedSupportedChains.length === 0
-                ? 'No network selected'
-                : null
-            }
+            emptyMessage={null}
             exportEnabled={Boolean(queryResult?.results?.length)}
             onPageChange={(newPage) => {
               setPage(newPage)
