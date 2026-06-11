@@ -63,7 +63,7 @@ export default function PublishedList({
   }, [page, queryResult])
 
   useEffect(() => {
-    if (!accountId) return
+    if (!accountId || validatedSupportedChains.length === 0) return
 
     getPublished(
       accountId,
