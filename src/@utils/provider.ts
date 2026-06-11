@@ -400,7 +400,32 @@ export async function downloadFile(
 
   try {
     const response = await fetch(downloadUrl)
-    if (!response.ok) throw new Error('Failed to fetch file.')
+    if (!response.ok) {
+      let providerMessage = ''
+
+      try {
+        providerMessage = await response.text()
+      } catch {
+        providerMessage = ''
+      }
+
+      const cleanProviderMessage = providerMessage?.trim()
+      const statusText = response.statusText?.trim()
+      const details =
+        cleanProviderMessage ||
+        statusText ||
+        'Provider returned an empty error response.'
+
+      console.error('[Download File Error]', {
+        status: response.status,
+        details,
+        did: asset.id,
+        serviceId: service.id,
+        providerUrl: service.serviceEndpoint || customProviderUrl
+      })
+
+      throw new Error(`Download failed (${response.status}): ${details}`)
+    }
 
     const blob = await response.blob()
     const blobUrl = window.URL.createObjectURL(blob)
