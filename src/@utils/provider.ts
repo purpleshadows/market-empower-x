@@ -11,7 +11,10 @@ import {
   UserCustomParameters,
   getErrorMessage,
   S3FileObject,
-  FtpFileObject
+  FtpFileObject,
+  ProviderComputeInitializeResults,
+  ProviderFees,
+  ZERO_ADDRESS
 } from '@oceanprotocol/lib'
 // if customProviderUrl is set, we need to call provider using this custom endpoint
 import { customProviderUrl } from '../../app.config.cjs'
@@ -114,9 +117,16 @@ export async function initializeProviderForComputeMulti(
     safeDatasets[0]?.service.serviceEndpoint ||
     algorithm.credentialSubject.services[svcIndexAlgo].serviceEndpoint ||
     customProviderUrl
-  const chainId =
+
+  // When the environment has no chain-specific fee config (fees: null), the
+  // node stores it under chainId=0. Passing the asset's chainId to
+  // initializeCompute would fail the node's env lookup — use 0 instead.
+  const assetChainId =
     safeDatasets[0]?.asset.credentialSubject.chainId ??
     algorithm.credentialSubject.chainId
+  const feesIsEmpty =
+    !computeEnv.fees || Object.keys(computeEnv.fees).length === 0
+  const chainId = !feesIsEmpty ? assetChainId : 0
 
   const resources =
     selectedResources.mode === 'free'
@@ -128,6 +138,52 @@ export async function initializeProviderForComputeMulti(
           id: res.id,
           amount: selectedResources?.[res.id] || res.min
         }))
+
+  // When the compute environment has no fee configuration (fees: null/empty), the
+  // node only registers it under chainId=0, but its own validate() rejects chainId=0.
+  // For free compute mode there are no provider fees anyway, so we skip the broken
+  // initializeCompute call and synthesise a zero-fee response. Ocean Protocol smart
+  // contracts skip EIP-712 signature verification when providerFeeAmount = '0', so
+  // the subsequent handleComputeOrder calls succeed without a real signed fee.
+  if (selectedResources.mode === 'free' && feesIsEmpty) {
+    console.log(
+      '[initializeCompute] free env with null fees — bypassing initializeCompute'
+    )
+    const zeroFee: ProviderFees = {
+      providerFeeAddress: ZERO_ADDRESS,
+      providerFeeToken: ZERO_ADDRESS,
+      providerFeeAmount: '0',
+      providerData: '0x',
+      v: '27',
+      r: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      s: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      validUntil: '0'
+    }
+    return {
+      datasets: safeDatasets.map(() => ({
+        providerFee: zeroFee,
+        validOrder: undefined
+      })),
+      algorithm: {
+        providerFee: zeroFee,
+        validOrder: undefined
+      }
+    } as ProviderComputeInitializeResults
+  }
+
+  console.log('[initializeCompute] request params', {
+    computeEnvId: computeEnv.id,
+    computeEnvFees: computeEnv.fees,
+    paymentTokenAddress,
+    chainId,
+    providerUrl,
+    resources,
+    computeAssets,
+    computeAlgo,
+    validUntil,
+    mode: selectedResources.mode
+  })
+
   return await ProviderInstance.initializeCompute(
     computeAssets,
     computeAlgo,

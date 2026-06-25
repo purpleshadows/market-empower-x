@@ -1,0 +1,24 @@
+services:
+  ocean-node-https:
+    image: caddy:2
+    container_name: ocean-node-https
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NODE_HOST: ${NODE_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - oe-node_backend
+
+networks:
+  oe-node_backend:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:

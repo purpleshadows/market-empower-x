@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import { useSsiWallet } from '@context/SsiWallet'
 import { toast } from 'react-toastify'
+import { requiresSsi } from '@utils/credentials'
 import {
   getPd,
   isPolicyServerRedirectMessage,
@@ -116,11 +117,13 @@ export function AssetActionCheckCredentials({
     clearVerifierSessionCache
   } = useSsiWallet()
 
+  // The wallet is only needed at the ReadDids stage; the initial policy server
+  // call does not require it, so don't gate on selectedWallet here.
   useEffect(() => {
-    if (autoStart && selectedWallet?.id) {
+    if (autoStart) {
       setCheckCredentialState(CheckCredentialState.StartCredentialExchange)
     }
-  }, [autoStart, selectedWallet?.id])
+  }, [autoStart])
 
   function handleResetWalletCache() {
     clearVerifierSessionCache()
@@ -138,6 +141,14 @@ export function AssetActionCheckCredentials({
         }
         switch (checkCredentialState) {
           case CheckCredentialState.StartCredentialExchange: {
+            const hasSsi =
+              requiresSsi(asset.credentialSubject?.credentials) ||
+              requiresSsi(service.credentials)
+            if (!hasSsi) {
+              onVerified?.()
+              break
+            }
+
             const presentationResult = await requestCredentialPresentation(
               asset,
               accountId,

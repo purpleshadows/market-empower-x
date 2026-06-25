@@ -1,0 +1,98 @@
+{
+  "siteTitle": "RegenAg-X Marketplace",
+  "siteTagline": "Publish and discover regenerative-agriculture data products in a private Ocean-powered dataspace.",
+  "taglineContinuation": "Built for trusted teams.",
+  "siteUrl": "https://regenag-x.com",
+  "siteImage": "/share.png",
+  "copyright": "All Rights Reserved. Powered by [Ocean Protocol](https://oceanprotocol.com).",
+  "menu": [
+    {
+      "name": "Catalogue",
+      "link": "/search?sort=indexedMetadata.event.block&sortOrder=desc"
+    },
+    {
+      "name": "Publish",
+      "link": "/publish/1"
+    },
+    {
+      "name": "Profile",
+      "link": "/profile"
+    }
+  ],
+  "announcement": "",
+  "devPreviewAnnouncement": "You are visiting the SITE-TITLE-PLACEHOLDER Developer Preview. Please note that some functionalities are in beta and may not work as expected. Visit the [SITE-TITLE-PLACEHOLDER marketplace](SITE-LINK-PLACEHOLDER) instead.",
+  "warning": {
+    "ctd": "Please note that Compute-to-Data is still in beta phase."
+  },
+  "siteDescription": "A regenerative-agriculture Ocean-powered marketplace scoped to a private dataspace.",
+  "footer": {
+    "subtitle": "Private dataspace market",
+    "copyright": "Copyright 2026 RegenAg-X Marketplace",
+    "privacyTitle": "Privacy",
+    "content": [
+      {
+        "title": "Resources",
+        "links": [
+          {
+            "name": "Log",
+            "link": "https://sepolia.etherscan.io/"
+          },
+          {
+            "name": "GitHub",
+            "link": "https://github.com/purpleshadows/market-empower-x"
+          },
+          {
+            "name": "Docs",
+            "link": "https://docs.regenag-x.com/"
+          },
+          {
+            "name": "RegenAg-X",
+            "link": "https://regenag-x.com/"
+          },
+          {
+            "name": "Ocean Protocol",
+            "link": "https://oceanprotocol.com"
+          }
+        ]
+      },
+      {
+        "title": "Navigation",
+        "links": [
+          {
+            "name": "Catalogue",
+            "link": "/search?sort=indexedMetadata.event.block&sortOrder=desc"
+          },
+          {
+            "name": "Profile",
+            "link": "/profile"
+          },
+          {
+            "name": "Publish",
+            "link": "/publish/1"
+          }
+        ]
+      },
+      {
+        "title": "Privacy",
+        "links": [
+          {
+            "name": "Terms and Conditions",
+            "link": "/imprint"
+          },
+          {
+            "name": "Privacy",
+            "link": "/privacy/en#6-cookies-and-web-storage"
+          },
+          {
+            "name": "Cookie Policy",
+            "link": "/cookie-settings"
+          },
+          {
+            "name": "Data Portal Usage Agreement",
+            "link": "/privacy/en#ocean-enterprise-collective-ev-data-portal-usage-agreement"
+          }
+        ]
+      }
+    ]
+  }
+}

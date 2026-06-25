@@ -1,0 +1,42 @@
+services:
+  ocean-market:
+    image: purpleshadows/market-regenag-x:latest
+    container_name: ocean-market-regenag
+    restart: unless-stopped
+    expose:
+      - "8008"
+    environment:
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      VIRTUAL_PORT: ${VIRTUAL_PORT}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      NODE_ENV: ${NODE_ENV}
+
+      NEXT_PUBLIC_PROVIDER_URL: ${NEXT_PUBLIC_PROVIDER_URL:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_METADATACACHE_URI: ${NEXT_PUBLIC_METADATACACHE_URI:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_NODE_URI_INDEXED: ${NEXT_PUBLIC_NODE_URI_INDEXED:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_NODE_URI_MAP: ${NEXT_PUBLIC_NODE_URI_MAP}
+
+      NEXT_PUBLIC_IPFS_GATEWAY: ${NEXT_PUBLIC_IPFS_GATEWAY}
+      NEXT_PUBLIC_IPFS_UPLOAD_URL: ${NEXT_PUBLIC_IPFS_UPLOAD_URL}
+      NEXT_PUBLIC_IPFS_DELETE_URL: ${NEXT_PUBLIC_IPFS_DELETE_URL}
+      IPFS_JWT: ${IPFS_JWT}
+      NEXT_PUBLIC_IPFS_UNPIN_FILES: ${NEXT_PUBLIC_IPFS_UNPIN_FILES}
+
+      NEXT_PUBLIC_ALLOWED_ERC20_ADDRESSES: ${NEXT_PUBLIC_ALLOWED_ERC20_ADDRESSES}
+
+      NEXT_PUBLIC_ENCRYPT_ASSET: ${NEXT_PUBLIC_ENCRYPT_ASSET}
+      # RegenAg-X uses the SAME node/chain as Empower-X but its OWN dataspace,
+      # so each marketplace's catalogue shows only its own assets.
+      NEXT_PUBLIC_DATASPACE: ${NEXT_PUBLIC_DATASPACE:-regenag-x}
+      NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT: ${NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT}
+      NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB: ${NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB}
+
+      NEXT_PUBLIC_SSI_ENABLED: ${NEXT_PUBLIC_SSI_ENABLED}
+      NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL: ${NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL}
+    networks:
+      - docker_default
+
+networks:
+  docker_default:
+    external: true

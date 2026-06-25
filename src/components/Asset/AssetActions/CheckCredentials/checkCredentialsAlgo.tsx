@@ -29,6 +29,7 @@ import {
   buildSsiValidationErrorMessage,
   getSsiVerificationFailureDetails
 } from './errorUtils'
+import { requiresSsi } from '@utils/credentials'
 
 function newExchangeStateData(): ExchangeStateData {
   return {
@@ -86,12 +87,14 @@ export function AssetActionCheckCredentialsAlgo({
     sessionToken
   } = useSsiWallet()
 
-  // Auto-start credential exchange if autoStart is true
+  // Auto-start credential exchange if autoStart is true.
+  // The wallet is only needed at the ReadDids stage; the initial policy server
+  // call does not require it, so don't gate on selectedWallet here.
   useEffect(() => {
-    if (autoStart && selectedWallet?.id) {
+    if (autoStart) {
       setCheckCredentialState(CheckCredentialState.StartCredentialExchange)
     }
-  }, [autoStart, selectedWallet?.id])
+  }, [autoStart])
 
   function handleResetWalletCache() {
     setCheckCredentialState(CheckCredentialState.Stop)
@@ -110,6 +113,14 @@ export function AssetActionCheckCredentialsAlgo({
         }
         switch (checkCredentialState) {
           case CheckCredentialState.StartCredentialExchange: {
+            const hasSsi =
+              requiresSsi(asset.credentialSubject?.credentials) ||
+              requiresSsi(service.credentials)
+            if (!hasSsi) {
+              onVerified?.()
+              break
+            }
+
             parseCredentialPolicies(asset.credentialSubject?.credentials)
             asset?.credentialSubject?.services?.forEach((service) => {
               parseCredentialPolicies(service.credentials)

@@ -1,0 +1,16 @@
+services:
+  ocean-market-regenag:
+    image: market-regenag-x-local
+    container_name: ocean-market-regenag-local
+    restart: unless-stopped
+    ports:
+      - "8009:8008"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      # Same node as empower, but RegenAg-X's own dataspace so the catalogue
+      # only shows regenag assets (empty until you publish into it).
+      NEXT_PUBLIC_DATASPACE: regenag-x
+      # Assets are indexed with node.zdevutils.com as their serviceEndpoint.
+      NEXT_PUBLIC_NODE_URI_INDEXED: '["https://node.zdevutils.com"]'

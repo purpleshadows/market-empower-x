@@ -1,0 +1,13 @@
+{$NODE_HOST} {
+    @options method OPTIONS
+    respond @options 204
+
+    header {
+        Access-Control-Allow-Origin *
+        Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        Access-Control-Allow-Headers *
+        Access-Control-Max-Age 86400
+    }
+
+    reverse_proxy oe-node:8000
+}

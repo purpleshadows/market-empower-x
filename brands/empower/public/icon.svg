@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 152.41 152.41" role="img" aria-label="Empower-X icon">
+  <defs>
+    <linearGradient id="empowerIconTop" x1="43.15" y1="63.89" x2="64.93" y2="-12.64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2d8ac5"/>
+      <stop offset=".05" stop-color="#358ec6"/>
+      <stop offset=".37" stop-color="#6cadcc"/>
+      <stop offset=".65" stop-color="#93c3d1"/>
+      <stop offset=".87" stop-color="#acd0d4"/>
+      <stop offset="1" stop-color="#b5d6d6"/>
+    </linearGradient>
+    <linearGradient id="empowerIconBottom" x1="-3523.92" y1="731.36" x2="-3502.14" y2="654.83" gradientTransform="translate(-3480.1404 819.8762) rotate(-180)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2d8ac5"/>
+      <stop offset=".05" stop-color="#358ec6"/>
+      <stop offset=".37" stop-color="#6cadcc"/>
+      <stop offset=".65" stop-color="#93c3d1"/>
+      <stop offset=".87" stop-color="#acd0d4"/>
+      <stop offset="1" stop-color="#b5d6d6"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(32.74 0)">
+    <circle fill="#2d8ac5" cx="43.43" cy="76.44" r="35.72"/>
+    <path fill="url(#empowerIconTop)" d="M82.86,26.63c5.88-6.57,5.32-16.67-1.25-22.56-6.57-5.88-16.67-5.32-22.56,1.25L18.07,51.11l.06.06c-.2.21-.44.36-.64.58-5.88,6.57-5.32,16.67,1.25,22.56s16.67,5.32,22.56-1.25c.2-.22.33-.47.51-.7l.06.06,40.97-45.79Z"/>
+    <path fill="url(#empowerIconBottom)" d="M4.07,125.78c-5.88,6.57-5.32,16.67,1.25,22.56,6.57,5.88,16.67,5.32,22.56-1.25l40.97-45.79-.06-.06c.2-.21.44-.36.64-.58,5.88-6.57,5.32-16.67-1.25-22.56-6.57-5.88-16.67-5.32-22.56,1.25-.2.22-.33.47-.51.7l-.06-.06L4.07,125.78Z"/>
+  </g>
+</svg>

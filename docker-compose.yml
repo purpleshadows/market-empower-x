@@ -1,4 +1,5 @@
 services:
+  # ── Empower-X marketplace ────────────────────────────────────────────────
   ocean-market:
     image: purpleshadows/market-empower-x:latest
     container_name: ocean-market
@@ -27,6 +28,51 @@ services:
 
       NEXT_PUBLIC_ENCRYPT_ASSET: ${NEXT_PUBLIC_ENCRYPT_ASSET}
       NEXT_PUBLIC_DATASPACE: ${NEXT_PUBLIC_DATASPACE}
+      NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT: ${NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT}
+      NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB: ${NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB}
+
+      NEXT_PUBLIC_SSI_ENABLED: ${NEXT_PUBLIC_SSI_ENABLED}
+      NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL: ${NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL}
+    networks:
+      - docker_default
+
+  # ── RegenAg-X marketplace ────────────────────────────────────────────────
+  # Same Ocean node/chain as Empower-X (all the shared ${...} vars below are
+  # identical), but its own domain and its own dataspace so the catalogue only
+  # shows RegenAg-X assets. The three values that DIFFER from empower use
+  # REGENAG_* overrides with sensible defaults — set them in the Portainer env
+  # only if you need to change them.
+  ocean-market-regenag:
+    image: purpleshadows/market-regenag-x:latest
+    container_name: ocean-market-regenag
+    restart: unless-stopped
+    expose:
+      - "8008"
+    environment:
+      # --- regenag-specific (differ from empower) ---
+      VIRTUAL_HOST: ${VIRTUAL_HOST}
+      LETSENCRYPT_HOST: ${LETSENCRYPT_HOST}
+      NEXT_PUBLIC_DATASPACE: ${NEXT_PUBLIC_DATASPACE}
+
+      # --- shared with empower (same node, same everything else) ---
+      VIRTUAL_PORT: ${VIRTUAL_PORT}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      NODE_ENV: ${NODE_ENV}
+
+      NEXT_PUBLIC_PROVIDER_URL: ${NEXT_PUBLIC_PROVIDER_URL:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_METADATACACHE_URI: ${NEXT_PUBLIC_METADATACACHE_URI:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_NODE_URI_INDEXED: ${NEXT_PUBLIC_NODE_URI_INDEXED:-https://node.zdevutils.com/}
+      NEXT_PUBLIC_NODE_URI_MAP: ${NEXT_PUBLIC_NODE_URI_MAP}
+
+      NEXT_PUBLIC_IPFS_GATEWAY: ${NEXT_PUBLIC_IPFS_GATEWAY}
+      NEXT_PUBLIC_IPFS_UPLOAD_URL: ${NEXT_PUBLIC_IPFS_UPLOAD_URL}
+      NEXT_PUBLIC_IPFS_DELETE_URL: ${NEXT_PUBLIC_IPFS_DELETE_URL}
+      IPFS_JWT: ${IPFS_JWT}
+      NEXT_PUBLIC_IPFS_UNPIN_FILES: ${NEXT_PUBLIC_IPFS_UNPIN_FILES}
+
+      NEXT_PUBLIC_ALLOWED_ERC20_ADDRESSES: ${NEXT_PUBLIC_ALLOWED_ERC20_ADDRESSES}
+
+      NEXT_PUBLIC_ENCRYPT_ASSET: ${NEXT_PUBLIC_ENCRYPT_ASSET}
       NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT: ${NEXT_PUBLIC_HIDE_ONBOARDING_MODULE_BY_DEFAULT}
       NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB: ${NEXT_PUBLIC_MAX_LICENSE_FILE_SIZE_KB}
 

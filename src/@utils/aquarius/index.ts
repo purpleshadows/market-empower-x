@@ -622,6 +622,39 @@ export async function getAssetsFromDids(
   }
 }
 
+// Whether a dataset's compute service trusts the given algorithm. Mirrors the
+// publish-time trust rules (publisherTrustedAlgorithms /
+// publisherTrustedAlgorithmPublishers), evaluated client-side because this
+// node's metadata index does not expose the nested
+// credentialSubject.services.compute.* fields as queryable terms.
+function datasetServiceTrustsAlgorithm(
+  compute: any,
+  algorithmId: string,
+  algorithmServiceId: string
+): boolean {
+  if (!compute) return false
+
+  const trustedPublishers = compute.publisherTrustedAlgorithmPublishers
+  if (Array.isArray(trustedPublishers) && trustedPublishers.includes('*')) {
+    return true
+  }
+
+  const trustedAlgos = compute.publisherTrustedAlgorithms
+  if (Array.isArray(trustedAlgos)) {
+    return trustedAlgos.some((entry: any) => {
+      const did = typeof entry === 'string' ? entry : entry?.did
+      const svc = typeof entry === 'string' ? undefined : entry?.serviceId
+      if (did === '*') return true
+      return (
+        did === algorithmId &&
+        (!svc || svc === '*' || svc === algorithmServiceId)
+      )
+    })
+  }
+
+  return false
+}
+
 export async function getAlgorithmDatasetsForCompute(
   algorithmId: string,
   serviceId: string,
@@ -631,88 +664,40 @@ export async function getAlgorithmDatasetsForCompute(
   cancelToken?: CancelToken,
   tokenSymbolMap?: Record<string, string>
 ): Promise<AssetSelectionAsset[]> {
+  // This node's metadata index does not support querying the nested
+  // credentialSubject.services.compute.publisherTrustedAlgorithms fields, so the
+  // previous term-based queries always returned nothing (empty dataset list in
+  // the algorithm flow). Instead, fetch all datasets on the chain — type queries
+  // ARE indexed — and filter client-side for those whose compute service trusts
+  // this algorithm.
   const baseQueryParams = {
     chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.did.keyword':
-            algorithmId
-        }
-      },
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.serviceId.keyword':
-            serviceId
-        }
-      }
-    ],
+    filters: [getFilterTerm('credentialSubject.metadata.type', 'dataset')],
     sortOptions: {
       sortBy: SortTermOptions.Created,
       sortDirection: SortDirectionOptions.Descending
-    }
-  } as BaseQueryParams
-
-  const baseQueryParams2 = {
-    chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.did.keyword':
-            '*'
-        }
-      },
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.serviceId.keyword':
-            '*'
-        }
-      }
-    ],
-    sortOptions: {
-      sortBy: SortTermOptions.Created,
-      sortDirection: SortDirectionOptions.Descending
-    }
-  } as BaseQueryParams
-
-  const baseQueryParams3 = {
-    chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithmPublishers.keyword':
-            '*'
-        }
-      }
-    ],
-    sortOptions: {
-      sortBy: SortTermOptions.Created,
-      sortDirection: SortDirectionOptions.Descending
+    },
+    esPaginationOptions: {
+      size: 3000
     }
   } as BaseQueryParams
 
   const query = generateBaseQuery(baseQueryParams)
-  const query2 = generateBaseQuery(baseQueryParams2)
-  const query3 = generateBaseQuery(baseQueryParams3)
-  const [res1, res2, res3] = await Promise.all([
-    queryMetadata(query, cancelToken),
-    queryMetadata(query2, cancelToken),
-    queryMetadata(query3, cancelToken)
-  ])
+  const res = await queryMetadata(query, cancelToken)
+  const allDatasets = res?.results || []
 
-  // Combine results and deduplicate by ID
-  const combined = [
-    ...(res1?.results || []),
-    ...(res2?.results || []),
-    ...(res3?.results || [])
-  ]
-
-  const datasetsOnly = combined.filter(
-    (asset) => asset?.credentialSubject?.metadata?.type === 'dataset'
-  )
+  const trustedDatasets = allDatasets.filter((asset) => {
+    if (asset?.credentialSubject?.metadata?.type !== 'dataset') return false
+    const services = asset?.credentialSubject?.services || []
+    return services.some(
+      (svc: any) =>
+        svc?.compute &&
+        datasetServiceTrustsAlgorithm(svc.compute, algorithmId, serviceId)
+    )
+  })
 
   const uniqueAssetsMap = new Map<string, any>()
-  datasetsOnly.forEach((asset) => {
+  trustedDatasets.forEach((asset) => {
     if (!uniqueAssetsMap.has(asset.id)) {
       uniqueAssetsMap.set(asset.id, asset)
     }
@@ -813,84 +798,35 @@ export async function getAlgorithmDatasetsForComputeSelection(
   cancelToken?: CancelToken,
   tokenSymbolMap?: Record<string, string>
 ): Promise<AssetSelectionAsset[]> {
+  // This node's metadata index does not support querying the nested
+  // credentialSubject.services.compute.publisherTrustedAlgorithms fields, so the
+  // previous term-based queries always returned nothing (empty "Select Datasets"
+  // list in the algorithm flow). Instead, fetch all datasets on the chain — type
+  // queries ARE indexed — and filter client-side for those whose compute service
+  // trusts this algorithm.
   const baseQueryParams = {
     chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.did.keyword':
-            algorithmId
-        }
-      },
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.serviceId.keyword':
-            serviceId
-        }
-      }
-    ],
+    filters: [getFilterTerm('credentialSubject.metadata.type', 'dataset')],
     sortOptions: {
       sortBy: SortTermOptions.Created,
       sortDirection: SortDirectionOptions.Descending
-    }
-  } as BaseQueryParams
-
-  const baseQueryParams2 = {
-    chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.did.keyword':
-            '*'
-        }
-      },
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithms.serviceId.keyword':
-            '*'
-        }
-      }
-    ],
-    sortOptions: {
-      sortBy: SortTermOptions.Created,
-      sortDirection: SortDirectionOptions.Descending
-    }
-  } as BaseQueryParams
-
-  const baseQueryParams3 = {
-    chainIds: [datasetChainId],
-    filters: [
-      {
-        term: {
-          'credentialSubject.services.compute.publisherTrustedAlgorithmPublishers.keyword':
-            '*'
-        }
-      }
-    ],
-    sortOptions: {
-      sortBy: SortTermOptions.Created,
-      sortDirection: SortDirectionOptions.Descending
+    },
+    esPaginationOptions: {
+      size: 3000
     }
   } as BaseQueryParams
 
   const query = generateBaseQuery(baseQueryParams)
-  const query2 = generateBaseQuery(baseQueryParams2)
-  const query3 = generateBaseQuery(baseQueryParams3)
-  const [res1, res2, res3] = await Promise.all([
-    queryMetadata(query, cancelToken),
-    queryMetadata(query2, cancelToken),
-    queryMetadata(query3, cancelToken)
-  ])
-
-  // Combine results and deduplicate by ID
-  const combined = [
-    ...(res1?.results || []),
-    ...(res2?.results || []),
-    ...(res3?.results || [])
-  ]
-  const datasetsOnly = combined.filter(
-    (asset) => asset?.credentialSubject?.metadata?.type === 'dataset'
-  )
+  const res = await queryMetadata(query, cancelToken)
+  const datasetsOnly = (res?.results || []).filter((asset) => {
+    if (asset?.credentialSubject?.metadata?.type !== 'dataset') return false
+    const services = asset?.credentialSubject?.services || []
+    return services.some(
+      (svc: any) =>
+        svc?.compute &&
+        datasetServiceTrustsAlgorithm(svc.compute, algorithmId, serviceId)
+    )
+  })
   const allowedDatasets = datasetsOnly.filter((asset) =>
     isAccountAllowed(asset, accountId)
   )

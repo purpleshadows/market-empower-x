@@ -398,6 +398,25 @@ export default function Review({
   ])
 
   const errorMessages: string[] = []
+
+  // For non-SSI assets there is no SSI session, so lookupVerifierSessionId
+  // returns nothing. When the queue rebuilds (e.g. after selectedAlgorithmAsset
+  // loads) we must preserve verified status by checking the localStorage
+  // timestamp written by handleVerificationComplete.
+  const getLocalVerifiedStatus = (
+    assetId: string,
+    serviceId: string,
+    hasSsi: boolean,
+    sessionId: string | undefined
+  ): boolean => {
+    if (sessionId) return true
+    if (hasSsi) return false
+    if (typeof window === 'undefined' || !window.localStorage) return false
+    return Boolean(
+      window.localStorage.getItem(`credential_${assetId}_${serviceId}`)
+    )
+  }
+
   const formatDuration = (seconds: number): string => {
     const d = Math.floor(seconds / 86400)
     const h = Math.floor((seconds % 86400) / 3600)
@@ -807,7 +826,15 @@ export default function Review({
     if (isDatasetFlow) {
       if (asset && service) {
         const sessionId = lookupVerifierSessionId?.(asset.id, service.id)
-        const isVerified = Boolean(sessionId)
+        const hasSsiDataset =
+          requiresSsi(asset?.credentialSubject?.credentials) ||
+          requiresSsi(service?.credentials)
+        const isVerified = getLocalVerifiedStatus(
+          asset.id,
+          service.id,
+          hasSsiDataset,
+          sessionId
+        )
         const rawPrice =
           accessDetails?.validOrderTx && accessDetails.validOrderTx !== ''
             ? '0'
@@ -844,7 +871,15 @@ export default function Review({
           selectedAlgorithmAsset.id,
           algoService?.id
         )
-        const isVerified = Boolean(sessionId)
+        const hasSsiAlgo =
+          requiresSsi(selectedAlgorithmAsset?.credentialSubject?.credentials) ||
+          requiresSsi(algoService?.credentials)
+        const isVerified = getLocalVerifiedStatus(
+          selectedAlgorithmAsset.id,
+          algoService.id,
+          hasSsiAlgo,
+          sessionId
+        )
         const details = selectedAlgorithmAsset?.accessDetails?.[serviceIndex]
         const rawPrice =
           details?.validOrderTx || details?.price
@@ -881,7 +916,15 @@ export default function Review({
           const dsService =
             ds.credentialSubject?.services?.[ds.serviceIndex || 0]
           const sessionId = lookupVerifierSessionId?.(ds.id, dsService?.id)
-          const isVerified = Boolean(sessionId)
+          const hasSsiDs =
+            requiresSsi(ds?.credentialSubject?.credentials) ||
+            requiresSsi(dsService?.credentials)
+          const isVerified = getLocalVerifiedStatus(
+            ds.id,
+            dsService?.id || '',
+            hasSsiDs,
+            sessionId
+          )
           const details = ds.accessDetails?.[ds.serviceIndex || 0]
           const rawPrice =
             details?.validOrderTx && details.validOrderTx !== ''
@@ -913,7 +956,15 @@ export default function Review({
       }
       if (service && asset) {
         const sessionId = lookupVerifierSessionId?.(asset?.id, service.id)
-        const isVerified = Boolean(sessionId)
+        const hasSsiAlgoFlow =
+          requiresSsi(asset?.credentialSubject?.credentials) ||
+          requiresSsi(service?.credentials)
+        const isVerified = getLocalVerifiedStatus(
+          asset.id,
+          service.id,
+          hasSsiAlgoFlow,
+          sessionId
+        )
         const rawPrice = asset.credentialSubject.metadata.algorithm
           ? accessDetails?.validOrderTx
             ? '0'
@@ -979,7 +1030,16 @@ export default function Review({
                 return { ...item, status: 'expired' as const }
               }
             } else {
-              return { ...item, status: 'failed' as const }
+              // No local timestamp — only fail if the SSI wallet also has no
+              // session for this asset. If the wallet cache says it's verified,
+              // trust it (the item was initialised from lookupVerifierSessionId).
+              const sessionId = lookupVerifierSessionId?.(
+                item.asset.id,
+                item.service.id
+              )
+              if (!sessionId) {
+                return { ...item, status: 'failed' as const }
+              }
             }
           }
           return item
@@ -992,37 +1052,13 @@ export default function Review({
   }, [])
 
   const startVerification = (index: number) => {
-    const hasExpiredCredentials = verificationQueue.some(
-      (item) => item.status === 'failed' || item.status === 'expired'
-    )
-    if (hasExpiredCredentials) {
-      const expiredIndices = verificationQueue
-        .map((item, i) => ({ item, index: i }))
-        .filter(
-          ({ item }) => item.status === 'failed' || item.status === 'expired'
-        )
-        .map(({ index }) => index)
-      const firstExpiredIndex = expiredIndices[0]
-      if (firstExpiredIndex !== undefined) {
-        setVerificationQueue((prev) =>
-          prev.map((item, i) =>
-            i === firstExpiredIndex
-              ? { ...item, status: 'checking' as const }
-              : item
-          )
-        )
-        setCurrentVerificationIndex(firstExpiredIndex)
-        setShowCredentialsCheck(true)
-      }
-    } else {
-      setVerificationQueue((prev) =>
-        prev.map((item, i) =>
-          i === index ? { ...item, status: 'checking' as const } : item
-        )
+    setVerificationQueue((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, status: 'checking' as const } : item
       )
-      setCurrentVerificationIndex(index)
-      setShowCredentialsCheck(true)
-    }
+    )
+    setCurrentVerificationIndex(index)
+    setShowCredentialsCheck(true)
   }
 
   const handleVerificationComplete = () => {
@@ -1350,6 +1386,7 @@ export default function Review({
           ...(algorithmProviderFees ? [algorithmProviderFees] : [])
         ]
         const tokenAddresses = allFees
+          .filter((f) => f?.providerFeeAmount && f.providerFeeAmount !== '0')
           .map((f) => f?.providerFeeToken)
           .filter(Boolean)
         if (tokenAddresses.length > 0) {
@@ -2200,6 +2237,18 @@ export default function Review({
         setAlgoLoadError(undefined)
       } catch (e) {
         console.error('Could not fetch algorithm asset in review:', e)
+        // Unblock the UI: set the algorithm without access details so the
+        // verification queue renders. The compute flow can still proceed
+        // because the free-mode bypass in provider.ts does not need them.
+        if (serviceIndexAlgo !== null) {
+          setServiceIndex(serviceIndexAlgo)
+        }
+        const fallbackExtended: AssetExtended = {
+          ...algorithmAsset,
+          accessDetails: [],
+          serviceIndex: serviceIndexAlgo ?? undefined
+        }
+        setSelectedAlgorithmAsset?.(fallbackExtended)
       }
     }
     fetchAlgorithmAssetExtended()

@@ -12,7 +12,8 @@ import {
   ProviderInstance,
   ProviderInitialize,
   getErrorMessage,
-  allowance
+  allowance,
+  ZERO_ADDRESS
 } from '@oceanprotocol/lib'
 import { Signer, TransactionResponse, formatUnits, parseUnits } from 'ethers'
 import Decimal from 'decimal.js'
@@ -116,6 +117,22 @@ export async function order(
   if (serviceIndex === -1) {
     throw new Error(`Service with id ${service.id} not found in the DDO.`)
   }
+
+  console.log('[order] entering order()', {
+    assetId: asset?.id,
+    assetType: asset?.credentialSubject?.metadata?.type,
+    accessType: accessDetails?.type,
+    templateId: accessDetails?.templateId,
+    price: accessDetails?.price,
+    baseTokenAddress: accessDetails?.baseToken?.address,
+    baseTokenSymbol: accessDetails?.baseToken?.symbol,
+    datatokenAddress: accessDetails?.datatoken?.address,
+    validOrderTx: accessDetails?.validOrderTx,
+    isOwned: accessDetails?.isOwned,
+    hasDatatoken,
+    providerFeeAmount: providerFees?.providerFeeAmount,
+    chainId: asset?.credentialSubject?.chainId
+  })
 
   // 1. Resolve the specific Consume Market Fee from the ENV configuration
   const baseTokenAddress = accessDetails.baseToken.address.toLowerCase()
@@ -337,27 +354,38 @@ export async function order(
         const providerFeeWei =
           orderParams._providerFee?.providerFeeAmount || '0'
         const providerToken = orderParams._providerFee?.providerFeeToken
-        const providerTokenInfo = await getTokenInfo(
-          providerToken,
-          signer?.provider
-        )
-        const providerFeeHuman = formatUnits(
-          providerFeeWei,
-          providerTokenInfo?.decimals || 18
-        )
 
-        // For free assets, we only need to approve the Provider Fee
-        const tx: any = await approve(
-          signer as any,
-          config,
-          accountId,
-          providerToken,
-          accessDetails.datatoken.address,
-          providerFeeHuman,
-          false
-        )
-        if (tx && typeof tx.wait === 'function') {
-          await tx.wait()
+        // Only approve the provider fee when there is a real token and a
+        // non-zero amount. The free-compute bypass sets providerFeeToken to the
+        // zero address; approve() internally calls allowance() on it, which
+        // reverts with BAD_DATA ("0x") because the zero address has no contract.
+        // (Matches the guard already present in the template-1 free path.)
+        if (
+          providerToken &&
+          providerToken !== ZERO_ADDRESS &&
+          providerFeeWei !== '0'
+        ) {
+          const providerTokenInfo = await getTokenInfo(
+            providerToken,
+            signer?.provider
+          )
+          const providerFeeHuman = formatUnits(
+            providerFeeWei,
+            providerTokenInfo?.decimals || 18
+          )
+
+          const tx: any = await approve(
+            signer as any,
+            config,
+            accountId,
+            providerToken,
+            accessDetails.datatoken.address,
+            providerFeeHuman,
+            false
+          )
+          if (tx && typeof tx.wait === 'function') {
+            await tx.wait()
+          }
         }
 
         const buyTx = await datatoken.buyFromDispenserAndOrder(

@@ -1,0 +1,16 @@
+services:
+  ocean-node-local-https:
+    image: nginx:alpine
+    container_name: ocean-node-local-https
+    restart: unless-stopped
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks:
+      - oe-node_backend
+
+networks:
+  oe-node_backend:
+    external: true

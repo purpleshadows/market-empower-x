@@ -1,0 +1,21 @@
+services:
+  ocean-node-proxy:
+    image: nginx:alpine
+    container_name: ocean-node-proxy
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      VIRTUAL_HOST: ${NODE_VIRTUAL_HOST}
+      VIRTUAL_PORT: ${NODE_VIRTUAL_PORT}
+      LETSENCRYPT_HOST: ${NODE_LETSENCRYPT_HOST}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+      UPSTREAM_NODE_URL: ${UPSTREAM_NODE_URL}
+    volumes:
+      - ./deploy/node-proxy/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      - docker_default
+
+networks:
+  docker_default:
+    external: true

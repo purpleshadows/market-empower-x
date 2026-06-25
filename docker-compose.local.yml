@@ -1,0 +1,14 @@
+services:
+  ocean-market:
+    image: market-empower-x-local
+    container_name: ocean-market-local
+    restart: unless-stopped
+    ports:
+      - "8008:8008"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      # Assets are indexed with node.zdevutils.com as their serviceEndpoint,
+      # so this filter value must match that URL in both local and production.
+      NEXT_PUBLIC_NODE_URI_INDEXED: '["https://node.zdevutils.com/"]'

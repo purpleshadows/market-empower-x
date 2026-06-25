@@ -721,7 +721,8 @@ export default function ComputeWizardController({
         baseTokenAddress ||
         selectedComputeEnv.fees?.[
           String(formValues?.user?.chainId || asset.credentialSubject.chainId)
-        ]?.[0]?.feeToken
+        ]?.[0]?.feeToken ||
+        oceanTokenAddress
 
       if (!paymentTokenAddress) {
         throw new Error(
@@ -1001,6 +1002,16 @@ export default function ComputeWizardController({
   }
 
   const onSubmit = async (values: FormComputeData) => {
+    console.log('[onSubmit] handler reached', {
+      flow,
+      isAlgorithmFlow,
+      hasAlgorithm: Boolean(values.algorithm),
+      hasDataset: Boolean(values.dataset),
+      hasComputeEnv: Boolean(values.computeEnv),
+      withoutDataset: values.withoutDataset,
+      selectedAlgorithmAsset: Boolean(selectedAlgorithmAsset),
+      selectedDatasetAssetCount: selectedDatasetAsset?.length
+    })
     try {
       if (isAlgorithmFlow) {
         const skip = lookupVerifierSessionIdSkip(asset?.id, service?.id)

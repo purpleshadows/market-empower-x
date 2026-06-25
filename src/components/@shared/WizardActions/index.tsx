@@ -83,7 +83,9 @@ export default function WizardActions({
   const {
     values,
     isSubmitting,
-    setFieldValue
+    setFieldValue,
+    errors,
+    isValid
   }: FormikContextType<FormComputeData> = useFormikContext()
 
   const hasUserParamsStep = Boolean(values?.isUserParameters)
@@ -121,6 +123,21 @@ export default function WizardActions({
     values.credentialsVerified
   const isFinalComputeActionDisabled =
     disabled || !isReviewStepReady || isBalanceSufficient === false
+
+  if (isLastStep) {
+    console.log('[WizardActions] submit button state', {
+      disabled,
+      isReviewStepReady,
+      isBalanceSufficient,
+      credentialsVerified: values.credentialsVerified,
+      termsAndConditions: values.termsAndConditions,
+      acceptPublishingLicense: values.acceptPublishingLicense,
+      isFinalComputeActionDisabled,
+      isValid,
+      validationErrors: errors,
+      validationErrorKeys: Object.keys(errors || {})
+    })
+  }
 
   const PurchaseButton = () => (
     <ButtonBuy

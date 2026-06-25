@@ -13,10 +13,17 @@ RUN npm install --legacy-peer-deps
 FROM base AS builder
 WORKDIR /app
 
+# Which marketplace brand to build (empower | regenag). Defaults to empower so a
+# plain `docker build` produces the Empower-X marketplace. Override per image:
+#   docker build --build-arg BRAND=regenag -t purpleshadows/market-regenag-x .
+ARG BRAND=empower
+ENV BRAND=$BRAND
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN apk add --no-cache bash git
+RUN node scripts/apply-brand.cjs "$BRAND"
 RUN npm run build
 
 FROM base AS runner
