@@ -21,17 +21,19 @@ export default function Footer(): ReactElement {
         <div className={styles.logoSection}>
           <Logo className={styles.logo} />
           <div className={styles.taglineContainer}>
-            <span className={styles.tagline}>
-              Empower-X trusted data space for Europe&apos;s energy transition.
-            </span>
-            <a
-              className={styles.websiteLink}
-              href="https://empower-x.io"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              empower-x.io
-            </a>
+            {footer.tagline && (
+              <span className={styles.tagline}>{footer.tagline}</span>
+            )}
+            {footer.website && (
+              <a
+                className={styles.websiteLink}
+                href={footer.website.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {footer.website.name}
+              </a>
+            )}
           </div>
         </div>
         <Links />

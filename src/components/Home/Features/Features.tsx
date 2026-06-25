@@ -21,7 +21,7 @@ export default function Features(): ReactElement {
     {
       title: 'Data Regulation Compliance',
       description:
-        'Empower-X aligns with Gaia-X principles for trusted data spaces and supports secure, interoperable data exchange across the energy sector.'
+        'Aligns with Gaia-X principles for trusted data spaces and supports secure, interoperable data exchange.'
     },
     {
       title: 'Cloud Agnostic Design',

@@ -27,6 +27,8 @@
   "siteDescription": "A personal Ocean-powered marketplace scoped to a private dataspace.",
   "footer": {
     "subtitle": "Private dataspace market",
+    "tagline": "Empower-X trusted data space for Europe's energy transition.",
+    "website": { "name": "empower-x.io", "url": "https://empower-x.io" },
     "copyright": "Copyright 2026 Empower-X Marketplace",
     "privacyTitle": "Privacy",
     "content": [

@@ -19,6 +19,7 @@ import { addExistingParamsToUrl } from '../Search/utils'
 import { useRouter } from 'next/router'
 import { useSearchBarStatus } from '@context/SearchBarStatus'
 import { useUserPreferences } from '@context/UserPreferences'
+import { useMarketMetadata } from '@context/MarketMetadata'
 import Container from '@components/@shared/atoms/Container'
 import OnboardingSection from '@components/@shared/Onboarding'
 
@@ -39,6 +40,7 @@ function HeroSection({
   initialValue?: string
 }): ReactElement {
   const router = useRouter()
+  const { siteContent } = useMarketMetadata()
   const [value, setValue] = useState(initialValue || '')
   const parsed = router.query
   const searchBarRef = useRef<HTMLInputElement>(null)
@@ -109,7 +111,7 @@ function HeroSection({
           <Menu />
         </header>
         <div className={styles.textContent}>
-          <h1 className={styles.title}>Empower-X Marketplace</h1>
+          <h1 className={styles.title}>{siteContent.siteTitle}</h1>
           <div className={styles.subtitle}>
             <p>
               Publish and discover data products inside your own private

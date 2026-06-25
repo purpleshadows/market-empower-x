@@ -1,4 +1,9 @@
 import type { BrandPanelIconVariant } from './AuthLayout/BrandPanelArtwork'
+import siteContent from '../../../content/site.json'
+
+// content/site.json is swapped per brand at build time (see scripts/apply-brand.cjs),
+// so this resolves to the active brand's name (Empower-X, RegenAg-X, …).
+const { siteTitle } = siteContent
 
 export type AuthTab = 'login' | 'signup'
 
@@ -28,7 +33,7 @@ export const authBrandDefaults: {
   trustLabel: string
   trustBadges: string[]
 } = {
-  title: 'Empower-X Marketplace',
+  title: siteTitle,
   description:
     'Discover, publish and manage data, software and AI services inside your own Ocean-powered dataspace.',
   features: [
@@ -47,14 +52,14 @@ export const authBrandDefaults: {
 export const authLoginCopy = {
   title: 'Welcome back',
   subtitle: "Sign in to your organization's data marketplace",
-  ssoLabel: 'Log in to Empower-X Marketplace',
+  ssoLabel: `Log in to ${siteTitle}`,
   ssoLoadingLabel: 'Redirecting to login...'
 }
 
 export const authSignupCopy = {
   title: 'Get started',
   subtitle: "Create your organization's marketplace account",
-  ssoLabel: 'Sign up to Empower-X Marketplace',
+  ssoLabel: `Sign up to ${siteTitle}`,
   ssoLoadingLabel: 'Redirecting to signup...',
   termsIntro: 'By creating an account, you agree to our',
   termsLabel: 'Terms of Service',

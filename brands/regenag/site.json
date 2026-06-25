@@ -27,6 +27,8 @@
   "siteDescription": "A regenerative-agriculture Ocean-powered marketplace scoped to a private dataspace.",
   "footer": {
     "subtitle": "Private dataspace market",
+    "tagline": "RegenAg-X — the Gaia-X dataspace for regenerative agriculture.",
+    "website": { "name": "regenag-x.com", "url": "https://regenag-x.com" },
     "copyright": "Copyright 2026 RegenAg-X Marketplace",
     "privacyTitle": "Privacy",
     "content": [
