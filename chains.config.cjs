@@ -51,12 +51,13 @@ const chains = [
     transactionConfirmationBlocks: 1,
     transactionPollingTimeout: 750,
     gasFeeMultiplier: 1.1,
-    providerUri: 'https://provider.dev.pontus-x.eu',
-    providerAddress: '0x68C24FA5b2319C81b34f248d1f928601D2E5246B',
-    metadataCacheUri: 'https://aquarius.pontus-x.eu',
-    nodeUri: 'https://rpc.dev.pontus-x.eu',
-    subgraphUri: 'https://subgraph.dev.pontus-x.eu',
-    explorerUri: 'https://explorer.pontus-x.eu/devnet/pontusx'
+    // Provider/metadata are served by the shared OE node (chain-agnostic); the
+    // RPC is the public Optimism Sepolia endpoint (override via NODE_URI_MAP).
+    providerUri: 'https://node.zdevutils.com',
+    providerAddress: '0x652b5B893612C158ffadF2B8b91c2055E3894790',
+    metadataCacheUri: 'https://node.zdevutils.com',
+    nodeUri: 'https://sepolia.optimism.io',
+    explorerUri: 'https://sepolia-optimism.etherscan.io'
   },
 
   // ───────────────────────────

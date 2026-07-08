@@ -161,7 +161,7 @@ module.exports = {
   ssiWalletApi:
     getEnv('NEXT_PUBLIC_SSI_WALLET_API') ||
     process.env.NEXT_PUBLIC_SSI_WALLET_API ||
-    'https://wallet.demo.oceanenterprise.io',
+    'https://wallet2.demo.oceanenterprise.io',
   ssiDefaultPolicyUrl:
     getEnv('NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL') ||
     process.env.NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL ||

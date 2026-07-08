@@ -3,19 +3,20 @@ import * as wagmiChains from 'wagmi/chains'
 import { getNodeUriMap } from '../runtimeConfig'
 import { LoggerInstance } from '@oceanprotocol/lib'
 
-// Custom OP Sepolia chain
+// Custom OP Sepolia chain. A NEXT_PUBLIC_NODE_URI_MAP entry for 11155420
+// overrides this RPC at runtime; the default is the public Optimism Sepolia RPC.
 const opSepolia: Chain = {
   id: 11155420,
   name: 'OP Sepolia',
   nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.dev.pontus-x.eu'] },
-    public: { http: ['https://rpc.dev.pontus-x.eu'] }
+    default: { http: ['https://sepolia.optimism.io'] },
+    public: { http: ['https://sepolia.optimism.io'] }
   },
   blockExplorers: {
     default: {
-      name: 'PontusX Explorer',
-      url: 'https://explorer.pontus-x.eu/devnet/pontusx'
+      name: 'Optimism Sepolia Explorer',
+      url: 'https://sepolia-optimism.etherscan.io'
     }
   },
   testnet: true
