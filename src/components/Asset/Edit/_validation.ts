@@ -3,7 +3,7 @@ import * as Yup from 'yup'
 import { isAddress } from 'ethers'
 import { MAX_DECIMALS } from '@utils/constants'
 import { getMaxDecimalsValidation } from '@utils/numbers'
-import { getOriginalValue, testLinks } from '@utils/yup'
+import { getOriginalValue, testLinks, testOptionalUrl } from '@utils/yup'
 import { validationConsumerParameters } from '@shared/FormInput/InputElement/ConsumerParameters/_validation'
 import { isS3File } from 'src/@types/S3File'
 
@@ -178,6 +178,7 @@ export const metadataValidationSchema = Yup.object().shape({
     })
   ),
   tags: Yup.array<string[]>().nullable(),
+  providedBy: testOptionalUrl('Provided By must be a valid URL.'),
   usesConsumerParameters: Yup.boolean(),
   consumerParameters: Yup.array().when('usesConsumerParameters', {
     is: true,

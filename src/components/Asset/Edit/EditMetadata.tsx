@@ -31,6 +31,8 @@ import { AdditionalVerifiableCredentials } from 'src/@types/ddo/AdditionalVerifi
 import { useSsiWallet } from '@context/SsiWallet'
 import { State } from 'src/@types/ddo/State'
 import { useEthersSigner } from '@hooks/useEthersSigner'
+import { getAsset } from '@utils/aquarius'
+import { useCancelToken } from '@hooks/useCancelToken'
 
 export default function Edit({
   asset
@@ -42,6 +44,7 @@ export default function Edit({
   const { address: accountId } = useAccount()
   const walletClient = useEthersSigner()
   const ssiWalletContext = useSsiWallet()
+  const newCancelToken = useCancelToken()
 
   const signer = walletClient as unknown as Signer
 
@@ -123,6 +126,7 @@ export default function Edit({
         },
         links: convertLinks(linksTransformed),
         author: values.author,
+        providedBy: values.providedBy || '',
         tags: values.tags,
         license,
         additionalInformation: {
@@ -184,7 +188,7 @@ export default function Edit({
 
       if (ipfsUpload /* && values.assetState !== assetState */) {
         const nft = new Nft(signer, updatedAsset.credentialSubject.chainId)
-        await nft.setMetadata(
+        const setMetadataTx = await nft.setMetadata(
           updatedAsset.credentialSubject.nftAddress,
           await signer.getAddress(),
           updatedNft.state,
@@ -196,7 +200,36 @@ export default function Edit({
           ipfsUpload.metadataIPFSHash
         )
 
+        // `setMetadata` resolves as soon as the tx is broadcast, not when it
+        // is mined. Wait for the receipt, otherwise the node hasn't emitted
+        // MetadataUpdated yet and going back to the asset shows the pre-edit
+        // copy ("edit didn't work on the first try").
+        if (typeof setMetadataTx?.wait === 'function') {
+          const receipt = await setMetadataTx.wait()
+          if (receipt?.status === 0) {
+            throw new Error('Metadata transaction failed. Please try again.')
+          }
+        }
+
         LoggerInstance.log('Version 5.0.0 Asset updated. ID:', updatedAsset.id)
+
+        // Best-effort: wait for the node to re-index the update (a few seconds
+        // after the tx is mined) so the asset page reflects the change right
+        // away instead of on a later refresh.
+        const previousUpdated = asset.credentialSubject?.metadata?.updated
+        const cancelToken = newCancelToken()
+        const maxAttempts = 30
+        for (let attempts = 0; attempts < maxAttempts; attempts++) {
+          try {
+            const refreshed = await getAsset(updatedAsset.id, cancelToken)
+            const reindexedUpdated =
+              refreshed?.credentialSubject?.metadata?.updated
+            if (reindexedUpdated && reindexedUpdated !== previousUpdated) break
+          } catch (e) {
+            // ignore transient lookup errors while the node catches up
+          }
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
       }
 
       // Edit succeeded

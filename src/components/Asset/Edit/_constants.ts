@@ -327,6 +327,7 @@ export function getInitialValues(
     type: metadata?.type,
     links: [{ url: '', type: 'url' }],
     author: metadata?.author,
+    providedBy: metadata?.providedBy || '',
     tags: metadata?.tags,
     usesConsumerParameters: metadata?.algorithm?.consumerParameters
       ? Object.values(metadata?.algorithm?.consumerParameters).length > 0

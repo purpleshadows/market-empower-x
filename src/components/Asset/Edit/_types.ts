@@ -25,6 +25,7 @@ export interface MetadataEditForm {
   type: string
   links?: FileInfo[]
   author?: string
+  providedBy?: string
   tags?: string[]
   usesConsumerParameters?: boolean
   consumerParameters?: FormConsumerParameter[]

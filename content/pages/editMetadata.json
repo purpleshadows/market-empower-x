@@ -77,6 +77,12 @@
         "placeholder": "e.g. John SRL"
       },
       {
+        "name": "providedBy",
+        "label": "Provided By",
+        "placeholder": "e.g. https://oceanenterprise.io/vc.json",
+        "help": "URL where the Verifiable Credential of the entity offering this asset resides."
+      },
+      {
         "name": "usesConsumerParameters",
         "label": "Algorithm custom parameters",
         "help": "Algorithm custom parameters are used to define required consumer input before running the algorithm in a Compute-to-Data environment.",
