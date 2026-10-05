@@ -28,6 +28,11 @@ import { Service } from 'src/@types/ddo/Service'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import { getTokenInfo } from './wallet'
 import { getConsumeMarketFeeWei } from './consumeMarketFee'
+import {
+  isBridgedV4Asset,
+  getV4SourceDid,
+  getV4ProviderUrl
+} from './dualVersion'
 
 export async function initializeProvider(
   asset: AssetExtended,
@@ -38,6 +43,17 @@ export async function initializeProvider(
   if (providerFees) return
 
   try {
+    // Bridged v4 (e.g. Pontus-X) assets: plain v4 initialize against the
+    // asset's real provider with the did:op id — no SSI/policy-server flow.
+    if (isBridgedV4Asset(asset)) {
+      return await ProviderInstance.initialize(
+        getV4SourceDid(asset),
+        service.id,
+        0,
+        accountId,
+        getV4ProviderUrl(service)
+      )
+    }
     // SSI-enabled flow
     if (appConfig.ssiEnabled) {
       const command = {
@@ -314,12 +330,26 @@ export async function order(
     case 'free': {
       // Template 1 Free logic
       if (accessDetails.templateId === 1) {
-        const dispenser = new Dispenser(config.dispenserAddress, signer as any)
-        await dispenser.dispense(
-          accessDetails.datatoken.address,
-          '1',
-          accountId
-        )
+        if (!hasDatatoken) {
+          // Use the dispenser actually attached to the datatoken (stored in
+          // accessDetails.addressOrId by getAccessDetails) — bridged v4 assets
+          // may use a different Ocean deployment than our configured one.
+          const dispenser = new Dispenser(
+            (accessDetails.addressOrId as string) || config.dispenserAddress,
+            signer as any
+          )
+          const dispenseTx: any = await dispenser.dispense(
+            accessDetails.datatoken.address,
+            '1',
+            accountId
+          )
+          // dispense() resolves on broadcast, not on mining — without waiting
+          // for the receipt, startOrder's gas estimation runs against a
+          // 0-datatoken balance and reverts with "Not enough datatokens".
+          if (dispenseTx && typeof dispenseTx.wait === 'function') {
+            await dispenseTx.wait()
+          }
+        }
         const providerFeeWei =
           orderParams._providerFee?.providerFeeAmount || '0'
         const providerToken = orderParams._providerFee?.providerFeeToken
@@ -396,7 +426,7 @@ export async function order(
         const buyTx = await datatoken.buyFromDispenserAndOrder(
           service.datatokenAddress,
           orderParams,
-          config.dispenserAddress
+          (accessDetails.addressOrId as string) || config.dispenserAddress
         )
         txResponse = buyTx as unknown as TransactionResponse
       }

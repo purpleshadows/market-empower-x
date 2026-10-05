@@ -28,6 +28,7 @@ import {
 import { secondsToString } from '@utils/ddo'
 import { MAX_DECIMALS } from '@utils/constants'
 import { checkVerifierSessionId } from '@utils/wallet/policyServer'
+import { isBridgedV4Asset } from '@utils/dualVersion'
 
 import Input from '@shared/FormInput'
 import Button from '@shared/atoms/Button'
@@ -187,8 +188,9 @@ export default function Download({
   }, [chainId, signer, orderPriceAndFees, accountId])
 
   useEffect(() => {
+    // license can be a plain string on bridged v4 assets (no licenseDocuments)
     const licenseMirrors =
-      asset?.credentialSubject?.metadata?.license?.licenseDocuments[0]
+      asset?.credentialSubject?.metadata?.license?.licenseDocuments?.[0]
         ?.mirrors || []
     let license = ''
 
@@ -353,7 +355,7 @@ export default function Download({
   async function handleFormSubmit(values: any) {
     try {
       const skip = lookupVerifierSessionIdSkip(asset.id, service.id)
-      if (appConfig.ssiEnabled && !skip) {
+      if (appConfig.ssiEnabled && !skip && !isBridgedV4Asset(asset)) {
         const result = await checkVerifierSessionId(
           lookupVerifierSessionId(asset.id, service.id)
         )
@@ -661,7 +663,10 @@ export default function Download({
           const hasSession = Boolean(
             sessionId || localSession || credentialCheckComplete
           )
-          const canRenderConsume = !appConfig.ssiEnabled || hasSession
+          // Bridged v4 (e.g. Pontus-X) assets have no SSI/VC concept — skip the
+          // credential gate and render the plain v4 consume flow directly.
+          const canRenderConsume =
+            !appConfig.ssiEnabled || hasSession || isBridgedV4Asset(asset)
 
           if (!canRenderConsume) {
             return (

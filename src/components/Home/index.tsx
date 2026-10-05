@@ -22,6 +22,7 @@ import { useUserPreferences } from '@context/UserPreferences'
 import { useMarketMetadata } from '@context/MarketMetadata'
 import Container from '@components/@shared/atoms/Container'
 import OnboardingSection from '@components/@shared/Onboarding'
+import EmpowerHome from './EmpowerHome'
 
 async function emptySearch() {
   const searchParams = new URLSearchParams(window?.location.href)
@@ -175,7 +176,11 @@ function HeroSection({
 }
 
 export default function HomePage(): ReactElement {
+  const { siteContent } = useMarketMetadata()
   const { showOnboardingModule } = useUserPreferences()
+  const isEmpower = siteContent?.siteTitle?.toLowerCase().includes('empower-x')
+
+  if (isEmpower) return <EmpowerHome />
 
   return (
     <>

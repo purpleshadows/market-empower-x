@@ -87,6 +87,8 @@ export const initialValues: FormPublishData = {
     descriptionLanguage: 'en',
     descriptionDirection: 'ltr',
     author: '',
+    providedBy: '',
+    ddoVersion: 'Enterprise (v5)',
     termsAndConditions: false,
     dockerImage: '',
     dockerImageCustom: '',

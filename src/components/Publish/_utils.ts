@@ -557,6 +557,7 @@ export async function transformPublishFormToDdo(
     description,
     tags,
     author,
+    providedBy,
     termsAndConditions,
     dockerImage,
     dockerImageCustom,
@@ -704,7 +705,7 @@ export async function transformPublishFormToDdo(
         }
       }),
     copyrightHolder: '',
-    providedBy: ''
+    providedBy: providedBy || ''
   }
   let fileObject: any
   if (files[0] && isS3File(files[0])) {
@@ -914,6 +915,33 @@ async function createJwtVerifiableCredential(
   return `${headerBase64}.${payloadBase64}.${signatureBase64}`
 }
 
+/**
+ * Recursively removes empty/invalid `@direction` and empty `@language` keys
+ * from language value objects anywhere in the asset. An empty `@direction`
+ * (e.g. in a license document's displayName/description) makes the DDO
+ * invalid JSON-LD — the node's SHACL validation (`jsonld.toRDF`) then throws
+ * ("Output is null or invalid") and silently refuses to index the update.
+ */
+export function sanitizeLanguageValueObjects(node: unknown): void {
+  if (Array.isArray(node)) {
+    node.forEach(sanitizeLanguageValueObjects)
+    return
+  }
+  if (!node || typeof node !== 'object') return
+  const obj = node as Record<string, unknown>
+  if (
+    '@direction' in obj &&
+    obj['@direction'] !== 'ltr' &&
+    obj['@direction'] !== 'rtl'
+  ) {
+    delete obj['@direction']
+  }
+  if ('@language' in obj && !obj['@language']) {
+    delete obj['@language']
+  }
+  Object.values(obj).forEach(sanitizeLanguageValueObjects)
+}
+
 export async function signAssetAndUploadToIpfs(
   asset: Asset,
   owner: Signer,
@@ -925,6 +953,10 @@ export async function signAssetAndUploadToIpfs(
     asset.credentialSubject.nftAddress,
     asset.credentialSubject.chainId.toString()
   )
+
+  // The node rejects DDOs that aren't valid JSON-LD — scrub empty
+  // @direction/@language before signing so edits/publishes always index.
+  sanitizeLanguageValueObjects(asset)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const credential: VCDataModel.Credential = {

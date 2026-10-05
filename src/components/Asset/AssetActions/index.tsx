@@ -12,6 +12,11 @@ import { FileInfo, LoggerInstance, Datatoken } from '@oceanprotocol/lib'
 import { compareAsBN } from '@utils/numbers'
 import { useAsset } from '@context/Asset'
 import { getFileDidInfo, getFileInfo, StorageType } from '@utils/provider'
+import {
+  isBridgedV4Asset,
+  getV4SourceDid,
+  getV4ProviderUrl
+} from '@utils/dualVersion'
 import { getOceanConfig } from '@utils/ocean'
 import { useCancelToken } from '@hooks/useCancelToken'
 import { useIsMounted } from '@hooks/useIsMounted'
@@ -45,6 +50,22 @@ import { toast } from 'react-toastify'
 
 function isNftActive(state: unknown): boolean {
   return Number(state) === 0
+}
+
+// The provider returns contentLength as a raw byte count string. Format it for
+// display; return undefined when unknown/zero so the caller can show a dash
+// (a 0-byte file means the provider couldn't reach the source).
+function formatFileSize(contentLength: unknown): string | undefined {
+  const bytes = Number(contentLength)
+  if (!Number.isFinite(bytes) || bytes <= 0) return undefined
+  const units = ['B', 'kB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${value.toFixed(unit === 0 ? 0 : 2)} ${units[unit]}`
 }
 
 export default function AssetActions({
@@ -149,7 +170,11 @@ export default function AssetActions({
               chainId,
               method
             )
-          : await getFileDidInfo(asset.id, service.id, providerUrl)
+          : await getFileDidInfo(
+              isBridgedV4Asset(asset) ? getV4SourceDid(asset) : asset.id,
+              service.id,
+              isBridgedV4Asset(asset) ? getV4ProviderUrl(service) : providerUrl
+            )
 
         fileInfoResponse && setFileMetadata(fileInfoResponse[0])
 
@@ -412,11 +437,13 @@ export default function AssetActions({
             <div className={styles.fileDetails}>
               <div className={styles.fileDetailItem}>
                 <span className={styles.fileDetailLabel}>Type:</span>{' '}
-                {fileMetadata?.type || 'Plain Text'}
+                {fileIsLoading ? 'Checking…' : fileMetadata?.contentType || '—'}
               </div>
               <div className={styles.fileDetailItem}>
                 <span className={styles.fileDetailLabel}>Size:</span>{' '}
-                {fileMetadata?.contentLength || '5.31 kB'}
+                {fileIsLoading
+                  ? 'Checking…'
+                  : formatFileSize(fileMetadata?.contentLength) || '—'}
               </div>
               <div className={styles.fileDetailItem}>
                 <span className={styles.fileDetailLabel}>Access via:</span>{' '}

@@ -72,6 +72,8 @@ export interface FormPublishData {
     descriptionLanguage?: string
     descriptionDirection?: string
     author: string
+    providedBy?: string
+    ddoVersion?: string
     termsAndConditions: boolean
     license?: License
     tags?: string[]

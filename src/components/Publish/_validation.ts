@@ -2,7 +2,7 @@ import { FileInfo } from '@oceanprotocol/lib'
 import { MAX_DECIMALS } from '@utils/constants'
 import { getMaxDecimalsValidation } from '@utils/numbers'
 import * as Yup from 'yup'
-import { getOriginalValue, testLinks } from '@utils/yup'
+import { getOriginalValue, testLinks, testOptionalUrl } from '@utils/yup'
 import { validationConsumerParameters } from '@components/@shared/FormInput/InputElement/ConsumerParameters/_validation'
 import { FormUrlFileInfo } from './_types'
 import { additionalLicenseSourceOptions } from './_license'
@@ -160,6 +160,7 @@ const validationMetadata = {
   descriptionLanguage: Yup.string(),
   descriptionDirection: Yup.string(),
   tags: Yup.array<string[]>().nullable(),
+  providedBy: testOptionalUrl('Provided By must be a valid URL.'),
   dockerImage: Yup.string().when('type', {
     is: 'algorithm',
     then: Yup.string().required('Required')
@@ -390,10 +391,38 @@ const validationService = {
       )
       .required('Required')
   }),
-  files: Yup.array()
-    .of(fileSchema)
-    .min(1, `At least one file is required.`)
-    .required('Enter a valid file and click Validate.'),
+  files: Yup.array().test(
+    'files',
+    'Enter a valid file and click Validate.',
+    function (value) {
+      // A custom Docker image algorithm ships its code inside the image, so a
+      // separate algorithm file is not required. Read the root form values via
+      // the parent chain to check the metadata.
+      const fromChain =
+        (this as unknown as { from?: { value: unknown }[] }).from || []
+      const root = fromChain
+        .map((entry) => entry.value)
+        .find(
+          (candidate) =>
+            candidate &&
+            typeof candidate === 'object' &&
+            'metadata' in candidate
+        ) as { metadata?: { type?: string; dockerImage?: string } } | undefined
+      const metadata = root?.metadata
+      const isCustomImageAlgorithm =
+        metadata?.type === 'algorithm' && metadata?.dockerImage === 'custom'
+      if (isCustomImageAlgorithm) return true
+
+      if (!Array.isArray(value) || value.length < 1) {
+        return this.createError({ message: 'At least one file is required.' })
+      }
+      const allValid = value.every((file) => fileSchema.isValidSync(file))
+      return (
+        allValid ||
+        this.createError({ message: 'Enter a valid file and click Validate.' })
+      )
+    }
+  ),
   links: Yup.array<FileInfo[]>()
     .of(
       Yup.object().shape({

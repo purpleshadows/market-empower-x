@@ -1,0 +1,16 @@
+{
+  "name": "clone-datasets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fetch metadata for and bulk-publish the empower-x demo datasets.",
+  "scripts": {
+    "fetch": "node fetch-metadata.mjs",
+    "publish": "node publish.mjs"
+  },
+  "dependencies": {
+    "@oceanprotocol/lib": "8.5.1",
+    "ethers": "^6.13.0",
+    "jose": "^6.2.3"
+  }
+}

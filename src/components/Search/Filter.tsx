@@ -22,19 +22,9 @@ import {
   getNetworkDisplayName
 } from '@hooks/useNetworkMetadata'
 import { useConnectorSupportedChains } from '@hooks/useDfnsWalletsByChain'
+import { formatProviderLabel } from '@utils/assetSource'
 
 const cx = classNames.bind(styles)
-
-function formatProviderLabel(providerUrl: string): string {
-  const providerWithoutProtocol = providerUrl.replace(/^https?:\/\//, '')
-  const firstDotIndex = providerWithoutProtocol.indexOf('.')
-
-  if (firstDotIndex > 0) {
-    return providerWithoutProtocol.slice(0, firstDotIndex)
-  }
-
-  return providerWithoutProtocol.slice(0, 10)
-}
 
 interface FilterStructure {
   id: string

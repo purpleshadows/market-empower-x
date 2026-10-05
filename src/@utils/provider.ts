@@ -30,6 +30,11 @@ import {
   PolicyServerInitiateComputeActionData
 } from 'src/@types/PolicyServer'
 import { resolveVerifierSessionId } from './verifierSession'
+import {
+  isBridgedV4Asset,
+  getV4SourceDid,
+  getV4ProviderUrl
+} from './dualVersion'
 
 const ENCRYPTED_PROVIDER_RESPONSE = /^0x[0-9a-fA-F]*$/
 
@@ -422,21 +427,31 @@ export async function downloadFile(
     presentationDefinitionUri: ``
   }
 
+  // Bridged v4 (e.g. Pontus-X) assets are consumed the plain v4 way: address the
+  // provider by the DID it actually knows (did:op), hit the asset's REAL v4
+  // provider (the bridge rewrote the visible endpoint), and no SSI/policyServer.
+  const isV4 = isBridgedV4Asset(asset)
+  const consumeDid = isV4 ? getV4SourceDid(asset) : asset.id
+  const providerUrl = isV4
+    ? getV4ProviderUrl(service)
+    : service.serviceEndpoint || customProviderUrl
+  const policyServerArg = isV4 ? undefined : policyServer
+
   try {
     downloadUrl = await ProviderInstance.getDownloadUrl(
-      asset.id,
+      consumeDid,
       service.id,
       0,
       validOrderTx || accessDetails.validOrderTx,
-      service.serviceEndpoint || customProviderUrl,
+      providerUrl,
       signer,
-      policyServer,
+      policyServerArg,
       userCustomParameters
     )
     const fileInfo: any = await getFileDidInfo(
-      asset.id,
+      consumeDid,
       service.id,
-      service.serviceEndpoint || customProviderUrl
+      providerUrl
     )
     const mimeExtensionMap: Record<string, string> = {
       'application/json': 'json',

@@ -1,107 +1,83 @@
 ## Privacy Policy
 
-This privacy policy informs you about how **Ocean Enterprise Collective e.V. (in the following OEC, we, us, our)** processes your personal data. Moreover, this privacy policy informs you about your rights.
+At Zertifier, we respect the privacy of people who visit our website and contact us. This policy explains how we process the personal data that we may receive through this website.
 
-### 1. Contact details of the controller
+### 1. Data Controller
 
-The controller pursuant to the EU General Data Protection Regulation ("GDPR") for the processing of your personal data is:
+The data controller is:
 
-**Ocean Enterprise Collective e.V.**  
-Carmerstrasse 18  
-10623 Berlin  
-Germany
+**ZERTIFIER S.L.**  
+Registered address: Terri, 13 / 17844 Cornellà del Terri  
+Tax ID (NIF/CIF): B05303755  
+Contact email: **info@zertifier.com**
 
-E-mail: **info@oceanenterprise.io**
+Empower-X is a solution developed by Zertifier S.L. to support an energy-sector data space.
 
-### 2. What's personal data?
+### 2. Data We May Process
 
-Personal data is any information that can be directly or indirectly associated with you. OEC processes the following personal data.
+We may process the personal data you provide when you contact us by email, LinkedIn or through other channels available on the website.
 
-- **Log file data including IP addresses:** Logfile data including IP addresses are processed when visiting our website.
-- **E-mail:** If you contact OEC via e-mail, we process your e-mail address and any personal data you decide to provide in your message (such as your name).
+This data may include:
 
-You can find further information about the processing of your personal data in the chapter "Processing operations according to Article 13 GDPR".
+- First and last name.
+- Company or organisation.
+- Business email address.
+- Telephone number, if provided.
+- Information about your energy project, available assets or demo requirements.
+- Basic technical data generated while browsing the website, where cookies or analytics tools are used.
 
-### 3. Processing operations according to Article 13 GDPR
+We do not request special-category or particularly sensitive personal data through this website.
 
-#### 3.1 Providing our website and creating log files
+### 3. Purposes of Processing
 
-We host our website with Webflow (Webflow, Inc. located at 398 11th Street, 2nd Floor, San Francisco, CA 94103, USA). When you visit our website, Webflow collects and uses your IP address and creates logfiles including your IP address.
+Personal data may be used for the following purposes:
 
-**Purpose:** Collecting and using your IP address is necessary for providing our website because it is a technical requirement for ensuring communication between your device and our website. Logfiles including your IP address are created for security, fraud-prevention, abuse-prevention, and troubleshooting purposes.
+- To respond to enquiries received through our contact channels.
+- To manage requests for demos or information about Empower-X.
+- To assess the suitability of Empower-X for energy communities, companies, public administrations, installers, partners or users with energy assets.
+- To maintain commercial or technical communications relating to Empower-X, where there is an appropriate legal basis.
+- To improve the operation, security and content of the website.
+- To comply with applicable legal obligations.
 
-**Legal basis:** The legal basis for this processing is our legitimate interest, pursuant to Art. 6(1)(f) GDPR.
+### 4. Legal Basis
 
-**Legitimate interests:** Our legitimate interest is to provide our website to you and to enable security, a technically error-free presentation, and the optimization of the website.
+The processing of personal data is based on:
 
-**Retention period:** Webflow stores your personal data for 15 days.
+- The data subject's consent, when they voluntarily contact us or accept certain cookies.
+- Our legitimate interests in responding to enquiries, maintaining professional relationships and improving the security and operation of the website.
+- Taking steps at the request of the data subject prior to entering into a contract, where an enquiry or request concerns a potential demo, proposal, pilot or engagement.
+- Compliance with legal obligations, where necessary.
 
-#### 3.2 Contact via e-mail
+### 5. Data Retention
 
-If you contact us via e-mail, OEC collects, uses, and stores your e-mail address, and any other information you provide us in your message, such as your name. When you send us an e-mail, our (mail) service provider supports us in processing your personal data so we can communicate with you.
+Data will be retained for as long as necessary to respond to the enquiry, manage the professional or commercial relationship, prepare a demo or comply with any applicable legal obligations.
 
-**Purpose:** We collect, use and store this personal data to respond to your inquiries.
+When the data is no longer required, it will be securely restricted or deleted in accordance with the applicable statutory retention periods.
 
-**Legal basis:** The legal basis for this processing is our legitimate interest, according to Art. 6(1)(f) GDPR.
+### 6. Recipients of Personal Data
 
-**Legitimate interests:** Our legitimate interest is to answer your inquiries.
+As a general rule, we will not disclose your personal data to third parties, except where required by law or where necessary to provide services relating to the operation of the website, communications, hosting, analytics or technical support.
 
-**Retention period:** We store your personal data as long as we need it to process your inquires. We store your personal data beyond this period if we are obliged to do so due to retention obligations under tax and commercial law or in the event of legal disputes. If the latter is the case, your personal data will be erased after the retention period has expired.
+In such cases, service providers will act as data processors and must implement appropriate security and confidentiality safeguards.
 
-### 4. Cookies
+### 7. International Transfers
 
-Our website uses cookies. You can manage cookies via your browser settings, including disabling or deleting cookies. If you want to change your cookie consent, use the Cookie Settings link in the footer when available.
+Where technological tools involve international transfers of personal data, such transfers will only take place where appropriate safeguards are in place in accordance with applicable law.
 
-### 5. Automated decision making including profiling according to Article 13(2)(f) GDPR
+### 8. Rights of Data Subjects
 
-Automated decision making including profiling does not take place.
+You may exercise your rights of access, rectification, erasure, objection, restriction of processing and data portability by sending a request to:
 
-### 6. External links
+**info@zertifier.com**
 
-Our website contains links to websites owned by third parties. These websites are beyond our control and responsibility.
+You may also withdraw your consent at any time where processing is based on consent.
 
-### 7. Your rights
+If you believe that the processing of your personal data does not comply with applicable law, you may lodge a complaint with the competent data protection supervisory authority.
 
-#### 7.1 Right to withdraw consent (Art. 7(3) GDPR)
+### 9. Security
 
-You have the right to withdraw your consent at any time. The withdrawal of consent does not affect the lawfulness of processing based on consent before its withdrawal.
+We implement reasonable technical and organisational measures to protect personal data against unauthorised access, loss, alteration or improper disclosure.
 
-#### 7.2 Right of access (Art. 15 GDPR)
+### 10. Changes to This Policy
 
-You have the right to obtain confirmation as to whether OEC processes personal data about you. If we are processing personal data about you, you have the right to access these personal data and to gain the information defined in Art. 15 GDPR.
-
-#### 7.3 Right to rectification (Art. 16 GDPR)
-
-You have the right to obtain without undue delay the rectification of inaccurate personal data about you. Additionally, you have the right that incomplete personal data about you are completed.
-
-#### 7.4 Right to erasure (Art. 17 GDPR)
-
-You have the right to obtain without undue delay the erasure of personal data about you, where the defined legal grounds in Art. 17 GDPR apply.
-
-#### 7.5 Right to restriction of processing (Art. 18 GDPR)
-
-Moreover, you have the right to obtain the restriction of processing your personal data where the defined legal grounds in Art. 18 GDPR apply.
-
-#### 7.6 Right to data portability (Art. 20 GDPR)
-
-You have the right to receive your personal data in a structured, commonly used, and machine-readable format. Additionally, you have the right to transmit those data to another controller without hindrance, where the defined legal grounds in Art. 20 GDPR apply. You can make use of your right to data portability by contacting us.
-
-#### 7.7 Right to object (Art. 21 GDPR)
-
-On grounds relating to your particular situation, you have the right to object to the processing of your personal data where we based the processing on legitimate interests (Art. 6(1)(f) GDPR). If you object, OEC will no longer process your personal data unless we can demonstrate compelling legitimate grounds for the processing, overriding your rights, freedoms, and interests, or if the processing is required to establish, exercise, or defend legal claims.
-
-#### 7.8 Right to lodge a complaint (Art. 77 GDPR)
-
-You have the right to lodge a complaint with a supervisory authority if you consider the processing of your personal data by OEC to infringe the GDPR. You can lodge a complaint in particular
-
-- in the Member State of your habitual residence,
-- in the Member State of your place of work, and
-- in the place of the alleged infringement.
-
-### 8. Questions
-
-If you have any questions about our privacy policy, please send us an e-mail at **info@oceanenterprise.io**.
-
-### 9. Changes to the Privacy Policy
-
-This privacy policy will be amended from time to time. You can see the date of the last alteration at the top of the privacy policy.
+We may update this Privacy Policy to reflect legal, technical or operational changes. The version published on the website will be the version in force at any given time.

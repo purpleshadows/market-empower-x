@@ -1,0 +1,13 @@
+{
+  "name": "hide-assets",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Batch hide (unlist) or restore Ocean data NFT assets by setting on-chain metadata state.",
+  "scripts": {
+    "start": "node hide-assets.mjs"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}

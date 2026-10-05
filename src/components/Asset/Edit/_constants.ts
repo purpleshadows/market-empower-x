@@ -268,7 +268,7 @@ export function getInitialValues(
   let fileInfo: FileInfo
   if (
     !useRemoteLicense &&
-    metadata.license?.licenseDocuments?.[0].mirrors?.[0]
+    metadata.license?.licenseDocuments?.[0]?.mirrors?.[0]
   ) {
     const licenseItem = metadata.license?.licenseDocuments?.[0]
     fileInfo = {

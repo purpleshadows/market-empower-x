@@ -1,29 +1,32 @@
 ---
 title: Cookie Policy
-description: This cookie policy explains how the Ocean Enterprise Demonstration Market uses cookies and similar technologies.
+description: This Cookie Policy explains what cookies are, which cookies may be used on the Empower-X website and how you can manage them.
 showLastUpdated: true
 ---
 
-This Cookie Policy explains how the Ocean Enterprise Demonstration Market uses cookies and similar technologies. This policy should be read alongside our Privacy Policy.
+This policy explains what cookies are, which cookies may be used on the Empower-X website and how you can manage them. It should be read alongside our Privacy Policy.
 
-## 1. What are cookies?
+## 1. What Are Cookies?
 
-A cookie is a small file that stores information on your device. Your web browser downloads it on your first visit to a website. When you return using the same device, the cookie is either sent back to the site that created it (first-party) or to another website it belongs to (third-party).
+Cookies are small files downloaded to a user's device when they visit a website. They are used to remember browsing information, improve website functionality, measure website usage and, where applicable, personalise content.
 
-In this policy, the term "cookies" refers to standard browser cookies, as well as web storage (`localStorage` and `sessionStorage`) and `IndexedDB`, which serve similar functions.
+In this policy, the term "cookies" also refers to web storage (`localStorage` and `sessionStorage`) and `IndexedDB`, which serve similar functions.
 
-### Cookie Categories
+## 2. Types of Cookies We May Use
 
-- Essential cookies: Strictly necessary for you to browse the website and use features like wallet connections.
-- Preference cookies: Used to remember your settings (e.g., currency or selected chains) to improve user-friendliness.
-- Statistics cookies: Collect information about how you use the website to improve functions.
-- Marketing cookies: Track activity to deliver relevant content or advertising.
+The Empower-X website may use the following categories of cookies:
 
-## 2. How do we use cookies?
+- **Technical or strictly necessary cookies.** Required for the basic operation of the website, navigation, security or cookie-consent management. These cookies do not require consent.
+- **Analytics cookies.** They help us understand how the website is used, which pages are visited and how we can improve the content and user experience. They will only be used where you have accepted them, except where applicable law permits the use of strictly limited measurement tools that are exempt from consent.
+- **Third-party cookies.** These may be used when the website integrates external services such as videos, maps, social networks or other third-party tools. Those third parties may process data in accordance with their own privacy and cookie policies.
 
-We use essential and preference-based first-party storage to ensure the portal functions correctly. Currently, optional cookie categories (statistics/marketing) are not active in the user interface.
+Currently, optional cookie categories (analytics/marketing) are not active in the user interface; the website relies on the strictly necessary first-party storage listed below.
 
-| Name / Key                  | Service          | Purpose                                                             | Type and Duration                    |
+## 3. Cookies Used on This Website
+
+We use essential and preference-based first-party storage to ensure the portal functions correctly.
+
+| Name / Key                  | Provider         | Purpose                                                             | Type and Duration                    |
 | --------------------------- | ---------------- | ------------------------------------------------------------------- | ------------------------------------ |
 | `wagmi.store`               | wagmi/connectkit | Stores wallet connection state (chain, connector, account mapping). | Cookie; session-based.               |
 | `ocean-user-preferences-v4` | Ocean App        | Stores currency, selected chains, bookmarks, and onboarding flags.  | `localStorage`; persistent.          |
@@ -34,72 +37,24 @@ We use essential and preference-based first-party storage to ensure the portal f
 | `ssiWalletApiOverride`      | SSI Auth         | Stores user-entered SSI API base URL overrides.                     | `sessionStorage`; ends with session. |
 | `wc@2:*`                    | WalletConnect    | Persistence for WalletConnect client sessions.                      | `localStorage` and `IndexedDB`.      |
 
-## 3. External Data Transfers
+## 4. Managing Consent
 
-While not all are "cookies," the following services receive data during your use of the market:
+When you access the website, you will be able to accept, reject or configure non-essential cookies. You may withdraw or change your consent at any time using the cookie settings panel available on the website. The process for withdrawing consent is as easy as the process used to give it.
 
-- SSI Wallet API: Processes wallet addresses and credential IDs during verification.
-- Ocean Node: Receives DIDs and consumer addresses for asset downloads or compute jobs, processes search and filter queries.
-- IPFS (Pinata/Gateways): Used for pinning and retrieving decentralized content.
+## 5. How to Delete or Block Cookies in Your Browser
 
-## 4. How to block or delete cookies
+You can also block or delete cookies through your browser settings. The steps may vary depending on the browser you use (for example Google Chrome, Mozilla Firefox, Safari or Microsoft Edge). Please note that blocking certain cookies — in particular the strictly necessary ones — may affect the proper operation of some parts of the website, such as wallet connections and asset access.
 
-- Removing cookies: You can delete all cookies or site-specific cookies via your browser settings at any time.
-- Blocking cookies: Most browsers allow you to prevent cookies from being placed. Please note that blocking essential cookies will prevent wallet connections and asset access from functioning.
+## 6. Cookies and Data from External Services
 
-## 5. Changes to this cookie policy
+Where the website includes videos, embedded content or links to external platforms, those services may place their own cookies when you interact with them. Empower-X does not have full control over third-party cookies, and we recommend reviewing the privacy and cookie policies of the relevant services.
 
-## This policy may be amended from time to time. The "Last updated" date at the top indicates the most recent changes. Material changes will be notified via a prominent notice on the demonstration market.
+In addition, while not all are "cookies", the following services receive data during your use of the marketplace:
 
-title: Cookie Policy
-description: This cookie policy explains how the Ocean Enterprise Demonstration Market uses cookies and similar technologies.
-showLastUpdated: true
+- **SSI Wallet API** — processes wallet addresses and credential IDs during verification.
+- **Ocean Node** — receives DIDs and consumer addresses for asset downloads or compute jobs, and processes search and filter queries.
+- **IPFS (Pinata / gateways)** — used for pinning and retrieving decentralised content.
 
----
+## 7. Updates to the Cookie Policy
 
-This Cookie Policy explains how the Ocean Enterprise Demonstration Market uses cookies and similar technologies. This policy should be read alongside our Privacy Policy.
-
-## 1. What are cookies?
-
-A cookie is a small file that stores information on your device. Your web browser downloads it on your first visit to a website. When you return using the same device, the cookie is either sent back to the site that created it (first-party) or to another website it belongs to (third-party).
-
-In this policy, the term "cookies" refers to standard browser cookies, as well as web storage (`localStorage` and `sessionStorage`) and `IndexedDB`, which serve similar functions.
-
-### Cookie Categories
-
-- Essential cookies: Strictly necessary for you to browse the website and use features like wallet connections.
-- Preference cookies: Used to remember your settings (e.g., currency or selected chains) to improve user-friendliness.
-- Statistics cookies: Collect information about how you use the website to improve functions.
-- Marketing cookies: Track activity to deliver relevant content or advertising.
-
-## 2. How do we use cookies?
-
-We use essential and preference-based first-party storage to ensure the portal functions correctly. Currently, optional cookie categories (statistics/marketing) are not active in the user interface.
-
-| Name / Key                  | Service          | Purpose                                                             | Type and Duration                    |
-| --------------------------- | ---------------- | ------------------------------------------------------------------- | ------------------------------------ |
-| `wagmi.store`               | wagmi/connectkit | Stores wallet connection state (chain, connector, account mapping). | Cookie; session-based.               |
-| `ocean-user-preferences-v4` | Ocean App        | Stores currency, selected chains, bookmarks, and onboarding flags.  | `localStorage`; persistent.          |
-| `sessionToken`              | SSI Auth         | Stores SSI session token (session ID, bearer token, expiration).    | `localStorage`; persistent.          |
-| `cachedCredentials`         | SSI Flow         | Caches verifiable credentials per DID to speed up access.           | `localStorage`; persistent.          |
-| `credential_<assetId>`      | Access Control   | Stores timestamp of successful credential checks.                   | `localStorage`; persistent.          |
-| `compute-rerun:<jobId>`     | Compute          | Stores rerun payloads for compute history.                          | `localStorage`; persistent.          |
-| `ssiWalletApiOverride`      | SSI Auth         | Stores user-entered SSI API base URL overrides.                     | `sessionStorage`; ends with session. |
-| `wc@2:*`                    | WalletConnect    | Persistence for WalletConnect client sessions.                      | `localStorage` and `IndexedDB`.      |
-
-## 3. External Data Transfers
-
-While not all are "cookies," the following services receive data during your use of the market:
-
-- SSI Wallet API: Processes wallet addresses and credential IDs during verification.
-- Ocean Node: Receives DIDs and consumer addresses for asset downloads or compute jobs, processes search and filter queries.
-- IPFS (Pinata/Gateways): Used for pinning and retrieving decentralized content.
-
-## 4. How to block or delete cookies
-
-- Removing cookies: You can delete all cookies or site-specific cookies via your browser settings at any time.
-- Blocking cookies: Most browsers allow you to prevent cookies from being placed. Please note that blocking essential cookies will prevent wallet connections and asset access from functioning.
-
-## 5. Changes to this cookie policy
-
-This policy may be amended from time to time. The "Last updated" date at the top indicates the most recent changes. Material changes will be notified via a prominent notice on the demonstration market.
+This policy may be updated when the cookies used, the website's technological tools or the applicable law change. The "Last updated" date at the top indicates the most recent changes.

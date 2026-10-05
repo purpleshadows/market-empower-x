@@ -6,9 +6,14 @@ import { useMarketMetadata } from '@context/MarketMetadata'
 // import Image from 'next/image'
 // import logo from '../../../public/images/ecosystem/ocean_enterprise_logo.png'
 import Logo from '@images/logo-white.svg'
+import EmpowerFooter from './EmpowerFooter'
 
 export default function Footer(): ReactElement {
   const { siteContent } = useMarketMetadata()
+  const isEmpower = siteContent?.siteTitle?.toLowerCase().includes('empower-x')
+
+  if (isEmpower) return <EmpowerFooter />
+
   const { footer } = siteContent
   const copyright = footer.copyright.replace(
     /\b\d{4}\b/g,

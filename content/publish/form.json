@@ -59,6 +59,19 @@
         "placeholder": "e.g. John SRL"
       },
       {
+        "name": "providedBy",
+        "label": "Provided By",
+        "placeholder": "e.g. https://oceanenterprise.io/vc.json",
+        "help": "URL where the Verifiable Credential of the entity offering this asset resides."
+      },
+      {
+        "name": "ddoVersion",
+        "label": "Asset standard",
+        "type": "select",
+        "options": ["Enterprise (v5)", "Standard (v4)"],
+        "help": "Enterprise (v5) is this marketplace's native format (did:ope, VC/SSI). Standard (v4) publishes a did:op asset that interoperates natively with Pontus-X and all standard Ocean markets (browse + download), but without the Enterprise SSI/VC features."
+      },
+      {
         "name": "license",
         "label": "URL",
         "placeholder": "e.g. https://file.com/license.json",

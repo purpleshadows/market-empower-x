@@ -20,6 +20,34 @@
   margin-left: var(--spacer);
 }
 
+.sourceBadge {
+  align-self: flex-start;
+  margin-left: var(--spacer);
+  margin-top: calc(var(--spacer) / 6);
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 9px;
+  border-radius: 11px;
+  border: 1px solid var(--empower-border);
+  color: var(--empower-muted-label);
+  background: var(--empower-surface);
+  white-space: nowrap;
+}
+
+.sourceBadge[data-source='Empower-X'] {
+  color: var(--empower-primary);
+  border-color: var(--empower-primary);
+}
+
+.sourceBadge[data-source='SENSE'] {
+  color: var(--empower-success);
+  border-color: var(--empower-success);
+}
+
 .addWrap {
   padding-left: calc(var(--spacer) / 5);
   border-left: 1px solid var(--border-color);

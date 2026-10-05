@@ -10,6 +10,7 @@ import { IpfsRemoteSource } from '@components/@shared/IpfsRemoteSource'
 import Label from '@components/@shared/FormInput/Label'
 import { assetStateToString } from '@utils/assetState'
 import AdditionalLicenseFiles from './AdditionalLicenseFiles'
+import { safeExternalWebUrl } from '@utils/url'
 
 function truncateMiddle(
   value?: string,
@@ -93,6 +94,22 @@ export default function MetaFull({ ddo }: { ddo: Asset }): ReactElement {
               content={ddo?.credentialSubject.metadata?.author}
             />
           </span>
+        )}
+        {ddo?.credentialSubject.metadata?.providedBy && (
+          <MetaItem
+            title="Provided By"
+            content={
+              <a
+                href={safeExternalWebUrl(
+                  ddo.credentialSubject.metadata.providedBy
+                )}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {ddo.credentialSubject.metadata.providedBy}
+              </a>
+            }
+          />
         )}
         <MetaItem
           title="Owner"

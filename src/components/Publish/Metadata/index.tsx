@@ -81,6 +81,19 @@ export default function MetadataFields(): ReactElement {
         component={Input}
         name="metadata.author"
       />
+      <Field
+        {...getFieldContent('providedBy', content.metadata.fields)}
+        component={Input}
+        name="metadata.providedBy"
+      />
+      {/* v4/v5 publish toggle — hidden until the v4 DDO build/sign backend is
+          wired. Field wiring (form.json, _constants, _types) is kept so this
+          can be re-enabled by uncommenting once the backend branch exists. */}
+      {/* <Field
+        {...getFieldContent('ddoVersion', content.metadata.fields)}
+        component={Input}
+        name="metadata.ddoVersion"
+      /> */}
 
       <Field
         {...getFieldContent('type', content.metadata.fields)}

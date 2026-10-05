@@ -52,10 +52,31 @@ export function getFilterTerm(
   }
 
   if (filterField.startsWith('credentialSubject.services.')) {
+    // OE nodes disagree on how they map `credentialSubject.services`: some as a
+    // true Elasticsearch `nested` type (which requires a nested query), others
+    // as a plain object (which needs a flat `.keyword` term — and a nested query
+    // against it throws a shard error, failing the whole search). To browse a
+    // catalog that federates nodes with either mapping, match both forms in a
+    // `should`, and set `ignore_unmapped` so the nested clause is skipped (not an
+    // error) on nodes where the path isn't nested.
+    const flatFilter = {
+      [useKey]: {
+        [`${filterField}.keyword`]: value
+      }
+    }
     return {
-      nested: {
-        path: 'credentialSubject.services',
-        query: filter
+      bool: {
+        should: [
+          {
+            nested: {
+              path: 'credentialSubject.services',
+              ignore_unmapped: true,
+              query: filter
+            }
+          },
+          flatFilter
+        ],
+        minimum_should_match: 1
       }
     } as unknown as FilterTerm
   }
@@ -296,11 +317,26 @@ function getServiceEndpointFilterValue(filter: unknown): unknown {
     nested?: {
       query?: unknown
     }
+    bool?: {
+      should?: unknown[]
+    }
+  }
+
+  // getFilterTerm now wraps service-endpoint filters in bool.should[nested, flat]
+  // (see the cross-node mapping note there) — traverse both branches, and accept
+  // the flat `.keyword` variant as well as the plain nested path.
+  if (Array.isArray(typedFilter?.bool?.should)) {
+    for (const clause of typedFilter.bool.should) {
+      const found = getServiceEndpointFilterValue(clause)
+      if (found) return found
+    }
   }
 
   return (
     typedFilter?.terms?.[serviceEndpointFilterPath] ||
     typedFilter?.term?.[serviceEndpointFilterPath] ||
+    typedFilter?.terms?.[`${serviceEndpointFilterPath}.keyword`] ||
+    typedFilter?.term?.[`${serviceEndpointFilterPath}.keyword`] ||
     (typedFilter?.nested?.query
       ? getServiceEndpointFilterValue(typedFilter.nested.query)
       : undefined)

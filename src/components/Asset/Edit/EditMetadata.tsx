@@ -218,17 +218,26 @@ export default function Edit({
         // away instead of on a later refresh.
         const previousUpdated = asset.credentialSubject?.metadata?.updated
         const cancelToken = newCancelToken()
-        const maxAttempts = 30
+        const maxAttempts = 60
+        let reindexed = false
         for (let attempts = 0; attempts < maxAttempts; attempts++) {
           try {
             const refreshed = await getAsset(updatedAsset.id, cancelToken)
             const reindexedUpdated =
               refreshed?.credentialSubject?.metadata?.updated
-            if (reindexedUpdated && reindexedUpdated !== previousUpdated) break
+            if (reindexedUpdated && reindexedUpdated !== previousUpdated) {
+              reindexed = true
+              break
+            }
           } catch (e) {
             // ignore transient lookup errors while the node catches up
           }
           await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+        if (!reindexed) {
+          throw new Error(
+            'The update transaction was confirmed on-chain, but the node has not re-indexed the change yet. If the asset still shows old data after a few minutes, the node may have rejected the update.'
+          )
         }
       }
 

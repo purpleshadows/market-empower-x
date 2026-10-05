@@ -21,6 +21,11 @@ import { CancelToken } from 'axios'
 import { getUserOrders } from './aquarius'
 import { AssetPrice } from '../@types/AssetPrice'
 import { getConsumeMarketFeeWei } from './consumeMarketFee'
+import {
+  isBridgedV4Asset,
+  getV4SourceDid,
+  getV4ProviderUrl
+} from './dualVersion'
 
 /**
  * This will be used to get price including fees before ordering
@@ -61,12 +66,17 @@ export async function getOrderPriceAndFees(
     if (service.type === 'compute') {
       console.warn('service type is compute')
     } else {
+      // Bridged v4 (e.g. Pontus-X) assets: the provider only knows the did:op
+      // id and lives at the asset's REAL v4 endpoint, not the bridge proxy.
+      const isV4 = isBridgedV4Asset(asset)
       initialize = await ProviderInstance.initialize(
-        asset.id,
+        isV4 ? getV4SourceDid(asset) : asset.id,
         service.id,
         0,
         accountId,
-        service?.serviceEndpoint || customProviderUrl
+        isV4
+          ? getV4ProviderUrl(service)
+          : service?.serviceEndpoint || customProviderUrl
       )
     }
     initializeData = !providerFees && initialize

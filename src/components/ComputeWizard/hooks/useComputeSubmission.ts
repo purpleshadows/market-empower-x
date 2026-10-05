@@ -410,15 +410,20 @@ export function useComputeSubmission() {
           const algorithm: ComputeAlgorithm = {
             documentId: algorithmAsset.id,
             serviceId: algorithmService.id,
+            // Free compute must carry the same user/custom parameters as paid,
+            // otherwise the algorithm's and datasets' parameters are dropped.
+            algocustomdata: userCustomParameters?.algoServiceParams,
+            userdata: userCustomParameters?.algoServiceParams,
             meta: algorithmAsset.credentialSubject?.metadata?.algorithm as any
           }
           response = await ProviderInstance.freeComputeStart(
             providerEndpoint,
             signer,
             selectedComputeEnv.id,
-            datasetInputs.map(({ documentId, serviceId }) => ({
+            datasetInputs.map(({ documentId, serviceId, userdata }) => ({
               documentId,
-              serviceId
+              serviceId,
+              userdata
             })),
             algorithm,
             resourceRequests,

@@ -1,0 +1,140 @@
+.footer {
+  margin-top: 80px;
+  color: #191c22;
+  background: #fff;
+  border-top: 1px solid #cfd5e2;
+  font-family: 'Helvetica', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  text-align: left;
+}
+
+.grid,
+.bottomBar {
+  width: min(100% - 48px, 1280px);
+  margin: 0 auto;
+}
+
+.grid {
+  padding: 48px 0;
+  display: grid;
+  grid-template-columns: 1.35fr repeat(3, 1fr);
+  gap: 48px;
+}
+
+.brandColumn,
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.logo {
+  width: 154px;
+  height: auto;
+  margin: 0 0 24px;
+}
+
+.brandColumn p {
+  max-width: 290px;
+  color: #414753;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.column h2 {
+  margin: 0 0 22px;
+  color: #191c22;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  text-transform: none;
+}
+
+.column a {
+  margin-bottom: 12px;
+  color: #414753;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.column a:hover {
+  color: #2d8ac4;
+}
+
+.bottomBar {
+  padding: 28px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid #cfd5e2;
+}
+
+.bottomBar p {
+  color: #414753;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+}
+
+.socialLinks {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.socialLinks a {
+  color: #414753;
+}
+
+.socialLinks a:hover {
+  color: #2d8ac4;
+}
+
+.socialLinks svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 760px) {
+  .footer {
+    margin-top: 64px;
+  }
+
+  .grid,
+  .bottomBar {
+    width: min(100% - 32px, 1280px);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 38px 24px;
+  }
+
+  .brandColumn {
+    grid-column: 1 / -1;
+  }
+
+  .bottomBar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 430px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .brandColumn {
+    grid-column: auto;
+  }
+}

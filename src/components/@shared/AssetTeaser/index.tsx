@@ -8,6 +8,7 @@ import styles from './index.module.css'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import Bookmark from '@components/Asset/AssetContent/Bookmark'
 import { ServiceTypeIcons } from '@shared/AssetList/ServiceTypeIcons'
+import { getAssetSourceLabel } from '@utils/assetSource'
 
 declare type AssetTeaserProps = {
   asset: AssetExtended
@@ -28,6 +29,7 @@ export default function AssetTeaser({
   )
   const owner = asset.indexedMetadata.nft?.owner
   const { orders } = asset.indexedMetadata.stats[0] || {}
+  const sourceLabel = getAssetSourceLabel(asset)
 
   return (
     <article className={`${styles.teaser} ${styles[type]}`}>
@@ -47,6 +49,15 @@ export default function AssetTeaser({
                 className={styles.serviceTypes}
               />
             </>
+          )}
+          {sourceLabel && (
+            <span
+              className={styles.sourceBadge}
+              data-source={sourceLabel}
+              title={`Provided by ${sourceLabel}`}
+            >
+              {sourceLabel}
+            </span>
           )}
         </aside>
         <header className={styles.header}>

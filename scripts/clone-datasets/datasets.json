@@ -1,0 +1,659 @@
+[
+  {
+    "label": "Energy Consumption and Generation (hourly, by month)",
+    "sourceDid": "did:ope:bab845f238ef9a7a80587d462eaa94fc185c20fdd31b817d7dec59903d58d6c3",
+    "sourceUrl": "",
+    "name": "Energy Consumption and Generation Dataset",
+    "type": "dataset",
+    "description": "Private, non-downloadable dataset with hourly data (filtered by month) for consumption, generation, and exports",
+    "author": "Zertifier SL",
+    "tags": [
+      "empower-x",
+      "zertifier",
+      "zertipower",
+      "rubi"
+    ],
+    "license": {
+      "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw/ee20654eae0f7b8bee04a131c9f4bad326a81d3d/License",
+      "licenseDocuments": [
+        {
+          "sha256": "9baadca864bcb6bb30ece91803c808e18980bb217ad849f225dd5ae660fbd4d5",
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw/ee20654eae0f7b8bee04a131c9f4bad326a81d3d/License"
+            }
+          ],
+          "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw/ee20654eae0f7b8bee04a131c9f4bad326a81d3d/License",
+          "fileType": "text/plain; charset=utf-8"
+        }
+      ]
+    },
+    "serviceType": "compute",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Pumping Stations & Water Infrastructure",
+    "sourceDid": "did:ope:633d9ebdea4092abc8c59f1b99a447cacf66ad1d460d911d0c2497fecdbb3c63",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/pump_stations",
+    "name": "Pumping stations and water-related infrastructure",
+    "type": "dataset",
+    "description": "Monitor and optimize energy consumption of drinking water and wastewater pumping stations",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Underground Waste Containers",
+    "sourceDid": "did:ope:ed18d26e25a8c509f152254b7c96797431920554e7bd5af46ff9f2e311e35944",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/underground_waste",
+    "name": "Underground waste container systems",
+    "type": "dataset",
+    "description": "Energy-efficient management of underground waste container systems through IoT sensor integration",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Cultural Buildings & Heritage",
+    "sourceDid": "did:ope:81e3ed9bee43baa1abd4077497d403ac926c3cd32313a0fa5339cdcff9fac9be",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/cultural_buildings",
+    "name": "Cultural buildings such as museums, heritage sites, and community centers",
+    "type": "dataset",
+    "description": "Preserving heritage with smart energy management that balances strict conservation requirements",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Educational Facilities",
+    "sourceDid": "did:ope:ebcd8844ba9c0e1a9cde7ac6e9d732ae25890c8f7b3cf5c25352de9b9a32044e",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/education_facilities",
+    "name": "Educational facilities including schools and training centers",
+    "type": "dataset",
+    "description": "Empowering sustainability in education through real-time tracking of energy usage in schools",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Public Street Lighting",
+    "sourceDid": "did:ope:301dd6a116fdfef4a6b82f8255893b6c63be20c5d830aaae4b4c412f10d0caf8",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/street_lighting",
+    "name": "Public street lighting points and lighting-related installations",
+    "type": "dataset",
+    "description": "Smart public lighting networks that transform urban infrastructure into adaptive systems",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Sports Facilities",
+    "sourceDid": "did:ope:31643222a8ec7babaa95096da069b40be0b3497b98101ddb7077b6f445cf47dd",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/sports_facilities",
+    "name": "Sports facilities like gyms, fields, and athletic centers",
+    "type": "dataset",
+    "description": "High-performance energy management for sports facilities with intensive and variable demands",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Mixed-Use Buildings",
+    "sourceDid": "did:ope:b9b9fd8d5da852139788b00044212c657ab222bde631b539d3989042b95d5a6d",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/mixeduse_buildings",
+    "name": "Mixed-use buildings with combined purposes",
+    "type": "dataset",
+    "description": "Integrated energy profiles for mixed-use buildings that combine housing, offices, shops, and services",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Office & Administrative Buildings",
+    "sourceDid": "did:ope:9e63e5dd09e2ff044b937e39c6d7758d05c24b825c6562dd54a2882ae94b7610",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/office_buildings",
+    "name": "Office buildings and administrative municipal spaces",
+    "type": "dataset",
+    "description": "Efficient public administration through intelligent monitoring and control of energy use",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Swimming Pool Facilities",
+    "sourceDid": "did:ope:2f4058b3ff4063c864497930a27b83ea944fcaeb4fb88b4ea650062a725fea04",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/swimming_pools",
+    "name": "Indoor and outdoor swimming pool facilities",
+    "type": "dataset",
+    "description": "Thermal energy optimization for indoor and outdoor pool facilities",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Healthcare & Sanitary Buildings",
+    "sourceDid": "did:ope:d58a7e0bda38d9222cfc8ce394d6f8a3261ed6dc7bb49f43bff240be92057a6a",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/healthcare_buildings",
+    "name": "Healthcare and sanitary service buildings",
+    "type": "dataset",
+    "description": "Reliability and efficiency in critical healthcare infrastructure requiring uninterrupted 24-hour electrical supply",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Traffic Lights & Signaling",
+    "sourceDid": "did:ope:c02b6f40c3d5b091db16d2752de8f71850d58f4a5c6cff25336a48c6a539fc47",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/traffic_lights",
+    "name": "Traffic light and signaling system installations",
+    "type": "dataset",
+    "description": "Urban flow efficiency through intelligent management of traffic lights and road signaling systems",
+    "author": "Zertifier SL",
+    "tags": [
+      "zertipower",
+      "rubi",
+      "zertifier",
+      "empower-x"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "sha256": "cd3a5ab9cc45107e13dc9152d2699349c384ddea47f4f81b9905c62866bfe501",
+          "name": "License",
+          "fileType": "text/html; charset=utf-8"
+        }
+      ],
+      "name": "License document"
+    },
+    "serviceType": "access",
+    "timeout": 31556952,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Solar Inverter Monitoring (Bettergy)",
+    "sourceDid": "did:ope:213b35870fc56abe505c91887221cefa6accc419d31840cb995b6728df869ee2",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/monitorizacion_y_gestion_de_inversores",
+    "name": "Solar Inverter Monitoring and Management",
+    "type": "dataset",
+    "description": "Secure access to technical and telemetric data from solar inverters in photovoltaic plants",
+    "author": "bettergy",
+    "tags": [
+      "electricidad",
+      "inversores-solares",
+      "bettergy"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "sha256": "5a051e8e73057a521eadf3f80219495c4ed04d63397e5817a72ec2c335025b44",
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw",
+          "fileType": "text/html; charset=ISO-8859-1"
+        }
+      ],
+      "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+    },
+    "serviceType": "access",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Hourly Electricity Prices (Soy Eficiente)",
+    "sourceDid": "did:ope:ef1b1d1ef16a555d572de3c48828ad773cbd9a457708843f5b4479e63b5aabd4",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/precios_de_la_luz_por_tarifa",
+    "name": "Hourly Electricity Prices by Tariff",
+    "type": "dataset",
+    "description": "Structured access to the hourly components of electricity prices in the Spanish market",
+    "author": "soyeficiente",
+    "tags": [
+      "electricidad",
+      "precios-electricos",
+      "tarifas-electricas",
+      "soyeficiente"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "sha256": "5a051e8e73057a521eadf3f80219495c4ed04d63397e5817a72ec2c335025b44",
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+            }
+          ],
+          "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw",
+          "fileType": "text/html; charset=ISO-8859-1"
+        }
+      ],
+      "name": "https://gist.githubusercontent.com/grigorevaiv/51ad15e39ce9e568ca70c56f9f906b20/raw"
+    },
+    "serviceType": "access",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Energy Production/Consumption + Solar (Badalona)",
+    "sourceDid": "did:ope:57faa605004cf42ed6eeeebb5541945f3622b6cadfbb3f2ad7627feae2e6f235",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/prod_cons_viladebadalona",
+    "name": "Energy Production and Consumption Analysis with Solar Generation",
+    "type": "dataset",
+    "description": "Base data service for the execution of advanced energy analysis algorithms",
+    "author": "Viladebadalona",
+    "tags": [
+      "energy",
+      "green-energy",
+      "viladebadalona"
+    ],
+    "license": {
+      "licenseDocuments": [
+        {
+          "additionalInformation": {
+            "size": 97086
+          },
+          "sha256": "6f3c292713436f805526da60b7ec63c4cbca18529234614518cb24a552910312",
+          "mirrors": [
+            {
+              "method": "get",
+              "type": "url",
+              "url": "https://zertifier.com/politica_privacitat.html&languageid=1"
+            }
+          ],
+          "displayName": {
+            "@value": "politica_privacitat.html&languageid=1",
+            "@direction": "",
+            "@language": ""
+          },
+          "name": "politica_privacitat.html&languageid=1",
+          "description": {
+            "@value": "",
+            "@direction": "",
+            "@language": ""
+          },
+          "fileType": "text/html; charset=UTF-8"
+        }
+      ]
+    },
+    "serviceType": "access",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Annual Photovoltaic Performance (Naturelek)",
+    "sourceDid": "did:ope:c1e3311cc026d2d2261c6cd9aae7a08ccb46cb32197aba97494d8f570e241acb",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/rendimiento_fotovoltaico",
+    "name": "Annual Photovoltaic Performance Analysis",
+    "type": "dataset",
+    "description": "Dataset of hourly annual energy production for five photovoltaic self-consumption plants",
+    "author": "NATURELEK",
+    "tags": [
+      "energy",
+      "naturelek"
+    ],
+    "license": null,
+    "serviceType": "access",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "OCEAN"
+    }
+  },
+  {
+    "label": "Sommobilitat Data (EV charges)",
+    "sourceDid": "did:ope:5d70e0ec4bc86527310ad8e6e4391c1532ac34cd69d4070acc73cd6c0cf1cb3e",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/cars_rubi_ds4ped",
+    "name": "Electric vehicles data",
+    "type": "dataset",
+    "description": "Hourly energy consumption data from electric vehicles.",
+    "author": "",
+    "tags": [
+      "ds4ped"
+    ],
+    "license": null,
+    "serviceType": "compute",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "EURC"
+    }
+  },
+  {
+    "label": "Etecnic Data (EV chargers)",
+    "sourceDid": "did:ope:85e105878ac8088b7d5ed3c440e958abdb6b791ae54a8f8e8ce15369e33b724d",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/chargers_rubi_ds4ped",
+    "name": "EV chargers data",
+    "type": "dataset",
+    "description": "Hourly energy consumption data from electric vehicle charging stations.",
+    "author": "Zertifier",
+    "tags": [
+      "ds4ped"
+    ],
+    "license": null,
+    "serviceType": "compute",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "EURC"
+    }
+  },
+  {
+    "label": "PV Production (solar surplus ZP)",
+    "sourceDid": "did:ope:25d0778c454d922ea66dded04f924b1ce71eef3e24566ba4a743909f32fa28ed",
+    "sourceUrl": "http://46.253.45.22:2106/raw/by-name/surplus_rubi_ds4ped",
+    "name": "PV surplus hourly data",
+    "type": "dataset",
+    "description": "Hourly photovoltaic (PV) energy surplus data representing the amount of solar energy available after local consumption.",
+    "author": "zertifier",
+    "tags": [
+      "ds4ped"
+    ],
+    "license": null,
+    "serviceType": "compute",
+    "timeout": 0,
+    "price": {
+      "value": 0,
+      "tokenSymbol": "EURC"
+    }
+  }
+]

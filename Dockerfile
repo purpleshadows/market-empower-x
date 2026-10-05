@@ -42,6 +42,12 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Markdown content (privacy/cookie/terms/imprint and other [slug] pages) is read
+# from disk at runtime via fs, so Next's standalone tracer omits it and those
+# pages render the "Content Not Found" fallback. Copy the content tree in
+# explicitly so the markdown pages resolve.
+COPY --from=builder --chown=nextjs:nodejs /app/content ./content
+
 COPY --chown=nextjs:nodejs ./scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 

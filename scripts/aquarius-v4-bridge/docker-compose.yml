@@ -1,0 +1,35 @@
+# v4 aquarius bridge — deploy on the node machine (192.168.130.2), alongside the
+# OE node. It joins the node's internal network and talks to oe-node:8000
+# directly (no TLS, no NAT-hairpin). Front :8092 with the same public ingress
+# that serves node.zdevutils.com, on its own hostname (e.g. bridge.zdevutils.com),
+# then give that URL to any standard Ocean Market as its metadataCacheUri.
+services:
+  aquarius-v4-bridge:
+    build: .
+    container_name: aquarius-v4-bridge
+    restart: unless-stopped
+    environment:
+      # Internal node endpoint (same API node.zdevutils.com proxies to).
+      UPSTREAM: http://oe-node:8000
+      PORT: 8080
+      # Reverse direction: /pontusx/* proxies to a foreign standard-Ocean (v4)
+      # node and up-converts its assets to v5 for your OE market.
+      REVERSE_UPSTREAM: https://node.demo.pontus-x.eu
+      REVERSE_SERVICE_ENDPOINT: https://node.zdevutils.com/pontusx
+      REVERSE_DATASPACE: pontus-x
+    ports:
+      - '8092:8080'
+    labels:
+      - autoheal=true
+    networks:
+      - oe-node_backend
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:8080/bridge/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  # The OE node's existing network, so we can reach it as http://oe-node:8000.
+  oe-node_backend:
+    external: true

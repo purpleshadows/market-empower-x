@@ -126,6 +126,33 @@ a.link:focus {
   height: 12px;
 }
 
+.sourceBadge {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: var(--font-family);
+  font-weight: 600;
+  font-size: 9px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 7px;
+  border-radius: 10px;
+  border: 1px solid var(--empower-border);
+  color: var(--empower-muted-label);
+  background: var(--empower-surface);
+  white-space: nowrap;
+}
+
+.sourceBadge[data-source='Empower-X'] {
+  color: var(--empower-primary);
+  border-color: var(--empower-primary);
+}
+
+.sourceBadge[data-source='SENSE'] {
+  color: var(--empower-success);
+  border-color: var(--empower-success);
+}
+
 .typeLabel {
   font-family: var(--font-family);
   font-weight: 400;
