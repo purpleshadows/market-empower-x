@@ -59,6 +59,12 @@
         "placeholder": "e.g. John SRL"
       },
       {
+        "name": "copyrightHolder",
+        "label": "Copyright Holder",
+        "placeholder": "e.g. Ocean Enterprise",
+        "help": "The entity holding the legal copyright for this asset."
+      },
+      {
         "name": "providedBy",
         "label": "Provided By",
         "placeholder": "e.g. https://oceanenterprise.io/vc.json",
@@ -70,6 +76,17 @@
         "type": "select",
         "options": ["Enterprise (v5)", "Standard (v4)"],
         "help": "Enterprise (v5) is this marketplace's native format (did:ope, VC/SSI). Standard (v4) publishes a did:op asset that interoperates natively with Pontus-X and all standard Ocean markets (browse + download), but without the Enterprise SSI/VC features."
+      },
+      {
+        "name": "links",
+        "label": "Links",
+        "type": "keyValue",
+        "keyLabel": "Title",
+        "valueLabel": "URL",
+        "keyPlaceholder": "e.g. Website",
+        "valuePlaceholder": "e.g. https://oceanenterprise.io",
+        "validateValueAsUrl": true,
+        "help": "Related links for this asset as a mapping of titles to URLs. Enter a Title and its URL, then click Add. Repeat to add more (e.g. website, demo)."
       },
       {
         "name": "license",
@@ -119,8 +136,9 @@
       {
         "name": "dockerImageCustom",
         "label": "Custom Docker Image",
-        "placeholder": "e.g. oceanprotocol/algo_dockers:node-vibrant or quay.io/startx/mariadb",
-        "help": "Provide the name and the tag of a public Docker hub image or the custom image if you have it hosted in a 3rd party repository",
+        "placeholder": "e.g. oceanprotocol/algo_dockers:node-vibrant or quay.io/startx/mariadb:latest",
+        "help": "Provide the repository and explicit tag of a public Docker image, including images hosted in a third-party registry.",
+        "type": "container",
         "required": true
       },
       {

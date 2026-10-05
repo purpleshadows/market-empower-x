@@ -67,6 +67,7 @@ function getSearchQuery(
   sortDirection?: string,
   serviceType?: string | string[],
   accessType?: string | string[],
+  priceType?: string | string[],
   supportedBlockchain?: string | string[],
   filterSet?: string | string[],
   assetState?: string | string[],
@@ -101,8 +102,12 @@ function getSearchQuery(
     }
   } else {
     filters.push({
-      term: {
-        'indexedMetadata.nft.state': State.Active
+      terms: {
+        'indexedMetadata.nft.state': [
+          State.Active,
+          State.EndOfLife,
+          State.OrderingIsTemporaryDisabled
+        ]
       }
     })
   }
@@ -194,8 +199,8 @@ function getSearchQuery(
       : chainIds
 
   const filtersList = getInitialFilters(
-    { accessType, serviceType, filterSet, nodeUriIndex },
-    ['accessType', 'serviceType', 'filterSet', 'nodeUriIndex']
+    { accessType, serviceType, priceType, filterSet, nodeUriIndex },
+    ['accessType', 'serviceType', 'priceType', 'filterSet', 'nodeUriIndex']
   )
   parseFilters(filtersList, filterSets).forEach((term) => filters.push(term))
   const normalizedPage = normalizeSearchPage(page)
@@ -227,6 +232,7 @@ export async function getResults(
     sortOrder?: string
     serviceType?: string | string[]
     accessType?: string | string[]
+    priceType?: string | string[]
     supportedBlockchain?: string | string[]
     filterSet?: string[]
     assetState?: string | string[]
@@ -245,6 +251,7 @@ export async function getResults(
     sortOrder,
     serviceType,
     accessType,
+    priceType,
     supportedBlockchain,
     filterSet,
     assetState,
@@ -263,6 +270,7 @@ export async function getResults(
     sortOrder,
     serviceType,
     accessType,
+    priceType,
     supportedBlockchain,
     filterSet,
     assetState,

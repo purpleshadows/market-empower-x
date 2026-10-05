@@ -26,6 +26,8 @@ import {
 import { convertToPolicyType } from '@components/@shared/PolicyEditor/utils'
 import { AdditionalVerifiableCredentials } from 'src/@types/ddo/AdditionalVerifiableCredentials'
 import { State } from 'src/@types/ddo/State'
+import { recordToKeyValuePairs } from '@utils/links'
+import { normalizeDockerImageReference } from '@utils/docker'
 
 export const defaultServiceComputeOptions: Compute = {
   allowRawAlgorithm: false,
@@ -262,6 +264,23 @@ export function getInitialValues(
   additionalDdos: AdditionalVerifiableCredentials[],
   assetState: string
 ): MetadataEditForm {
+  const container = metadata?.algorithm?.container
+  let containerImage = container?.image || ''
+  let containerTag = container?.tag || ''
+
+  if (containerImage) {
+    try {
+      const normalizedContainer = normalizeDockerImageReference(
+        containerImage,
+        containerTag
+      )
+      containerImage = normalizedContainer.image
+      containerTag = normalizedContainer.tag
+    } catch {
+      // Keep invalid legacy values visible so the owner can correct them.
+    }
+  }
+
   const useRemoteLicense =
     metadata.license?.licenseDocuments?.[0]?.mirrors?.[0]?.type !== 'url'
 
@@ -325,10 +344,15 @@ export function getInitialValues(
     descriptionLanguage: metadata?.description?.['@language'] || 'en',
     descriptionDirection: metadata?.description?.['@direction'] || 'ltr',
     type: metadata?.type,
-    links: [{ url: '', type: 'url' }],
+    links: recordToKeyValuePairs(metadata?.links),
     author: metadata?.author,
     providedBy: metadata?.providedBy || '',
+    copyrightHolder: metadata?.copyrightHolder || '',
     tags: metadata?.tags,
+    containerImage,
+    containerTag,
+    containerChecksum: container?.checksum || '',
+    containerEntrypoint: container?.entrypoint || '',
     usesConsumerParameters: metadata?.algorithm?.consumerParameters
       ? Object.values(metadata?.algorithm?.consumerParameters).length > 0
       : false,
@@ -458,7 +482,7 @@ export const getServiceInitialValues = (
   }
 
   const hasExistingEncryptedFile =
-    Array.isArray(service.files) && service.files.length > 0
+    typeof service.files === 'string' && service.files.trim().length > 0
 
   let processedFiles = []
   if (hasExistingEncryptedFile) {

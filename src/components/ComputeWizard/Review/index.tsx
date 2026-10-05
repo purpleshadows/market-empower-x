@@ -55,6 +55,7 @@ import { ComputeStartProgressStep } from '../progress'
 import Accordion from '@components/@shared/Accordion'
 import RowItem from './RowItem'
 import CurrencySplitRow from './CurrencySplitRow'
+import DockerRegistryAuthFields from '../DockerRegistryAuthFields'
 
 type VerificationStatus =
   | 'verified'
@@ -282,7 +283,7 @@ export default function Review({
     Record<string, string>
   >({})
   const [isOecFeesLoading, setIsOecFeesLoading] = useState(false)
-  const { setFieldValue, setFieldTouched, values } =
+  const { setFieldValue, setFieldTouched, values, isSubmitting } =
     useFormikContext<FormComputeData>()
   const [verificationQueue, setVerificationQueue] = useState<
     VerificationItem[]
@@ -1472,6 +1473,9 @@ export default function Review({
   ])
 
   useEffect(() => {
+    // Wallet balances decrease as the submission pays for escrow and orders.
+    // Recheck the remaining costs once the submission has settled.
+    if (isSubmitting) return
     const filteredPriceChecks = totalPriceBreakdown.filter(
       (price) => price.value !== '0' && price.symbol
     )
@@ -1507,6 +1511,7 @@ export default function Review({
     setInsufficientBalances(missingBalances)
     setIsBalanceSufficient(sufficient)
   }, [
+    isSubmitting,
     balance,
     totalPriceBreakdown,
     setIsBalanceSufficient,
@@ -2161,7 +2166,7 @@ export default function Review({
   )
   const progressPercent = getProgressPercent(computeProgressSteps)
 
-  if (!isBalanceSufficient) {
+  if (!isSubmitting && !isBalanceSufficient) {
     if (insufficientBalances.length > 0) {
       insufficientBalances.forEach(({ symbol, required, available }) => {
         errorMessages.push(
@@ -2514,6 +2519,7 @@ export default function Review({
             />
           </FormErrorGroup>
         </div>
+        {values.dockerRegistryAuthRequired && <DockerRegistryAuthFields />}
         {showComputeProgress && (
           <section
             className={styles.computeProgress}

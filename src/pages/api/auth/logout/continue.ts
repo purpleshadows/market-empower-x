@@ -28,10 +28,14 @@ function serializeFederatedLogoutContinueCookie(value: string, maxAge: number) {
 }
 
 function clearLogoutCookies(res: NextApiResponse) {
-  res.setHeader('Set-Cookie', [
-    ...buildClearAuthCookieStrings(),
-    serializeFederatedLogoutContinueCookie('', 0)
-  ])
+  try {
+    res.setHeader('Set-Cookie', [
+      ...buildClearAuthCookieStrings(),
+      serializeFederatedLogoutContinueCookie('', 0)
+    ])
+  } catch (error) {
+    console.error('Failed to clear logout cookies:', error)
+  }
 }
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -45,6 +49,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   if (req.cookies[FEDERATED_LOGOUT_CONTINUE_COOKIE] !== '1') {
+    console.info(
+      'No federated logout continuation cookie found. Redirecting to login.'
+    )
     clearLogoutCookies(res)
     return res.redirect(302, '/auth/login?loggedout=1')
   }
@@ -53,22 +60,35 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const issuer = oidcIssuer
 
   if (!clientId || !issuer) {
-    console.error('Missing OIDC configuration for logout continuation')
+    console.error(
+      'Missing Main OIDC configuration during federated logout continuation.'
+    )
     clearLogoutCookies(res)
     return res.redirect(302, '/auth/login?loggedout=1')
   }
 
-  const callbackUrl = `${getRequestOrigin(req)}/auth/callback/logout`
-  const oidcParams = new URLSearchParams({ client_id: clientId })
-  const idTokenHint = req.cookies.id_token
+  try {
+    const callbackUrl = `${getRequestOrigin(req)}/auth/callback/logout`
 
-  if (idTokenHint) oidcParams.set('id_token_hint', idTokenHint)
-  oidcParams.set('post_logout_redirect_uri', callbackUrl)
-  oidcParams.set('state', 'logout')
+    const oidcParams = new URLSearchParams({
+      client_id: clientId,
+      post_logout_redirect_uri: callbackUrl,
+      state: 'logout'
+    })
 
-  clearLogoutCookies(res)
-  return res.redirect(
-    302,
-    `${getEndSessionUrl(issuer)}?${oidcParams.toString()}`
-  )
+    console.info('Continuing logout with Main OIDC provider.')
+    console.info(
+      `Redirecting to: ${getEndSessionUrl(issuer)}?${oidcParams.toString()}`
+    )
+
+    clearLogoutCookies(res)
+    return res.redirect(
+      302,
+      `${getEndSessionUrl(issuer)}?${oidcParams.toString()}`
+    )
+  } catch (error) {
+    console.error('Federated logout continuation failed:', error)
+    clearLogoutCookies(res)
+    return res.redirect(302, '/auth/login?loggedout=1')
+  }
 }

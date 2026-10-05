@@ -4,13 +4,14 @@ import Details from './Details'
 import Tooltip from '@shared/atoms/Tooltip'
 import styles from './index.module.css'
 import { useAccount } from 'wagmi'
-import { useModal } from 'connectkit'
 import Network from './Network'
 import { useDfnsConnect } from '@hooks/useDfnsConnect'
 import { useAuth } from '@hooks/useAuth'
 import { useSignerServerConnect } from '@hooks/useSignerServerConnect'
+import { useMetaMaskConnect } from '@hooks/useMetaMaskConnect'
 import WalletChoiceModal from '@shared/WalletChoiceModal'
 import DfnsRegistrationModal from '@shared/DfnsRegistrationModal'
+import { getRuntimeConfig } from '@utils/runtimeConfig'
 
 type TooltipHandle = {
   hide?: () => void
@@ -18,10 +19,11 @@ type TooltipHandle = {
 
 export default function Wallet(): ReactElement {
   const { address: accountId } = useAccount()
-  const { setOpen } = useModal()
+  const metaMask = useMetaMaskConnect()
   const dfns = useDfnsConnect()
   const signerServer = useSignerServerConnect()
   const { authEnabled } = useAuth()
+  const isDfnsEnabled = getRuntimeConfig().NEXT_PUBLIC_DFNS_ENABLED === 'true'
   const [isSsiModalOpen, setIsSsiModalOpen] = useState(false)
   const [isWalletChoiceOpen, setIsWalletChoiceOpen] = useState(false)
   const tooltipRef = useRef<TooltipHandle | null>(null)
@@ -54,12 +56,12 @@ export default function Wallet(): ReactElement {
         isOpen={isWalletChoiceOpen}
         isDfnsConnecting={dfns.isConnecting}
         isSignerServerConnecting={signerServer.isConnecting}
-        showDfns={authEnabled}
+        showDfns={authEnabled && isDfnsEnabled}
         showSignerServer={signerServer.isConfigured}
         onClose={() => setIsWalletChoiceOpen(false)}
         onSelectMetaMask={() => {
           setIsWalletChoiceOpen(false)
-          setOpen(true)
+          metaMask.openConnect()
         }}
         onSelectDfns={() => {
           setIsWalletChoiceOpen(false)
@@ -71,14 +73,16 @@ export default function Wallet(): ReactElement {
         }}
       />
 
-      <DfnsRegistrationModal
-        isOpen={dfns.isRegistrationModalOpen}
-        registrationCode={dfns.registrationCode}
-        isConnecting={dfns.isConnecting}
-        onChange={dfns.setRegistrationCode}
-        onSubmit={dfns.submitRegistrationCode}
-        onClose={() => dfns.setIsRegistrationModalOpen(false)}
-      />
+      {isDfnsEnabled && (
+        <DfnsRegistrationModal
+          isOpen={dfns.isRegistrationModalOpen}
+          registrationCode={dfns.registrationCode}
+          isConnecting={dfns.isConnecting}
+          onChange={dfns.setRegistrationCode}
+          onSubmit={dfns.submitRegistrationCode}
+          onClose={() => dfns.setIsRegistrationModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

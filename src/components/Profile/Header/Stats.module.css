@@ -55,4 +55,6 @@
 
 .withdrawHint {
   display: block;
+  font-size: var(--font-size-small);
+  color: var(--color-secondary);
 }

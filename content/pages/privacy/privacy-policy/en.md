@@ -64,7 +64,11 @@ In such cases, service providers will act as data processors and must implement 
 
 Where technological tools involve international transfers of personal data, such transfers will only take place where appropriate safeguards are in place in accordance with applicable law.
 
-### 8. Rights of Data Subjects
+### 8. Cookies
+
+Our website uses cookies. You can manage cookies via your browser settings, including disabling or deleting cookies. If you want to change your cookie consent, use the Cookie Settings link in the footer. A description of every cookie and web storage item we use, including its purpose and storage duration, can be found in our [Cookie Policy](/privacy/cookie-policy).
+
+### 9. Rights of Data Subjects
 
 You may exercise your rights of access, rectification, erasure, objection, restriction of processing and data portability by sending a request to:
 
@@ -74,10 +78,10 @@ You may also withdraw your consent at any time where processing is based on cons
 
 If you believe that the processing of your personal data does not comply with applicable law, you may lodge a complaint with the competent data protection supervisory authority.
 
-### 9. Security
+### 10. Security
 
 We implement reasonable technical and organisational measures to protect personal data against unauthorised access, loss, alteration or improper disclosure.
 
-### 10. Changes to This Policy
+### 11. Changes to This Policy
 
 We may update this Privacy Policy to reflect legal, technical or operational changes. The version published on the website will be the version in force at any given time.

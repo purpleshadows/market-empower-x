@@ -1,5 +1,5 @@
 import Input from '@shared/FormInput'
-import { Field } from 'formik'
+import { Field, useFormikContext } from 'formik'
 import { ReactElement } from 'react'
 import content from '../../../../content/publish/form.json'
 import { getFieldContent } from '@utils/form'
@@ -10,11 +10,13 @@ import useMetadata from './useMetadata'
 
 import SectionContainer from '../../@shared/SectionContainer/SectionContainer'
 import styles from './index.module.css'
+import DockerRegistryChecksum from '@shared/DockerRegistryChecksum'
+import { FormPublishData } from '../_types'
 
 export default function MetadataFields(): ReactElement {
+  const { setFieldTouched, setFieldValue } = useFormikContext<FormPublishData>()
   const {
     values,
-    meta,
     assetTypeOptions,
     dockerImageOptions,
     additionalFiles,
@@ -36,6 +38,7 @@ export default function MetadataFields(): ReactElement {
   } = useMetadata()
   const primaryUploadedLicenseDocument =
     values.metadata.uploadedLicense?.licenseDocuments?.[0]
+  const linksFieldContent = getFieldContent('links', content.metadata.fields)
 
   return (
     <>
@@ -82,6 +85,11 @@ export default function MetadataFields(): ReactElement {
         name="metadata.author"
       />
       <Field
+        {...getFieldContent('copyrightHolder', content.metadata.fields)}
+        component={Input}
+        name="metadata.copyrightHolder"
+      />
+      <Field
         {...getFieldContent('providedBy', content.metadata.fields)}
         component={Input}
         name="metadata.providedBy"
@@ -94,6 +102,17 @@ export default function MetadataFields(): ReactElement {
         component={Input}
         name="metadata.ddoVersion"
       /> */}
+      <SectionContainer
+        title={linksFieldContent.label}
+        help={linksFieldContent.help}
+      >
+        <Field
+          {...linksFieldContent}
+          component={Input}
+          name="metadata.links"
+          hideLabel
+        />
+      </SectionContainer>
 
       <Field
         {...getFieldContent('type', content.metadata.fields)}
@@ -137,10 +156,27 @@ export default function MetadataFields(): ReactElement {
                   )}
                   component={Input}
                   name="metadata.dockerImageCustomChecksum"
-                  disabled={
-                    values.metadata.dockerImageCustomChecksum && !meta.touched
-                  }
                 />
+                {values.metadata.dockerImageCustom &&
+                  values.metadata.dockerImageCustomTag &&
+                  !values.metadata.dockerImageCustomChecksum && (
+                    <DockerRegistryChecksum
+                      image={values.metadata.dockerImageCustom}
+                      tag={values.metadata.dockerImageCustomTag}
+                      onChecksumResolved={async (checksum) => {
+                        await setFieldValue(
+                          'metadata.dockerImageCustomChecksum',
+                          checksum,
+                          true
+                        )
+                        await setFieldTouched(
+                          'metadata.dockerImageCustomChecksum',
+                          false,
+                          false
+                        )
+                      }}
+                    />
+                  )}
                 <Field
                   {...getFieldContent(
                     'dockerImageCustomEntrypoint',

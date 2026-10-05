@@ -22,6 +22,11 @@ import { Filters } from '@context/Filter'
 import { filterSets } from '@components/Search/Filter'
 import { Asset } from 'src/@types/Asset'
 import { resolveServiceTokenSymbol } from '@utils/priceToken'
+import {
+  CONTAINER_UPDATE_REQUIRED_MESSAGE,
+  getExplicitTrustedAlgorithm,
+  hasTrustedContainerChanged
+} from '@utils/computeContainerUpdates'
 
 export const MAXIMUM_NUMBER_OF_PAGES_WITH_RESULTS = 476
 
@@ -59,9 +64,13 @@ export function getFilterTerm(
     // catalog that federates nodes with either mapping, match both forms in a
     // `should`, and set `ignore_unmapped` so the nested clause is skipped (not an
     // error) on nodes where the path isn't nested.
+    // Some callers already pass a `.keyword` field — do not double it.
+    const flatField = filterField.endsWith('.keyword')
+      ? filterField
+      : `${filterField}.keyword`
     const flatFilter = {
       [useKey]: {
-        [`${filterField}.keyword`]: value
+        [flatField]: value
       }
     }
     return {
@@ -103,6 +112,7 @@ export function parseFilters(
   const filterQueryPath = {
     accessType: 'credentialSubject.services.type',
     serviceType: 'credentialSubject.metadata.type',
+    priceType: 'indexedMetadata.stats.prices.type',
     filterSet: 'credentialSubject.metadata.tags.keyword',
     filterTime: 'credentialSubject.metadata.created',
     assetState: 'indexedMetadata.nft.state',
@@ -128,6 +138,9 @@ export function parseFilters(
         const targetDate = new Date(now.getTime() - Number(filtersList[key][0]))
         const targetDateISOString = targetDate.toISOString()
         return getRangeFilterTerm(filterQueryPath[key], targetDateISOString)
+      }
+      if (key === 'assetState' && filtersList[key]?.length > 0) {
+        return getFilterTerm(filterQueryPath[key], filtersList[key].map(Number))
       }
       if (filtersList[key]?.length > 0) {
         return getFilterTerm(filterQueryPath[key], filtersList[key])
@@ -846,7 +859,8 @@ export async function getAlgorithmDatasetsForComputeSelection(
   accountId: string,
   datasetChainId?: number,
   cancelToken?: CancelToken,
-  tokenSymbolMap?: Record<string, string>
+  tokenSymbolMap?: Record<string, string>,
+  algorithmAsset?: Asset
 ): Promise<AssetSelectionAsset[]> {
   // This node's metadata index does not support querying the nested
   // credentialSubject.services.compute.publisherTrustedAlgorithms fields, so the
@@ -888,7 +902,7 @@ export async function getAlgorithmDatasetsForComputeSelection(
   })
 
   const uniqueAssets = Array.from(uniqueAssetsMap.values())
-  const datasets = await transformAssetToAssetSelectionDataset(
+  let datasets = await transformAssetToAssetSelectionDataset(
     datasetProviderUri,
     uniqueAssets,
     accountId,
@@ -897,6 +911,48 @@ export async function getAlgorithmDatasetsForComputeSelection(
     { algorithmDid: algorithmId, algorithmServiceId: serviceId },
     tokenSymbolMap
   )
+
+  if (algorithmAsset) {
+    datasets = datasets.map((selection) => {
+      const dataset = uniqueAssets.find(
+        (item: Asset) => item.id === selection.did
+      ) as Asset | undefined
+      const datasetService = dataset?.credentialSubject?.services?.find(
+        (item) => item.id === selection.serviceId
+      )
+      if (!datasetService) return selection
+
+      const trustedAlgorithm = getExplicitTrustedAlgorithm(
+        datasetService,
+        algorithmId,
+        serviceId
+      )
+      if (!trustedAlgorithm) return selection
+
+      const selectionDisabled = hasTrustedContainerChanged(
+        trustedAlgorithm,
+        algorithmAsset
+      )
+
+      if (selectionDisabled) {
+        console.warn('[C2D container check] Dataset option disabled', {
+          datasetDid: selection.did,
+          datasetServiceId: selection.serviceId,
+          algorithmDid: algorithmId,
+          algorithmServiceId: serviceId
+        })
+      }
+
+      return {
+        ...selection,
+        selectionDisabled,
+        selectionDisabledReason: selectionDisabled
+          ? CONTAINER_UPDATE_REQUIRED_MESSAGE
+          : undefined
+      }
+    })
+  }
+
   return datasets
 }
 

@@ -23,9 +23,9 @@ import { useIsMounted } from '@hooks/useIsMounted'
 import styles from './index.module.css'
 import { FormikContext, FormikContextType } from 'formik'
 import { FormPublishData } from '@components/Publish/_types'
-import { getTokenBalanceFromSymbol } from '@utils/wallet'
+import { getTokenBalanceFromSymbol, getOrCreateProvider } from '@utils/wallet'
 import { isAddressWhitelisted } from '@utils/ddo'
-import { useAccount, useChainId, usePublicClient } from 'wagmi'
+import { useAccount, useChainId } from 'wagmi'
 import useBalance from '@hooks/useBalance'
 import Button from '@components/@shared/atoms/Button'
 import { Service } from 'src/@types/ddo/Service'
@@ -37,7 +37,7 @@ import { AssetActionCheckCredentials } from './CheckCredentials'
 import { useSsiWallet } from '@context/SsiWallet'
 import appConfig from 'app.config.cjs'
 import ComputeWizard from '@components/ComputeWizard'
-import { JsonRpcProvider } from 'ethers'
+// import { JsonRpcProvider } from 'ethers'
 import { useEthersSigner } from '@hooks/useEthersSigner'
 import { useRouter } from 'next/router'
 import {
@@ -47,10 +47,17 @@ import {
 } from '@utils/computeRerun'
 import { getAsset } from '@utils/aquarius'
 import { toast } from 'react-toastify'
-
-function isNftActive(state: unknown): boolean {
-  return Number(state) === 0
-}
+import { getIsPolicyServerConfigured } from '@utils/wallet/policyServer'
+import Loader from '@shared/atoms/Loader'
+import {
+  isPolicyServerConsumptionDisabled,
+  requiresPolicyServerCredentialCheck,
+  isSsiPolicyConsumptionDisabled,
+  SSI_NODE_UNSUPPORTED_MESSAGE,
+  SSI_POLICY_UNSUPPORTED_MESSAGE
+} from '@utils/credentials'
+import Alert from '@shared/atoms/Alert'
+import { isAssetOrderableState } from '@utils/assetState'
 
 // The provider returns contentLength as a raw byte count string. Format it for
 // display; return undefined when unknown/zero so the caller can show a dash
@@ -90,11 +97,17 @@ export default function AssetActions({
   const signer = useEthersSigner()
   const { balance } = useBalance()
   const chainId = useChainId()
-  const publicClient = usePublicClient()
+  // const publicClient = usePublicClient()
   const rpcUrl = getOceanConfig(chainId)?.nodeUri
 
-  const ethersProvider =
-    publicClient && rpcUrl ? new JsonRpcProvider(rpcUrl) : undefined
+  const ethersProvider = useMemo(() => {
+    if (!rpcUrl) return undefined
+    try {
+      return getOrCreateProvider(chainId)
+    } catch {
+      return undefined
+    }
+  }, [chainId, rpcUrl])
   const { isAssetNetwork, isOwner } = useAsset()
   const newCancelToken = useCancelToken()
   const isMounted = useIsMounted()
@@ -109,6 +122,51 @@ export default function AssetActions({
   const [isComputePopupOpen, setIsComputePopupOpen] = useState<boolean>(false)
   const [rerunConfig, setRerunConfig] = useState<ComputeRerunConfig>()
   const processedRerunJobRef = useRef<string | null>(null)
+  const [isPSConfigured, setIsPSConfigured] = useState<boolean | undefined>()
+  const isSsiConsumptionDisabled = isSsiPolicyConsumptionDisabled(
+    asset,
+    appConfig.ssiEnabled,
+    service
+  )
+
+  useEffect(() => {
+    const controller = new AbortController()
+    setIsPSConfigured(undefined)
+
+    getIsPolicyServerConfigured(service.serviceEndpoint, controller.signal)
+      .then((configured) => {
+        if (!controller.signal.aborted) setIsPSConfigured(configured)
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        LoggerInstance.warn(
+          '[Policy Server Status] Treating policy server as configured:',
+          error
+        )
+        setIsPSConfigured(true)
+      })
+
+    return () => controller.abort()
+  }, [service.serviceEndpoint])
+
+  const isPolicyServerStatusLoading = isPSConfigured === undefined
+  // Bridged v4 (e.g. Pontus-X) assets have no SSI/VC concept — the policy
+  // server gate does not apply to them (mirrors Download/index.tsx).
+  const isV4Asset = isBridgedV4Asset(asset)
+  const isPolicyServerUnsupported =
+    !isV4Asset &&
+    isPolicyServerConsumptionDisabled(
+      appConfig.ssiEnabled,
+      isPSConfigured === true
+    )
+  const requiresCredentialCheck =
+    !isV4Asset &&
+    requiresPolicyServerCredentialCheck(
+      appConfig.ssiEnabled,
+      isPSConfigured === true
+    )
+  const isConsumptionDisabled =
+    isSsiConsumptionDisabled || isPolicyServerUnsupported
 
   // TODO: using this for the publish preview works fine, but produces a console warning
   // on asset details page as there is no formik context there:
@@ -192,7 +250,10 @@ export default function AssetActions({
         setFileIsLoading(false)
       } catch (error) {
         setFileIsLoading(false)
-        LoggerInstance.error(error.message)
+        LoggerInstance.warn(
+          '[Asset File Info] Optional metadata unavailable:',
+          error instanceof Error ? error.message : String(error)
+        )
       }
     }
     initFileInfo()
@@ -277,6 +338,7 @@ export default function AssetActions({
   const salesCount = asset.indexedMetadata?.stats?.[0]?.orders || 0
 
   const handleComputeClick = () => {
+    if (isConsumptionDisabled) return
     setIsComputePopupOpen(true)
   }
 
@@ -309,7 +371,13 @@ export default function AssetActions({
 
   useEffect(() => {
     if (!router.isReady || !isCompute || !rerunJobId) return
+    if (isPolicyServerStatusLoading) return
     if (processedRerunJobRef.current === rerunJobId) return
+
+    if (isConsumptionDisabled) {
+      clearRerunQueryFromUrl()
+      return
+    }
 
     processedRerunJobRef.current = rerunJobId
     let cancelled = false
@@ -342,7 +410,7 @@ export default function AssetActions({
         )
         if (
           !algorithmAsset ||
-          !isNftActive(algorithmAsset.indexedMetadata?.nft?.state)
+          !isAssetOrderableState(algorithmAsset.indexedMetadata?.nft?.state)
         ) {
           toast.error('Algorithm is not available.')
           return
@@ -357,7 +425,8 @@ export default function AssetActions({
 
           const hasUnavailableDataset = fetchedDatasets.some(
             (dataset) =>
-              !dataset || !isNftActive(dataset.indexedMetadata?.nft?.state)
+              !dataset ||
+              !isAssetOrderableState(dataset.indexedMetadata?.nft?.state)
           )
           if (hasUnavailableDataset) {
             toast.error('One or more datasets are not available.')
@@ -387,7 +456,9 @@ export default function AssetActions({
     isCompute,
     asset.id,
     clearRerunQueryFromUrl,
-    newCancelToken
+    newCancelToken,
+    isConsumptionDisabled,
+    isPolicyServerStatusLoading
   ])
 
   function resetCacheWallet() {
@@ -465,13 +536,15 @@ export default function AssetActions({
             <span className={styles.ownerMessage}>
               You are the asset owner.
             </span>
-          ) : appConfig.ssiEnabled ? (
+          ) : isPolicyServerStatusLoading ? (
+            <Loader message="Checking credential requirements..." />
+          ) : requiresCredentialCheck ? (
             isCompute ? (
               <Button
                 style="primary"
                 onClick={handleComputeClick}
                 className={styles.computeButton}
-                disabled={!isAccountIdWhitelisted}
+                disabled={isConsumptionDisabled || !isAccountIdWhitelisted}
               >
                 Start Compute
               </Button>
@@ -490,6 +563,7 @@ export default function AssetActions({
                 file={fileMetadata}
                 fileIsLoading={fileIsLoading}
                 consumableFeedback={consumableFeedback}
+                isPSConfigured={isPSConfigured === true}
               />
             ) : (
               <AssetActionCheckCredentials asset={asset} service={service} />
@@ -499,7 +573,7 @@ export default function AssetActions({
               style="primary"
               onClick={handleComputeClick}
               className={styles.computeButton}
-              disabled={!isAccountIdWhitelisted}
+              disabled={isConsumptionDisabled || !isAccountIdWhitelisted}
             >
               Start Compute
             </Button>
@@ -518,12 +592,18 @@ export default function AssetActions({
               file={fileMetadata}
               fileIsLoading={fileIsLoading}
               consumableFeedback={consumableFeedback}
+              isPSConfigured={isPSConfigured === true}
             />
           )}
         </div>
+        {isPolicyServerUnsupported ? (
+          <Alert state="warning" text={SSI_NODE_UNSUPPORTED_MESSAGE} />
+        ) : isSsiConsumptionDisabled ? (
+          <Alert state="warning" text={SSI_POLICY_UNSUPPORTED_MESSAGE} />
+        ) : null}
       </div>
 
-      {isCompute && isComputePopupOpen && (
+      {!isConsumptionDisabled && isCompute && isComputePopupOpen && (
         <div className={styles.computePopup}>
           <div className={styles.computePopupContent}>
             <button

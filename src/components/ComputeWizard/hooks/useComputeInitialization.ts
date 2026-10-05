@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   ComputeEnvironment,
   ComputeOutput,
@@ -7,6 +7,7 @@ import {
   EscrowContract,
   ZERO_ADDRESS
 } from '@oceanprotocol/lib'
+import type { dockerRegistryAuth as DockerRegistryAuth } from '@oceanprotocol/lib'
 import { initializeProviderForComputeMulti } from '@utils/provider'
 import { getOrderPriceAndFees } from '@utils/accessDetailsAndPricing'
 import { getTokenInfo } from '@utils/wallet'
@@ -18,6 +19,7 @@ import {
   ComputeStartProgressPhase,
   ComputeStartProgressStatus
 } from '../progress'
+import { prepareEscrowPayment } from './escrowPayment'
 
 type DatasetServiceSelection = {
   asset: AssetExtended
@@ -41,8 +43,10 @@ type InitializeParams = {
   queueMaxWaitTime?: number
   algoParams?: Record<string, any>
   datasetParams?: Record<string, any>
+  dockerRegistryAuth?: DockerRegistryAuth
   accountId?: string
-  shouldDepositEscrow?: boolean
+  shouldPrepareEscrow?: boolean
+  onEscrowPrepared?: () => void
   onProgress?: (
     phase: ComputeStartProgressPhase,
     status: ComputeStartProgressStatus
@@ -137,7 +141,6 @@ export function useComputeInitialization({
   const [extraFeesLoaded, setExtraFeesLoaded] = useState(false)
   const [isInitLoading, setIsInitLoading] = useState(false)
   const [initError, setInitError] = useState<string>()
-  const lastEscrowDepositKey = useRef<string | null>(null)
 
   const resetInitializationState = useCallback(() => {
     setInitializedProviderResponse(undefined)
@@ -148,7 +151,6 @@ export function useComputeInitialization({
     setExtraFeesLoaded(false)
     setIsInitLoading(false)
     setInitError(undefined)
-    lastEscrowDepositKey.current = null
   }, [])
 
   const initializePricingAndProvider = useCallback(
@@ -167,8 +169,10 @@ export function useComputeInitialization({
       queueMaxWaitTime,
       algoParams,
       datasetParams,
+      dockerRegistryAuth,
       accountId,
-      shouldDepositEscrow = true,
+      shouldPrepareEscrow = true,
+      onEscrowPrepared,
       onProgress
     }: InitializeParams): Promise<InitializeResult> => {
       setIsInitLoading(true)
@@ -187,7 +191,8 @@ export function useComputeInitialization({
           computeOutput,
           queueMaxWaitTime,
           algoParams,
-          datasetParams
+          datasetParams,
+          dockerRegistryAuth
         )
 
         if (!initializedProvider) {
@@ -214,88 +219,45 @@ export function useComputeInitialization({
             }
           )
         )
-        const depositRequired =
-          selectedResources.mode === 'paid' &&
-          Number(selectedResources.price || 0) > 0
-        if (!depositRequired || !shouldDepositEscrow) {
-          onProgress?.('escrow', 'skipped')
-        }
-        if (Boolean(shouldDepositEscrow) && depositRequired) {
+        if (shouldPrepareEscrow && selectedResources.mode === 'paid') {
           onProgress?.('escrow', 'active')
           if (!paymentTokenAddress || !web3Provider) {
             throw new Error('Missing token or provider for escrow payment')
           }
-
-          const escrowAddress = ethers.getAddress(
-            initializedProvider.payment.escrowAddress
+          const { payment } = initializedProvider
+          const escrowAddress = ethers.getAddress(payment.escrowAddress)
+          const escrow = new EscrowContract(
+            escrowAddress,
+            signer,
+            algorithmAsset.credentialSubject.chainId
           )
-          const amountHuman = String(selectedResources.price || 0)
-          const depositKey = `${escrowAddress}:${paymentTokenAddress}:${amountHuman}`
-          if (lastEscrowDepositKey.current === depositKey) {
-            console.log('escrow deposit skipped (already done)', depositKey)
-            onProgress?.('escrow', 'completed')
-          } else {
-            lastEscrowDepositKey.current = depositKey
-            const tokenDetails = await getTokenInfo(
-              paymentTokenAddress,
-              web3Provider
-            )
-            const amountWei = ethers.parseUnits(
-              amountHuman,
-              tokenDetails.decimals
-            )
-            const escrow = new EscrowContract(
-              escrowAddress,
-              signer,
-              algorithmAsset.credentialSubject.chainId
-            )
-
-            const erc20 = new ethers.Contract(
-              paymentTokenAddress,
-              [
-                'function approve(address spender, uint256 amount) returns (bool)',
-                'function allowance(address owner, address spender) view returns (uint256)'
-              ],
-              signer
-            )
-
-            const owner = await signer.getAddress()
-            const escrowSpender =
-              (escrow.contract.target ?? escrow.contract.address).toString() ||
-              escrowAddress
-            if (amountWei !== BigInt(0)) {
-              const approveTx = await erc20.approve(escrowSpender, amountWei)
-              await approveTx.wait()
-              const allowanceDeadline = Date.now() + 120_000
-              while (true) {
-                const allowanceNow = await erc20.allowance(owner, escrowSpender)
-                if (allowanceNow >= amountWei) {
-                  break
-                }
-                if (Date.now() >= allowanceDeadline) {
-                  throw new Error(
-                    'Timed out waiting for escrow allowance update.'
-                  )
-                }
-                await new Promise((resolve) => setTimeout(resolve, 2000))
-              }
-              const depositTx = await escrow.deposit(
-                paymentTokenAddress,
-                amountHuman
-              )
-              await depositTx.wait()
-              await escrow.authorize(
-                paymentTokenAddress,
-                selectedComputeEnv.consumerAddress,
-                initializedProvider.payment.amount.toString(),
-                selectedResources.jobDuration.toString(),
-                '10'
-              )
-              onProgress?.('escrow', 'completed')
-            } else {
-              onProgress?.('escrow', 'skipped')
-            }
-          }
+          const tokenDetails = await getTokenInfo(
+            paymentTokenAddress,
+            web3Provider
+          )
+          const erc20 = new ethers.Contract(
+            paymentTokenAddress,
+            [
+              'function approve(address spender, uint256 amount) returns (bool)',
+              'function allowance(address owner, address spender) view returns (uint256)'
+            ],
+            signer
+          )
+          const prepared = await prepareEscrowPayment({
+            escrow,
+            erc20,
+            escrowAddress,
+            token: paymentTokenAddress,
+            owner: await signer.getAddress(),
+            payee: ethers.getAddress(payment.payee),
+            amount: payment.amount,
+            minLockSeconds: payment.minLockSeconds,
+            decimals: tokenDetails.decimals,
+            onPrepared: onEscrowPrepared
+          })
+          onProgress?.('escrow', prepared ? 'completed' : 'skipped')
+        } else {
+          onProgress?.('escrow', 'skipped')
         }
 
         const algoOrderPriceAndFees = await setAlgoPrice(

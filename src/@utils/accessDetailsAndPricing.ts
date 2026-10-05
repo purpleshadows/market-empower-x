@@ -4,8 +4,7 @@ import {
   getErrorMessage,
   LoggerInstance,
   ProviderFees,
-  ProviderInstance,
-  ZERO_ADDRESS
+  ProviderInstance
 } from '@oceanprotocol/lib'
 import { getFixedBuyPrice } from './ocean/fixedRateExchange'
 import {
@@ -13,11 +12,10 @@ import {
   customProviderUrl
 } from '../../app.config.cjs'
 import { Signer } from 'ethers'
-import { toast } from 'react-toastify'
 import { getDummySigner, getTokenInfo } from './wallet'
 import { Service } from '../@types/ddo/Service'
 import { AssetExtended } from '../@types/AssetExtended'
-import { CancelToken } from 'axios'
+import axios, { CancelToken } from 'axios'
 import { getUserOrders } from './aquarius'
 import { AssetPrice } from '../@types/AssetPrice'
 import { getConsumeMarketFeeWei } from './consumeMarketFee'
@@ -26,6 +24,97 @@ import {
   getV4SourceDid,
   getV4ProviderUrl
 } from './dualVersion'
+
+export const tokenInfoCache = new Map<string, TokenInfo>()
+export async function getCachedTokenInfo(
+  address: string,
+  provider: any
+): Promise<TokenInfo> {
+  const key = address.toLowerCase()
+  if (tokenInfoCache.has(key)) {
+    return tokenInfoCache.get(key) as TokenInfo
+  }
+  const info = await getTokenInfo(address, provider)
+  tokenInfoCache.set(key, info)
+  return info
+}
+
+function getErrorRecordValue(
+  value: unknown,
+  key: 'error' | 'message'
+): string | undefined {
+  if (typeof value !== 'object' || value === null || !(key in value)) return
+  const entry = (value as Record<string, unknown>)[key]
+  return typeof entry === 'string' && entry.trim() ? entry.trim() : undefined
+}
+
+export function getProviderInitializationErrorMessage(error: unknown): string {
+  const responseData =
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof error.response === 'object' &&
+    error.response !== null &&
+    'data' in error.response
+      ? error.response.data
+      : undefined
+
+  const responseMessage =
+    getErrorRecordValue(responseData, 'error') ||
+    getErrorRecordValue(responseData, 'message')
+  if (responseMessage) return responseMessage
+
+  const rawMessage =
+    typeof responseData === 'string' && responseData.trim()
+      ? responseData.trim()
+      : error instanceof Error
+      ? error.message
+      : typeof error === 'string'
+      ? error
+      : 'Provider initialization failed.'
+
+  return rawMessage.trim().startsWith('{')
+    ? getErrorMessage(rawMessage)
+    : rawMessage
+}
+
+export async function recoverProviderInitializationErrorMessage(
+  error: unknown,
+  assetId: string,
+  serviceId: string,
+  accountId: string,
+  serviceEndpoint: string
+): Promise<string> {
+  const originalMessage = getProviderInitializationErrorMessage(error)
+  const isPlainTextParseFailure =
+    originalMessage.includes('Unexpected token') &&
+    originalMessage.includes('not valid JSON')
+
+  if (!isPlainTextParseFailure) return originalMessage
+
+  const nodeUrl = serviceEndpoint.replace(/\/+$/, '')
+  try {
+    const response = await axios.get<string>(
+      `${nodeUrl}/api/services/initialize`,
+      {
+        params: {
+          documentId: assetId,
+          serviceId,
+          fileIndex: 0,
+          consumerAddress: accountId
+        },
+        responseType: 'text',
+        validateStatus: () => true
+      }
+    )
+
+    const responseMessage =
+      typeof response.data === 'string' ? response.data.trim() : ''
+    return responseMessage || originalMessage
+  } catch {
+    return originalMessage
+  }
+}
 
 /**
  * This will be used to get price including fees before ordering
@@ -61,33 +150,35 @@ export async function getOrderPriceAndFees(
   } as OrderPriceAndFees
   // fetch provider fee
   let initializeData
+  // Bridged v4 (e.g. Pontus-X) assets: the provider only knows the did:op
+  // id and lives at the asset's REAL v4 endpoint, not the bridge proxy.
+  const isV4 = isBridgedV4Asset(asset)
+  const initializeDid = isV4 ? getV4SourceDid(asset) : asset.id
+  const initializeUrl = isV4
+    ? getV4ProviderUrl(service)
+    : service?.serviceEndpoint || customProviderUrl
   try {
     let initialize = null
     if (service.type === 'compute') {
       console.warn('service type is compute')
     } else {
-      // Bridged v4 (e.g. Pontus-X) assets: the provider only knows the did:op
-      // id and lives at the asset's REAL v4 endpoint, not the bridge proxy.
-      const isV4 = isBridgedV4Asset(asset)
       initialize = await ProviderInstance.initialize(
-        isV4 ? getV4SourceDid(asset) : asset.id,
+        initializeDid,
         service.id,
         0,
         accountId,
-        isV4
-          ? getV4ProviderUrl(service)
-          : service?.serviceEndpoint || customProviderUrl
+        initializeUrl
       )
     }
     initializeData = !providerFees && initialize
   } catch (error) {
-    if (error.message.includes('Unexpected token')) {
-      // toast.error(
-      //   `Use the initializeCompute endpoint to initialize compute jobs`
-      // )
-      return
-    }
-    const message = getErrorMessage(error.message)
+    let message = await recoverProviderInitializationErrorMessage(
+      error,
+      initializeDid,
+      service.id,
+      accountId,
+      initializeUrl
+    )
     LoggerInstance.error('[Initialize Provider] Error:', message)
 
     // Customize error message for accountId non included in allow list
@@ -96,12 +187,7 @@ export async function getOrderPriceAndFees(
       message.includes('ConsumableCodes.CREDENTIAL_NOT_IN_ALLOW_LIST') ||
       message.includes('denied with code: 3')
     ) {
-      if (accountId !== ZERO_ADDRESS) {
-        toast.error(
-          `Consumer address not found in allow list for service ${asset.id}. Access has been denied.`
-        )
-      }
-      return
+      message = `Consumer address not found in allow list for service ${asset.id}. Access has been denied.`
     }
     // Customize error message for accountId included in deny list
     if (
@@ -109,14 +195,9 @@ export async function getOrderPriceAndFees(
       message.includes('ConsumableCodes.CREDENTIAL_IN_DENY_LIST') ||
       message.includes('denied with code: 4')
     ) {
-      if (accountId !== ZERO_ADDRESS) {
-        toast.error(
-          `Consumer address found in deny list for service ${asset.id}. Access has been denied.`
-        )
-      }
-      return
+      message = `Consumer address found in deny list for service ${asset.id}. Access has been denied.`
     }
-    toast.error(message)
+    throw new Error(message)
   }
   orderPriceAndFee.providerFee = providerFees || initializeData?.providerFee
   // fetch price and swap fees
@@ -152,6 +233,13 @@ export async function getAccessDetails(
   const datatoken = new Datatoken(signer, chainId)
   const { datatokenAddress } = service
 
+  const [dtName, dtSymbol, paymentCollector, templateId] = await Promise.all([
+    datatoken.getName(datatokenAddress),
+    datatoken.getSymbol(datatokenAddress),
+    datatoken.getPaymentCollector(datatokenAddress),
+    datatoken.getId(datatokenAddress)
+  ])
+
   const accessDetails: AccessDetails = {
     type: 'NOT_SUPPORTED',
     price: '0',
@@ -164,12 +252,12 @@ export async function getAccessDetails(
     },
     datatoken: {
       address: datatokenAddress,
-      name: await datatoken.getName(datatokenAddress),
-      symbol: await datatoken.getSymbol(datatokenAddress),
+      name: dtName,
+      symbol: dtSymbol,
       decimals: 0
     },
-    paymentCollector: await datatoken.getPaymentCollector(datatokenAddress),
-    templateId: await datatoken.getId(datatokenAddress),
+    paymentCollector,
+    templateId,
     // TODO these 4 records
     isOwned: false,
     validOrderTx: '', // should be possible to get from ocean-node - orders collection in typesense
@@ -239,6 +327,12 @@ export async function getAccessDetails(
 
       const exchange = await fre.getExchange(exchangeId)
       const tokenInfo = await getTokenInfo(exchange.baseToken, signer.provider)
+      // console.log('accessdetails: data token info', tokenInfo)
+      // const testName = await datatoken.getName(exchange.baseToken)
+      // console.log('accessdetails: data token name', testName)
+      // const testSymbol = await datatoken.getSymbol(exchange.baseToken)
+      // console.log('accessdetails: data token symbol', testSymbol)
+
       return {
         ...accessDetails,
         type: 'fixed',
@@ -246,8 +340,8 @@ export async function getAccessDetails(
         price: exchange.fixedRate,
         baseToken: {
           address: exchange.baseToken,
-          name: await datatoken.getName(exchange.baseToken), // reuse the datatoken instance since it is ERC20
-          symbol: await datatoken.getSymbol(exchange.baseToken),
+          name: tokenInfo?.name, // reuse the datatoken instance since it is ERC20
+          symbol: tokenInfo?.symbol,
           decimals: tokenInfo?.decimals || parseInt(exchange.btDecimals)
         }
       }

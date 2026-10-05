@@ -38,6 +38,7 @@ export async function initializeProvider(
   asset: AssetExtended,
   service: Service,
   accountId: string,
+  signer: Signer,
   providerFees?: ProviderFees
 ): Promise<ProviderInitialize> {
   if (providerFees) return
@@ -71,6 +72,7 @@ export async function initializeProvider(
 
       const initializePs = await ProviderInstance.initializePSVerification(
         service.serviceEndpoint || customProviderUrl,
+        signer,
         command
       )
 

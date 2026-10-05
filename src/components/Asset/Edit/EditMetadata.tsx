@@ -12,7 +12,6 @@ import content from '../../../../content/pages/editMetadata.json'
 import DebugEditMetadata from './DebugEditMetadata'
 import EditFeedback from './EditFeedback'
 import { useAsset } from '@context/Asset'
-import { sanitizeUrl } from '@utils/url'
 import { useAccount } from 'wagmi'
 import {
   transformConsumerParameters,
@@ -26,13 +25,15 @@ import { Asset, AssetNft } from 'src/@types/Asset'
 import { AssetExtended } from 'src/@types/AssetExtended'
 import { customProviderUrl, encryptAsset } from '../../../../app.config.cjs'
 import { isAddress, Signer, toBeHex } from 'ethers'
-import { convertLinks } from '@utils/links'
+import { keyValuePairsToRecord } from '@utils/links'
 import { AdditionalVerifiableCredentials } from 'src/@types/ddo/AdditionalVerifiableCredentials'
 import { useSsiWallet } from '@context/SsiWallet'
 import { State } from 'src/@types/ddo/State'
 import { useEthersSigner } from '@hooks/useEthersSigner'
 import { getAsset } from '@utils/aquarius'
 import { useCancelToken } from '@hooks/useCancelToken'
+import { getOpaServerUrl } from '@utils/wallet/policyServer'
+import { useOpaServerChangeNotification } from './useOpaServerChangeNotification'
 
 export default function Edit({
   asset
@@ -51,6 +52,13 @@ export default function Edit({
   const [success, setSuccess] = useState<string>()
   const [error, setError] = useState<string>()
   const hasFeedback = error || success
+
+  useOpaServerChangeNotification(
+    asset.id,
+    asset.credentialSubject?.services[0]?.serviceEndpoint,
+    asset.credentialSubject?.credentials,
+    'The OPA server URL has changed. Save this asset to update it.'
+  )
 
   async function handleSubmit(values: MetadataEditForm, resetForm: () => void) {
     try {
@@ -88,9 +96,6 @@ export default function Edit({
         processAddress(values.credentials.denyInputValue, 'deny')
       }
 
-      const linksTransformed = values.links?.length &&
-        values.links[0].valid && [sanitizeUrl(values.links[0].url)]
-
       let { license } = values
       if (!license && !values.useRemoteLicense && values.licenseUrl[0]) {
         license = {
@@ -124,9 +129,10 @@ export default function Edit({
           '@direction': values.descriptionDirection || '',
           '@language': values.descriptionLanguage || ''
         },
-        links: convertLinks(linksTransformed),
+        links: keyValuePairsToRecord(values.links),
         author: values.author,
         providedBy: values.providedBy || '',
+        copyrightHolder: values.copyrightHolder || '',
         tags: values.tags,
         license,
         additionalInformation: {
@@ -135,13 +141,27 @@ export default function Edit({
       }
 
       if (asset.credentialSubject?.metadata.type === 'algorithm') {
-        updatedMetadata.algorithm.consumerParameters =
-          !values.usesConsumerParameters
+        updatedMetadata.algorithm = {
+          ...updatedMetadata.algorithm,
+          container: {
+            image: values.containerImage?.trim() || '',
+            tag: values.containerTag?.trim() || '',
+            checksum: values.containerChecksum?.trim() || '',
+            entrypoint: values.containerEntrypoint?.trim() || ''
+          },
+          consumerParameters: !values.usesConsumerParameters
             ? undefined
             : transformConsumerParameters(values.consumerParameters)
+        }
       }
 
-      const updatedCredentials = generateCredentials(values?.credentials)
+      const opaServerUrl = await getOpaServerUrl(
+        asset.credentialSubject?.services[0]?.serviceEndpoint
+      )
+      const updatedCredentials = generateCredentials(
+        values?.credentials,
+        opaServerUrl
+      )
       const updatedNft: AssetNft = {
         ...asset.indexedMetadata.nft,
         state: State[values.assetState as unknown as keyof typeof State]
@@ -164,7 +184,7 @@ export default function Edit({
       updatedAsset.credentialSubject.services =
         updatedAsset.credentialSubject.services.map((svc) => ({
           ...svc,
-          credentials: generateCredentials(values?.credentials)
+          credentials: generateCredentials(values?.credentials, opaServerUrl)
         }))
 
       stringifyCredentialPolicies(updatedAsset.credentialSubject.credentials)

@@ -28,21 +28,6 @@ function TokenAmount({
   )
 }
 
-function EscrowAvailableLabel({
-  hasAvailable
-}: {
-  hasAvailable: boolean
-}): ReactElement {
-  return (
-    <>
-      <span>Escrow Available Funds</span>
-      {hasAvailable && (
-        <span className={styles.withdrawHint}>👉 Click to Withdraw 👈</span>
-      )}
-    </>
-  )
-}
-
 export default function Stats({
   selectedToken
 }: {
@@ -145,7 +130,7 @@ export default function Stats({
             style={{ cursor: hasAvailable ? 'pointer' : 'default' }}
           >
             <NumberUnit
-              label={<EscrowAvailableLabel hasAvailable={hasAvailable} />}
+              label="Escrow Available Funds"
               value={
                 <TokenAmount
                   amount={formatToFixedNoRounding(selectedEscrowAvailable, 3)}
@@ -158,6 +143,11 @@ export default function Stats({
                   : undefined
               }
             />
+            {hasAvailable && (
+              <span className={styles.withdrawHint}>
+                👉 Click to Withdraw 👈
+              </span>
+            )}
           </div>
         </>
       )}

@@ -39,12 +39,13 @@ import { CredentialDialogProvider } from '../Asset/AssetActions/Compute/Credenti
 import { useAsset } from '@context/Asset'
 import { useUserPreferences } from '@context/UserPreferences'
 import { useSsiWallet } from '@context/SsiWallet'
+import { useProfile } from '@context/Profile'
 import { secondsToString } from '@utils/ddo'
 import {
   getAlgorithmAssetSelectionListForComputeWizard,
   getAlgorithmsForAsset
 } from '@utils/compute'
-import { getAlgorithmDatasetsForCompute } from '@utils/aquarius'
+import { getAlgorithmDatasetsForComputeSelection } from '@utils/aquarius'
 import { getDummySigner, getTokenInfo } from '@utils/wallet'
 import { checkVerifierSessionId } from '@utils/wallet/policyServer'
 import { getOceanConfig } from '@utils/ocean'
@@ -65,6 +66,11 @@ import {
   getOutputStorageValidationMessage
 } from './outputStorage'
 import { isComputeEnvironmentConfigured } from './stepCompletion'
+import {
+  getDockerRegistryAuthErrorMessage,
+  getDockerRegistryAuth,
+  isDockerRegistryAuthError
+} from './dockerRegistryAuth'
 
 type ParamValue = string | number | boolean | undefined
 
@@ -452,6 +458,7 @@ export default function ComputeWizardController({
 
   const [svcIndex, setSvcIndex] = useState(0)
   const [isSubmittingJob, setIsSubmittingJob] = useState(false)
+  const { refreshEscrowFunds } = useProfile()
 
   const [allResourceValues, setAllResourceValues] = useState<{
     [envId: string]: ResourceType
@@ -742,6 +749,7 @@ export default function ComputeWizardController({
         formValues?.outputStorageEnabled,
         formValues?.outputStorage
       )
+      const dockerRegistryAuth = getDockerRegistryAuth(formValues)
 
       const initResult = await initializePricingAndProvider({
         datasetsForProvider,
@@ -763,8 +771,25 @@ export default function ComputeWizardController({
           : undefined,
         algoParams,
         datasetParams,
+        dockerRegistryAuth,
         accountId,
-        shouldDepositEscrow: withEscrow,
+        shouldPrepareEscrow: withEscrow,
+        onEscrowPrepared: () => {
+          // Confirmed escrow funds no longer need to be paid from the wallet,
+          // including when a later step fails and the user retries.
+          const resourceKey = `${selectedComputeEnv.id}_${selectedResources.mode}`
+          setAllResourceValues((previous) => ({
+            ...previous,
+            [resourceKey]: {
+              ...selectedResources,
+              price: '0',
+              actualPaymentAmount: '0',
+              escrowCoveredAmount: selectedResources.fullJobPrice
+            }
+          }))
+          formikRef.current?.setFieldValue('actualPaymentAmount', '0', false)
+          refreshEscrowFunds?.()
+        },
         onProgress: setComputeProgressStep
       })
 
@@ -788,7 +813,16 @@ export default function ComputeWizardController({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to initialize provider.'
-      setError(message)
+      if (isDockerRegistryAuthError(err)) {
+        setError(undefined)
+        await formikRef.current?.setFieldValue(
+          'dockerRegistryAuthRequired',
+          true,
+          false
+        )
+      } else {
+        setError(message)
+      }
       LoggerInstance.error(`[compute] ${message}`)
       throw err
     }
@@ -813,14 +847,15 @@ export default function ComputeWizardController({
       try {
         setIsLoading(true)
         if (isAlgorithmFlow) {
-          const datasetLists = await getAlgorithmDatasetsForCompute(
+          const datasetLists = await getAlgorithmDatasetsForComputeSelection(
             asset.id,
             service.id,
             service.serviceEndpoint,
             accountId,
             asset.credentialSubject?.chainId,
             newCancelToken(),
-            tokenSymbolMap
+            tokenSymbolMap,
+            asset
           )
           if (!cancelled) setDatasetList(datasetLists || [])
         } else {
@@ -860,7 +895,8 @@ export default function ComputeWizardController({
     service,
     isUnsupportedPricing,
     newCancelToken,
-    isAlgorithmFlow
+    isAlgorithmFlow,
+    tokenSymbolMap
   ])
 
   // Output errors in toast UI
@@ -873,7 +909,11 @@ export default function ComputeWizardController({
 
   useEffect(() => {
     if (!initError) return
-    toast.error(initError)
+    toast.error(
+      isDockerRegistryAuthError(initError)
+        ? getDockerRegistryAuthErrorMessage(initError)
+        : initError
+    )
     setInitError(undefined)
   }, [initError, setInitError])
 
@@ -931,9 +971,6 @@ export default function ComputeWizardController({
     setComputeProgressStep('escrow', 'active')
     try {
       const formValuesForEscrow = formikValues || initialFormValues
-      const shouldDepositEscrow = new Decimal(
-        formValuesForEscrow?.actualPaymentAmount || 0
-      ).gt(0)
       const {
         datasetResponses,
         actualAlgorithmAsset,
@@ -942,11 +979,7 @@ export default function ComputeWizardController({
         initializedProvider,
         selectedComputeEnv,
         selectedResources
-      } = await initPriceAndFees(
-        datasetServices,
-        formikValues,
-        shouldDepositEscrow
-      )
+      } = await initPriceAndFees(datasetServices, formikValues, true)
 
       if (!datasetResponses || !selectedComputeEnv || !selectedResources) {
         throw new Error('Missing compute initialization data.')
@@ -984,9 +1017,26 @@ export default function ComputeWizardController({
               formikValues.queueMaxWaitTime,
               formikValues.queueMaxWaitTimeUnit
             )
-          : undefined
+          : undefined,
+        dockerRegistryAuth: getDockerRegistryAuth(formValuesForEscrow)
         // oceanTokenAddress --- IGNORE ---
       })
+
+      await formikRef.current?.setFieldValue(
+        'dockerRegistryPassword',
+        '',
+        false
+      )
+      await formikRef.current?.setFieldValue(
+        'dockerRegistryUsername',
+        '',
+        false
+      )
+      await formikRef.current?.setFieldValue(
+        'dockerRegistryAuthRequired',
+        false,
+        false
+      )
 
       await refetchComputeJobs('init')
       resetCacheWallet()
@@ -1006,7 +1056,9 @@ export default function ComputeWizardController({
 
       const message =
         (error as Error)?.message || 'Failed to start compute job.'
-      setError(message)
+      if (!isDockerRegistryAuthError(error)) {
+        setError(message)
+      }
       throw error
     } finally {
       setIsSubmittingJob(false)
@@ -1199,13 +1251,29 @@ export default function ComputeWizardController({
       return
     }
 
+    if (
+      formikValues.dockerRegistryAuthRequired &&
+      !getDockerRegistryAuth(formikValues)
+    ) {
+      await formikRef.current?.setFieldTouched(
+        'dockerRegistryUsername',
+        true,
+        false
+      )
+      await formikRef.current?.setFieldTouched(
+        'dockerRegistryPassword',
+        true,
+        false
+      )
+      toast.error('Enter both the registry username and password.')
+      return
+    }
+
     try {
       await initPriceAndFees(datasetServices, formikValues, false)
       toast.info('Compute provider initialized successfully.')
-    } catch (err) {
-      const message =
-        (err as Error)?.message || 'Failed to initialize provider.'
-      toast.error(message)
+    } catch {
+      // Initialization errors are surfaced once through initError.
     }
   }
 
