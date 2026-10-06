@@ -1,8 +1,14 @@
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 
+const { version } = require('./package.json')
+
 const nextConfig = {
   output: 'standalone',
+  // Inlined at build time so the footer can show the marketplace version.
+  env: {
+    NEXT_PUBLIC_APP_VERSION: version
+  },
   serverExternalPackages: ['wagmi', 'viem', 'connectkit'],
   experimental: {
     esmExternals: 'loose'

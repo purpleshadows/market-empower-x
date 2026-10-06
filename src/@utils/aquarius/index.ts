@@ -636,6 +636,9 @@ export async function getAsset(
         } catch (error) {
           if (axios.isCancel(error)) {
             LoggerInstance.log(error.message)
+          } else if (error?.response?.status === 404) {
+            // Expected when federating catalogs: the asset lives on another node.
+            LoggerInstance.log(`Asset ${did} not found on ${cacheUri}`)
           } else {
             LoggerInstance.error(
               `Metadata cache asset lookup failed for ${cacheUri}: ${error.message}`

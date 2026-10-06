@@ -49,7 +49,11 @@ export default function EmpowerFooter(): ReactElement {
         </div>
       </div>
       <div className={styles.bottomBar}>
-        <p>© {new Date().getFullYear()} Zertifier. All rights reserved.</p>
+        <p>
+          © {new Date().getFullYear()} Zertifier. All rights reserved.
+          {process.env.NEXT_PUBLIC_APP_VERSION &&
+            ` · v${process.env.NEXT_PUBLIC_APP_VERSION}`}
+        </p>
         <div className={styles.socialLinks} aria-label="Empower-X links">
           <a
             href="https://empower-x.io/"

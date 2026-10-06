@@ -299,10 +299,22 @@ async function getJobs(
   }
   try {
     for (let i = 0; i < uniqueProviders.length; i++) {
-      const providerComputeJobs = (await ProviderInstance.computeStatus(
-        uniqueProviders[i],
-        signer
-      )) as ComputeJob[]
+      // One unreachable/misbehaving provider must not hide the jobs of the
+      // others. lib 9 also returns the raw JSON body, which can be `null`.
+      let providerComputeJobs: ComputeJob[]
+      try {
+        providerComputeJobs = (await ProviderInstance.computeStatus(
+          uniqueProviders[i],
+          signer
+        )) as ComputeJob[]
+      } catch (error) {
+        LoggerInstance.error(
+          `[Compute to Data] Failed to fetch jobs from ${uniqueProviders[i]}:`,
+          formatProviderError(error)
+        )
+        continue
+      }
+      if (!Array.isArray(providerComputeJobs)) continue
       providerComputeJobs.forEach((job) =>
         providersComputeJobsExtended.push({
           ...job,

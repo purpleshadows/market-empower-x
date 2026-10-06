@@ -43,7 +43,11 @@ export default function Footer(): ReactElement {
         </div>
         <Links />
       </div>
-      <p className={styles.copyright}>{copyright}</p>
+      <p className={styles.copyright}>
+        {copyright}
+        {process.env.NEXT_PUBLIC_APP_VERSION &&
+          ` · v${process.env.NEXT_PUBLIC_APP_VERSION}`}
+      </p>
     </footer>
   )
 }
