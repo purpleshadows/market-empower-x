@@ -28,7 +28,8 @@ services:
     restart: "no"
     environment:
       WALLET_HOST: wallet.zdevutils.com
-      MARKET_ORIGINS: https://market-empower-x.zdevutils.com
+      # Every domain the marketplace is served on (space separated).
+      MARKET_ORIGINS: https://market-empower-x.zdevutils.com https://portal.empower-x.io
       WALLET_ENCRYPTION_KEY: ${WALLET_ENCRYPTION_KEY:?run scripts/generate-secrets.mjs}
       WALLET_SIGN_KEY: ${WALLET_SIGN_KEY:?run scripts/generate-secrets.mjs}
       WALLET_TOKEN_KEY: ${WALLET_TOKEN_KEY:?run scripts/generate-secrets.mjs}
