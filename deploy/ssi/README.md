@@ -36,7 +36,8 @@ credential is denied.
 - A DNS record for `wallet.zdevutils.com` pointing at that host (or a
   `*.zdevutils.com` wildcard). The hostnames are set in the compose files.
 - The **Ocean node can reach this host** on the policy server port (default
-  8001), and this host can reach the node (`https://node.zdevutils.com`).
+  8001), and this host can reach the node on the LAN (`http://192.168.130.2:8000`; the
+  public node URLs are not reachable from inside the LAN).
 
 ## 1. Generate secrets
 
@@ -69,7 +70,7 @@ Check: `https://wallet.zdevutils.com/` shows the walt.id web wallet, and
 On the node host, add to the node's env file (`~/soft/ocean/oe-node/.env.node`):
 
 ```
-POLICY_SERVER_URL=http://<this-host-LAN-IP>:8001
+POLICY_SERVER_URL=http://192.168.130.130:8011
 ```
 
 and recreate the node (`docker compose up -d` in the node folder).

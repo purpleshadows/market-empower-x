@@ -142,7 +142,9 @@ services:
     environment: &policy-server-env
       AUTH_TYPE: waltid
       WALTID_VERIFIER_URL: http://verifier-api:7003
-      OCEAN_NODE_URL: https://node.zdevutils.com
+      # LAN address: the public node URLs are not reachable from inside the LAN
+      # (the router has no NAT hairpin).
+      OCEAN_NODE_URL: http://192.168.130.2:8000
       WALTID_SUCCESS_REDIRECT_URL: https://market-empower-x.zdevutils.com/success?id=$$id
       WALTID_ERROR_REDIRECT_URL: https://market-empower-x.zdevutils.com/error?id=$$id
       # Fetched/posted by the wallet backend server-side -> internal URLs.
