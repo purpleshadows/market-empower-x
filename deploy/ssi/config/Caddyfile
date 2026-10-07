@@ -1,0 +1,45 @@
+# Public entry point for the SSI wallet: https://${WALLET_HOST}
+# TLS is terminated by nginx-proxy / Let's Encrypt in front of this container.
+#   /wallet-api/*  -> walt.id wallet API (used by the marketplace and the UI)
+#   everything else -> walt.id web wallet UI (users accept credentials here)
+{
+	auto_https off
+	admin off
+}
+
+:80 {
+	@allowed_origin header_regexp Origin ^(${MARKET_ORIGINS_REGEX})$
+
+	handle /wallet-api/* {
+		# CORS with credentials for the marketplace origins only.
+		@preflight {
+			method OPTIONS
+			header_regexp Origin ^(${MARKET_ORIGINS_REGEX})$
+		}
+		handle @preflight {
+			header Access-Control-Allow-Origin {http.request.header.Origin}
+			header Access-Control-Allow-Credentials true
+			header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+			header Access-Control-Allow-Headers "Authorization, Content-Type, Accept"
+			header Access-Control-Max-Age 86400
+			header Vary Origin
+			respond 204
+		}
+
+		header @allowed_origin {
+			Access-Control-Allow-Origin {http.request.header.Origin}
+			Access-Control-Allow-Credentials true
+			Vary Origin
+			defer
+		}
+
+		reverse_proxy wallet-api:7001 {
+			header_down -Access-Control-Allow-Origin
+			header_down -Access-Control-Allow-Credentials
+		}
+	}
+
+	handle {
+		reverse_proxy waltid-demo-wallet:7101
+	}
+}

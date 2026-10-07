@@ -1,0 +1,73 @@
+# Optional second stack: credential issuance tools (walt.id issuer + portal).
+# Deploy AFTER the main stack (it joins the "ssi" network created there).
+#
+# The portal is an admin tool: it is published on the host's LAN ports only
+# (bind TOOLS_BIND to the LAN IP), not on the internet. An admin opens
+# http://<host>:7102, picks a credential, and the portal sends the user to the
+# public web wallet (https://wallet.zdevutils.com) to accept it.
+
+name: ssi-tools
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  ssi-tools-config:
+    build: ./config
+    image: empower-x/ssi-config:local
+    restart: "no"
+    environment:
+      # render.sh validates these even though only the issuer config is written.
+      WALLET_HOST: wallet.zdevutils.com
+      MARKET_ORIGINS: https://market-empower-x.zdevutils.com
+      WALLET_ENCRYPTION_KEY: unused
+      WALLET_SIGN_KEY: unused
+      WALLET_TOKEN_KEY: unused
+      WALLET_AUTHNZ_JWK: unused
+      WALLET_PEPPER: unused
+    volumes:
+      - issuer-config:/out/issuer-api
+
+  issuer-api:
+    <<: *restart
+    # 0.15.x / 0.16.x crash on start (hardcoded example certificate dates
+    # expired in 2026); 0.23.2 works with the OE wallet.
+    image: waltid/issuer-api:${ISSUER_API_VERSION:-0.23.2}
+    depends_on:
+      ssi-tools-config:
+        condition: service_completed_successfully
+    volumes:
+      - issuer-config:/waltid-issuer-api/config:ro
+    ports:
+      - "${TOOLS_BIND:-127.0.0.1}:7002:7002"
+
+  vc-repo:
+    <<: *restart
+    image: waltid/vc-repository:${VC_REPO_VERSION:-latest}
+    platform: linux/amd64
+    environment:
+      PORT: "7103"
+    ports:
+      - "${TOOLS_BIND:-127.0.0.1}:7103:7103"
+
+  web-portal:
+    <<: *restart
+    image: waltid/portal:${PORTAL_VERSION:-0.15.1}
+    environment:
+      PORT: "7102"
+      # Called from the admin's browser -> host LAN address.
+      NEXT_PUBLIC_ISSUER: http://${TOOLS_HOST:?set TOOLS_HOST (LAN IP of this host)}:7002
+      NEXT_PUBLIC_VC_REPO: http://${TOOLS_HOST}:7103
+      NEXT_PUBLIC_VERIFIER: https://wallet.zdevutils.com
+      # Users accept the credential in the public web wallet.
+      NEXT_PUBLIC_WALLET: https://wallet.zdevutils.com
+    ports:
+      - "${TOOLS_BIND:-127.0.0.1}:7102:7102"
+
+volumes:
+  issuer-config:
+
+networks:
+  default:
+    name: ssi
+    external: true
