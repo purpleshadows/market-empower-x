@@ -5,7 +5,8 @@ import {
   metadataCacheUri,
   allowDynamicPricing,
   nodeUriIndex,
-  dataspace
+  dataspace,
+  customProviderUrl
 } from '../../../app.config.cjs'
 import {
   SortDirectionOptions,
@@ -18,7 +19,11 @@ import {
 import addressConfig from '../../../address.config.cjs'
 import { isValidDid } from '@utils/ddo'
 import { getCredentialAddressValue } from '@utils/credentials'
-import { applyNodeAliases, withNodeAliases } from '@utils/nodeAliases'
+import {
+  applyNodeAliases,
+  getCanonicalNodeUri,
+  withNodeAliases
+} from '@utils/nodeAliases'
 import { Filters } from '@context/Filter'
 import { filterSets } from '@components/Search/Filter'
 import { Asset } from 'src/@types/Asset'
@@ -424,7 +429,27 @@ function prepareMergedCacheQuery(query: SearchQuery): SearchQuery {
   }
 }
 
-function buildMetadataCacheQueries(
+function normalizeNodeUri(uri?: string): string {
+  return (getCanonicalNodeUri(uri) || '').trim().replace(/\/+$/, '')
+}
+
+function withoutDataspaceFilter(query: SearchQuery): SearchQuery {
+  return {
+    ...query,
+    query: {
+      ...query.query,
+      bool: {
+        ...query.query.bool,
+        filter: getSearchFilters(query).filter(
+          (filter) =>
+            !JSON.stringify(filter).includes('"credentialSubject.dataspace')
+        )
+      }
+    }
+  }
+}
+
+function buildNodeCacheQueries(
   cacheUris: string[],
   query: SearchQuery
 ): MetadataCacheQuery[] {
@@ -465,6 +490,21 @@ function buildMetadataCacheQueries(
         cacheUri,
         query: prepareMergedCacheQuery(query)
       }))
+}
+
+// The dataspace filter scopes this market's OWN node (our assets carry our
+// dataspace). Federated nodes (e.g. SENSE on node.demo.pontus-x.eu) don't use
+// our dataspace, so their queries go out without it.
+function buildMetadataCacheQueries(
+  cacheUris: string[],
+  query: SearchQuery
+): MetadataCacheQuery[] {
+  const homeNode = normalizeNodeUri(customProviderUrl)
+  return buildNodeCacheQueries(cacheUris, query).map((cacheQuery) =>
+    normalizeNodeUri(cacheQuery.cacheUri) === homeNode
+      ? cacheQuery
+      : { ...cacheQuery, query: withoutDataspaceFilter(cacheQuery.query) }
+  )
 }
 
 function getQueryResult(
