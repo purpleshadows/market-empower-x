@@ -4,6 +4,7 @@ import { AssetExtended } from 'src/@types/AssetExtended'
 // catalog federates several OE nodes (see cross-node federation), so an asset's
 // origin is otherwise only visible as a bare "node" hostname.
 const PROVIDER_LABEL_BY_HOST: Record<string, string> = {
+  'node.empower-x.io': 'Empower-X',
   'node.zdevutils.com': 'Empower-X',
   'node.demo.pontus-x.eu': 'SENSE'
 }

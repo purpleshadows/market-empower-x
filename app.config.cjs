@@ -197,6 +197,25 @@ module.exports = {
     ]
   ),
 
+  // Old public names of a node, mapped to the name to use instead, e.g.
+  // {"https://node.zdevutils.com":"https://node.empower-x.io"}. Assets keep the
+  // service URL they were published with; the market rewrites them on load and
+  // still finds them in catalog queries.
+  nodeUriAliases: (() => {
+    const raw =
+      getEnv('NEXT_PUBLIC_NODE_URI_ALIASES') ||
+      process.env.NEXT_PUBLIC_NODE_URI_ALIASES
+    if (!raw) return {}
+    try {
+      const parsed = JSON.parse(raw)
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed
+        : {}
+    } catch {
+      return {}
+    }
+  })(),
+
   dataspace:
     getEnv('NEXT_PUBLIC_DATASPACE') ||
     process.env.NEXT_PUBLIC_DATASPACE ||

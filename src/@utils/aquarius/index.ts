@@ -18,6 +18,7 @@ import {
 import addressConfig from '../../../address.config.cjs'
 import { isValidDid } from '@utils/ddo'
 import { getCredentialAddressValue } from '@utils/credentials'
+import { applyNodeAliases, withNodeAliases } from '@utils/nodeAliases'
 import { Filters } from '@context/Filter'
 import { filterSets } from '@components/Search/Filter'
 import { Asset } from 'src/@types/Asset'
@@ -142,6 +143,12 @@ export function parseFilters(
       if (key === 'assetState' && filtersList[key]?.length > 0) {
         return getFilterTerm(filterQueryPath[key], filtersList[key].map(Number))
       }
+      if (key === 'nodeUriIndex' && filtersList[key]?.length > 0) {
+        return getFilterTerm(
+          filterQueryPath[key],
+          withNodeAliases(filtersList[key])
+        )
+      }
       if (filtersList[key]?.length > 0) {
         return getFilterTerm(filterQueryPath[key], filtersList[key])
       }
@@ -235,7 +242,12 @@ export function generateBaseQuery(
             }
           },
           ...(shouldApplyDefaultNodeFilter
-            ? [getFilterTerm(serviceEndpointFilterPath, nodeUriIndex)]
+            ? [
+                getFilterTerm(
+                  serviceEndpointFilterPath,
+                  withNodeAliases(nodeUriIndex)
+                )
+              ]
             : []),
           ...(dataspaceFilterTerm ? [dataspaceFilterTerm] : [])
         ]
@@ -382,7 +394,10 @@ function replaceServiceEndpointFilter(
         ...query.query.bool,
         filter: getSearchFilters(query).map((filter) => {
           if (getServiceEndpointFilterValue(filter)) {
-            return getFilterTerm(serviceEndpointFilterPath, [serviceEndpoint])
+            return getFilterTerm(
+              serviceEndpointFilterPath,
+              withNodeAliases([serviceEndpoint])
+            )
           }
 
           return filter
@@ -580,7 +595,11 @@ async function postMetadataQuery(
     )
     if (!response || response.status !== 200 || !response.data) return
 
-    return getQueryResult(response.data)
+    const queryResult = getQueryResult(response.data)
+    if (Array.isArray(queryResult?.results)) {
+      queryResult.results = queryResult.results.map(applyNodeAliases)
+    }
+    return queryResult
   } catch (error) {
     if (axios.isCancel(error)) {
       LoggerInstance.log(error.message)
@@ -650,8 +669,7 @@ export async function getAsset(
     const responseData = responses.find(Boolean)
     if (!responseData) return
 
-    const data = { ...responseData }
-    return data
+    return applyNodeAliases({ ...responseData })
   } catch (error) {
     if (axios.isCancel(error)) {
       LoggerInstance.log(error.message)
