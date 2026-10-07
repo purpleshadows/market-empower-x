@@ -33,6 +33,9 @@ services:
 
       NEXT_PUBLIC_SSI_ENABLED: ${NEXT_PUBLIC_SSI_ENABLED}
       NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL: ${NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL}
+      # SSI wallet (deploy/ssi): https://<WALLET_HOST> for both
+      NEXT_PUBLIC_SSI_WALLET_API: ${NEXT_PUBLIC_SSI_WALLET_API}
+      NEXT_PUBLIC_SSI_UI_URL: ${NEXT_PUBLIC_SSI_UI_URL}
     networks:
       - docker_default
 
@@ -78,6 +81,9 @@ services:
 
       NEXT_PUBLIC_SSI_ENABLED: ${NEXT_PUBLIC_SSI_ENABLED}
       NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL: ${NEXT_PUBLIC_SSI_DEFAULT_POLICIES_URL}
+      # SSI wallet (deploy/ssi): https://<WALLET_HOST> for both
+      NEXT_PUBLIC_SSI_WALLET_API: ${NEXT_PUBLIC_SSI_WALLET_API}
+      NEXT_PUBLIC_SSI_UI_URL: ${NEXT_PUBLIC_SSI_UI_URL}
     networks:
       - docker_default
 

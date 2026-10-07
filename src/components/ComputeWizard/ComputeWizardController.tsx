@@ -48,6 +48,7 @@ import {
 import { getAlgorithmDatasetsForComputeSelection } from '@utils/aquarius'
 import { getDummySigner, getTokenInfo } from '@utils/wallet'
 import { checkVerifierSessionId } from '@utils/wallet/policyServer'
+import { requiresSsi } from '@utils/credentials'
 import { getOceanConfig } from '@utils/ocean'
 import useNetworkMetadata from '@hooks/useNetworkMetadata'
 import { useCancelToken } from '@hooks/useCancelToken'
@@ -1079,8 +1080,14 @@ export default function ComputeWizardController({
     try {
       if (isAlgorithmFlow) {
         const skip = lookupVerifierSessionIdSkip(asset?.id, service?.id)
+        // Assets without SSI policies never get a verifier session (the
+        // credential step short-circuits), so there is nothing to re-check —
+        // and on nodes without a policy server the check would 404.
+        const hasSsi =
+          requiresSsi(asset?.credentialSubject?.credentials) ||
+          requiresSsi(service?.credentials)
 
-        if (appConfig.ssiEnabled && !skip) {
+        if (appConfig.ssiEnabled && hasSsi && !skip) {
           try {
             const sessionId = lookupVerifierSessionId(asset.id, service.id)
             const result = await checkVerifierSessionId(sessionId)

@@ -60,7 +60,8 @@ import { getConsumeMarketFeeWei } from '@utils/consumeMarketFee'
 import {
   isPolicyServerConsumptionDisabled,
   requiresPolicyServerCredentialCheck,
-  isSsiPolicyConsumptionDisabled
+  isSsiPolicyConsumptionDisabled,
+  requiresSsi
 } from '@utils/credentials'
 
 export default function Download({
@@ -390,7 +391,11 @@ export default function Download({
       if (isConsumptionDisabled) return
 
       const skip = lookupVerifierSessionIdSkip(asset.id, service.id)
-      if (requiresCredentialCheck && !skip) {
+      // No SSI policy → the credential step never created a session to check.
+      const hasSsi =
+        requiresSsi(asset.credentialSubject?.credentials) ||
+        requiresSsi(service.credentials)
+      if (requiresCredentialCheck && hasSsi && !skip) {
         const result = await checkVerifierSessionId(
           lookupVerifierSessionId(asset.id, service.id)
         )

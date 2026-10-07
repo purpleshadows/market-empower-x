@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import {
   getPd,
   isPolicyServerRedirectMessage,
+  nodeHasPolicyServer,
   requestCredentialPresentation
 } from '@utils/wallet/policyServer'
 import {
@@ -118,7 +119,10 @@ export function AssetActionCheckCredentialsAlgo({
             const hasSsi =
               requiresSsi(asset.credentialSubject?.credentials) ||
               requiresSsi(service.credentials)
-            if (!hasSsi) {
+            // Assets without SSI rules need no verification when the node has
+            // no Policy Server. With one, a session is still required (it
+            // also gates downloads), so run the normal exchange.
+            if (!hasSsi && !(await nodeHasPolicyServer())) {
               onVerified?.()
               break
             }

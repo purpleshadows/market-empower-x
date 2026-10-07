@@ -22,6 +22,41 @@ import {
 
 const POLICY_SERVER_REQUEST_TIMEOUT = 10_000
 
+let nodeHasPolicyServerPromise: Promise<boolean> | undefined
+
+/**
+ * Whether the Ocean node forwards to a Policy Server. A node without
+ * POLICY_SERVER_URL answers every passthrough with an empty 404; with one, the
+ * Policy Server's JSON reply comes back. (Node 4.x reports this in its status,
+ * see getIsPolicyServerConfigured, but node 3.x does not.) Unknown → true, so
+ * the full credential check still runs.
+ */
+export function nodeHasPolicyServer(): Promise<boolean> {
+  if (!nodeHasPolicyServerPromise) {
+    const nodeUrl = customProviderUrl?.replace(/\/+$/, '')
+    nodeHasPolicyServerPromise = axios
+      .post(
+        `${nodeUrl}/api/services/PolicyServerPassthrough`,
+        {
+          policyServerPassthrough: {
+            action: PolicyServerActions.CHECK_SESSION_ID,
+            sessionId: 'probe'
+          }
+        },
+        { timeout: POLICY_SERVER_REQUEST_TIMEOUT, validateStatus: () => true }
+      )
+      .then(
+        (response) =>
+          !(
+            response.status === 404 &&
+            (response.data === '' || response.data == null)
+          )
+      )
+      .catch(() => true)
+  }
+  return nodeHasPolicyServerPromise
+}
+
 export async function getIsPolicyServerConfigured(
   serviceEndpoint: string,
   signal?: AbortSignal
