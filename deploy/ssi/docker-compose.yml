@@ -3,7 +3,7 @@
 #   wallet-gateway  public https://wallet.zdevutils.com (nginx-proxy + Let's Encrypt)
 #                   /wallet-api/* -> wallet-api, / -> web wallet UI
 #   wallet-api      walt.id wallet backend (users log in with MetaMask)
-#   waltid-demo-wallet  web wallet UI (users accept credentials here)
+#   waltid-dev-wallet   web wallet UI (MetaMask login; users manage credentials)
 #   verifier-api    walt.id verifier (OpenID4VP)
 #   opa-server      policy engine for custom policies (internal, TLS)
 #   policy-server   Ocean Enterprise Policy Server  -> called by the Ocean node
@@ -75,16 +75,20 @@ services:
       - wallet-config:/waltid-wallet-api/config:ro
       - wallet-data:/waltid-wallet-api/data
 
-  waltid-demo-wallet:
+  waltid-dev-wallet:
     <<: *restart
-    image: waltid/waltid-demo-wallet:${DEMO_WALLET_VERSION:-0.15.1}
+    # Ocean Enterprise's web wallet: "Connect with MetaMask" uses the same
+    # wallet-api login as the marketplace, so it is the same account/wallet.
+    # (Its OIDC/DFNS/signer-server buttons need services we don't run.)
+    image: oceanenterprise/waltid-dev-wallet:${DEV_WALLET_VERSION:-gaiax-0.1.5-OE}
     depends_on:
       - wallet-api
     environment:
-      PORT: "7101"
+      PORT: "7104"
+      NUXT_PUBLIC_WALLET_API: https://wallet.zdevutils.com/wallet-api
+      NUXT_WALLET_API_INTERNAL: http://wallet-api:7001/wallet-api
       NUXT_PUBLIC_ISSUER_CALLBACK_URL: https://wallet.zdevutils.com
       NUXT_PUBLIC_DEMO_WALLET_URL: https://wallet.zdevutils.com
-      NUXT_PUBLIC_DEV_WALLET_URL: https://wallet.zdevutils.com
 
   wallet-gateway:
     <<: *restart

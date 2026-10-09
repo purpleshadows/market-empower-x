@@ -40,6 +40,6 @@
 	}
 
 	handle {
-		reverse_proxy waltid-demo-wallet:7101
+		reverse_proxy waltid-dev-wallet:7104
 	}
 }
