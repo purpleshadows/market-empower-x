@@ -1,0 +1,79 @@
+[
+  {
+    "did": "126a2761",
+    "nft": "0xd8576cfb3890b4065a1311d0E3F0392Ec1f9b69F",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "6a28fd8a",
+    "nft": "0x3c06A4Df7528784cBAA2D1d48367370Be75759Fc",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "d1974da4",
+    "nft": "0x8a96EC9E770Bb7f79b0d71E303F406bE1B69Cae2",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "4fe9678f",
+    "nft": "0xD6F5487de333bd601763BeaDB4D0396A6119B7Fd",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "8cfd23cf",
+    "nft": "0x6388666BFA67b48cD2b01520A765E252491f99e2",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "744d4d36",
+    "nft": "0xb9D05e1B1151853541F5485a926C652a5cB3Db96",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "39fdea02",
+    "nft": "0x484F4acdF256bAa6a6050EC915FF355bA641b35f",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "ee9c5900",
+    "nft": "0x1B28ec4a0cab609b07512E0e71AD6BCa550a7667",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "319e204a",
+    "nft": "0xcDee8AD89fA58195E00645ca48Cd8eB99DA0302b",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "6f06da54",
+    "nft": "0x276caB6716D97fc1FBdd15a6c5908eC976e9b2c5",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  },
+  {
+    "did": "09b8cbb8",
+    "nft": "0xB8081aAAE7b186204bd5c55FE64e2B012aB58CEa",
+    "owner": "0x02B54d8972",
+    "reason": "July 2026 test assets",
+    "chainId": 11155111
+  }
+]

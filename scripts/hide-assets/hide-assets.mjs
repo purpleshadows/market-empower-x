@@ -14,48 +14,57 @@
  * Usage:
  *   cd scripts/hide-assets
  *   npm install
- *   PRIVATE_KEY=0xabc... node hide-assets.mjs          # hide all (state 5)
- *   PRIVATE_KEY=0xabc... STATE=0 node hide-assets.mjs   # restore all (state 0)
+ *   DRY_RUN=1 node hide-assets.mjs cleanup-2026-10.json                 # preview
+ *   PRIVATE_KEY=0xabc... node hide-assets.mjs cleanup-2026-10.json          # hide
+ *   PRIVATE_KEY=0xabc... STATE=0 node hide-assets.mjs cleanup-2026-10.json  # restore
+ *
+ * Lists: cleanup-2026-10.json (test/duplicate assets, Oct 2026),
+ *        hidden-2026-07.json (July 2026 test assets, already hidden).
  *
  * Optional env:
- *   RPC_URL   override the Sepolia RPC endpoint
+ *   RPC_<chainId>  override an RPC endpoint (RPC_URL = Sepolia, kept for compat)
  *   STATE     target metadata state (default 5 = Unlisted)
+ *   DRY_RUN=1 only show owners/states, send nothing (no key needed)
  */
 
+import { readFileSync } from 'node:fs'
 import { ethers } from 'ethers'
 
-const DEFAULT_RPC =
-  'https://ethereum-sepolia-rpc.publicnode.com'
-
-const RPC_URL = process.env.RPC_URL || DEFAULT_RPC
+// Public RPCs per chain; override with RPC_<chainId>, e.g. RPC_11155420=...
+const DEFAULT_RPCS = {
+  11155111: 'https://ethereum-sepolia-rpc.publicnode.com',
+  11155420: 'https://sepolia.optimism.io'
+}
+const rpcFor = (chainId) =>
+  process.env[`RPC_${chainId}`] ||
+  (chainId === 11155111 && process.env.RPC_URL) ||
+  DEFAULT_RPCS[chainId]
 const PRIVATE_KEY = process.env.PRIVATE_KEY
 const STATE = Number(process.env.STATE ?? 5)
 
-// The 11 data NFTs owned by 0x02B54d89725a073bAA05795aa9359072694c39d0.
-// Each entry: [short DID, NFT contract address]
-const ASSETS = [
-  ['126a2761', '0xd8576cfb3890b4065a1311d0E3F0392Ec1f9b69F'],
-  ['6a28fd8a', '0x3c06A4Df7528784cBAA2D1d48367370Be75759Fc'],
-  ['d1974da4', '0x8a96EC9E770Bb7f79b0d71E303F406bE1B69Cae2'],
-  ['4fe9678f', '0xD6F5487de333bd601763BeaDB4D0396A6119B7Fd'],
-  ['8cfd23cf', '0x6388666BFA67b48cD2b01520A765E252491f99e2'],
-  ['744d4d36', '0xb9D05e1B1151853541F5485a926C652a5cB3Db96'],
-  ['39fdea02', '0x484F4acdF256bAa6a6050EC915FF355bA641b35f'],
-  ['ee9c5900', '0x1B28ec4a0cab609b07512E0e71AD6BCa550a7667'],
-  ['319e204a', '0xcDee8AD89fA58195E00645ca48Cd8eB99DA0302b'],
-  ['6f06da54', '0x276caB6716D97fc1FBdd15a6c5908eC976e9b2c5'],
-  ['09b8cbb8', '0xB8081aAAE7b186204bd5c55FE64e2B012aB58CEa']
-]
+// Assets to process come from a JSON list (first CLI argument):
+//   [{ "name": "...", "did": "did:ope:...", "nft": "0x...", "chainId": 11155111,
+//      "reason": "..." }]   (chainId defaults to Sepolia)
+// Assets whose data NFT is not owned by the signing wallet are skipped, so one
+// list can mix owners: each owner runs it with their own key.
+const LIST_FILE = process.argv[2]
+const DRY_RUN = process.env.DRY_RUN === '1'
 
 // Minimal Ocean ERC721Template ABI: just the state setter + a reader.
 const ABI = [
   'function setMetaDataState(uint8 _metaDataState) external',
-  'function getMetaData() external view returns (string, string, uint8, bool)'
+  'function getMetaData() external view returns (string, string, uint8, bool)',
+  'function ownerOf(uint256 tokenId) external view returns (address)'
 ]
 
 async function main() {
-  if (!PRIVATE_KEY) {
-    console.error('ERROR: set PRIVATE_KEY (the wallet that owns the assets).')
+  if (!LIST_FILE) {
+    console.error('ERROR: pass the asset list, e.g. node hide-assets.mjs cleanup-2026-10.json')
+    process.exit(1)
+  }
+  const ASSETS = JSON.parse(readFileSync(LIST_FILE, 'utf8'))
+  if (!PRIVATE_KEY && !DRY_RUN) {
+    console.error('ERROR: set PRIVATE_KEY (the wallet that owns the assets), or DRY_RUN=1.')
     process.exit(1)
   }
   if (!Number.isInteger(STATE) || STATE < 0 || STATE > 255) {
@@ -63,24 +72,47 @@ async function main() {
     process.exit(1)
   }
 
-  const provider = new ethers.JsonRpcProvider(RPC_URL)
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider)
-  const from = await wallet.getAddress()
-
-  const network = await provider.getNetwork()
+  const from = PRIVATE_KEY
+    ? new ethers.Wallet(PRIVATE_KEY).address
+    : '(dry run, no wallet)'
+  const signers = {}
+  const signerFor = (chainId) => {
+    if (!signers[chainId]) {
+      const rpc = rpcFor(chainId)
+      if (!rpc) throw new Error(`no RPC for chain ${chainId} (set RPC_${chainId})`)
+      const provider = new ethers.JsonRpcProvider(rpc)
+      signers[chainId] = PRIVATE_KEY
+        ? new ethers.Wallet(PRIVATE_KEY, provider)
+        : provider
+    }
+    return signers[chainId]
+  }
   const action = STATE === 0 ? 'RESTORE (Active)' : `HIDE (state ${STATE})`
   console.log(`Wallet:  ${from}`)
-  console.log(`Chain:   ${network.chainId}`)
   console.log(`Action:  ${action}`)
   console.log(`Assets:  ${ASSETS.length}`)
   console.log('')
 
   let ok = 0
   let failed = 0
+  let skipped = 0
 
-  for (const [did, nftAddress] of ASSETS) {
-    const nft = new ethers.Contract(nftAddress, ABI, wallet)
+  for (const { did, nft: nftAddress, name, chainId = 11155111 } of ASSETS) {
+    const label = `${name || did} [chain ${chainId}]`
     try {
+      const nft = new ethers.Contract(nftAddress, ABI, signerFor(chainId))
+      const owner = await nft.ownerOf(1)
+      if (DRY_RUN) {
+        const meta = await nft.getMetaData()
+        console.log(`- ${label}
+    owner ${owner}  state ${Number(meta[2])}`)
+        continue
+      }
+      if (owner.toLowerCase() !== from.toLowerCase()) {
+        console.log(`- ${label}  owned by ${owner}, skipped`)
+        skipped++
+        continue
+      }
       // Skip if already in the target state.
       let current
       try {
@@ -90,28 +122,29 @@ async function main() {
         current = undefined
       }
       if (current === STATE) {
-        console.log(`= ${did}  ${nftAddress}  already state ${STATE}, skipped`)
+        console.log(`= ${label}  already state ${STATE}, skipped`)
         ok++
         continue
       }
 
       const tx = await nft.setMetaDataState(STATE)
-      process.stdout.write(`… ${did}  ${nftAddress}  tx ${tx.hash} `)
+      process.stdout.write(`… ${label}  tx ${tx.hash} `)
       await tx.wait()
       console.log('✓ confirmed')
       ok++
     } catch (err) {
       console.log('')
-      console.error(`✗ ${did}  ${nftAddress}  FAILED: ${err.shortMessage || err.message}`)
+      console.error(`✗ ${label}  FAILED: ${err.shortMessage || err.message}`)
       failed++
     }
   }
 
   console.log('')
-  console.log(`Done. ${ok} ok, ${failed} failed.`)
+  if (DRY_RUN) process.exit(0)
+  console.log(`Done. ${ok} ok, ${skipped} skipped (other owner), ${failed} failed.`)
   if (STATE !== 0) {
     console.log('Assets will drop out of the catalog once the node re-indexes.')
-    console.log('To restore: STATE=0 node hide-assets.mjs')
+    console.log(`To restore: STATE=0 node hide-assets.mjs ${LIST_FILE}`)
   }
   process.exit(failed > 0 ? 1 : 0)
 }

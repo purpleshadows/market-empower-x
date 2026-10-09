@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Input verification C2D",
+    "did": "did:ope:51670a8287941fee7cd4fb520f4da12c241baaee753d479076dabad91c038a92",
+    "nft": "0x4ECC68c6b2B4D6634dE8FBBB63B3e72364438492",
+    "owner": "0xd50bA47192",
+    "reason": "Test algorithm (description = its name)",
+    "chainId": 11155111
+  },
+  {
+    "name": "ZERTIPOWER -  PV surplus hourly data (download copy)",
+    "did": "did:ope:5cc8b1b0527d00f86c1cd33eeb39fdb1d289ac16044d4c03acaea8fbe8fdf5d9",
+    "nft": "0x2423462667c0Ed8DA3Eb9495268Cb52dBdb16913",
+    "owner": "0x02B54d8972",
+    "reason": "Duplicate of the Compute-to-Data version (did:ope:1d1a9cde...); typo in name",
+    "chainId": 11155420
+  },
+  {
+    "name": "SOMMOBILITAT - Electric vehicles data (download copy)",
+    "did": "did:ope:0fe8935e632a6632755dc46883ae04366eb052b89f17c0500043c2719f2cb9df",
+    "nft": "0xD97cBbeB182E1c02e23B781267099c4949275673",
+    "owner": "0x02B54d8972",
+    "reason": "Duplicate of the Compute-to-Data version (did:ope:8fa64c68...)",
+    "chainId": 11155420
+  },
+  {
+    "name": "EMPOWER-X SmartMeter HourlyConsumption ES0176001900000XXXXX_2025 (download copy)",
+    "did": "did:ope:64ca41169e23fe6e8f8f9970193a515983391cda6293d8852ecc95a02b2c1aa4",
+    "nft": "0xc96980ffcAC6921a896590276F68A9746d5509AD",
+    "owner": "0x91b7377A3D",
+    "reason": "Duplicate of the Compute-to-Data version (did:ope:3702595f...) used by the dashboard algorithm",
+    "chainId": 11155420
+  }
+]
