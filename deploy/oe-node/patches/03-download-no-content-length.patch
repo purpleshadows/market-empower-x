@@ -1,0 +1,21 @@
+--- a/src/components/core/handler/downloadHandler.ts
++++ b/src/components/core/handler/downloadHandler.ts
+@@ -90,10 +90,14 @@
+     }
+     // need to check if content length is already in headers, but we don't know the case
+     const objTemp = JSON.parse(JSON.stringify(headers)?.toLowerCase())
+-    if (!('Content-Length'?.toLowerCase() in objTemp))
+-      headers['Transfer-Encoding'] = 'chunked'
+-    // ensure that the right content length is set in the headers
+-    headers['Content-Length'.toLowerCase()] = fileMetadata.contentLength
++    // PATCH(empower-x): never declare a Content-Length. The body comes from a second
++    // upstream request (dynamic sources differ in size between calls), axios may have
++    // decompressed it, and the encrypted path pads it, so no length known here is
++    // reliably the length of the bytes actually sent. Stream it chunked instead.
++    for (const key of Object.keys(headers)) {
++      if (key.toLowerCase() === 'content-length') delete headers[key]
++    }
++    headers['Transfer-Encoding'] = 'chunked'
+ 
+     if (!('Content-Disposition'?.toLowerCase() in objTemp))
+       headers['Content-Disposition'.toLowerCase()] =

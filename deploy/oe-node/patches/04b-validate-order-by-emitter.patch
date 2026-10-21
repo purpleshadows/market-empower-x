@@ -1,0 +1,59 @@
+--- a/src/components/core/utils/validateOrders.ts
++++ b/src/components/core/utils/validateOrders.ts
+@@ -56,17 +56,18 @@
+       message: errorMsg
+     }
+   }
+-  const erc20Address = txReceiptMined.to
+-  const datatokenContract = new Contract(erc20Address, ERC20Template.abi, signer)
+-  const erc721Address = await datatokenContract.getERC721Address()
++  // PATCH(empower-x): do not assume the tx was sent straight to the datatoken
++  // (MetaMask delegation / relayers send it to another contract). Instead only trust
++  // events emitted BY the datatoken itself (log.address), as upstream ocean-node 4.2.x does.
++  const isFromDatatoken = (event: any) =>
++    event?.log?.address?.toLowerCase() === datatokenAddress?.toLowerCase()
+ 
+-  const orderReusedEvent = fetchEventFromTransaction(
+-    txReceiptMined,
+-    EVENTS.ORDER_REUSED,
+-    contractInterface
+-  )
++  const orderReusedEvent = (
++    fetchEventFromTransaction(txReceiptMined, EVENTS.ORDER_REUSED, contractInterface) ||
++    []
++  ).filter(isFromDatatoken)
+ 
+-  if (orderReusedEvent && orderReusedEvent?.length > 0) {
++  if (orderReusedEvent.length > 0) {
+     const reusedTxId = orderReusedEvent[0].args[0]
+     txReceiptMined = await fetchTransactionReceipt(reusedTxId, provider)
+     if (!txReceiptMined) {
+@@ -84,15 +85,21 @@
+     contractInterface
+   )
+   let orderEvent
+-  for (const event of OrderStartedEvent) {
+-    if (
+-      (userAddress?.toLowerCase() === event.args[0]?.toLowerCase() ||
+-        userAddress?.toLowerCase() === event.args[1]?.toLowerCase()) &&
+-      erc20Address?.toLowerCase() === datatokenAddress?.toLowerCase() &&
+-      erc721Address?.toLowerCase() === dataNftAddress?.toLowerCase()
+-    ) {
++  for (const event of OrderStartedEvent || []) {
++    const userMatches =
++      userAddress?.toLowerCase() === event.args[0]?.toLowerCase() ||
++      userAddress?.toLowerCase() === event.args[1]?.toLowerCase()
++    if (!userMatches || !isFromDatatoken(event)) continue
++
++    try {
++      const datatokenContract = new Contract(datatokenAddress, ERC20Template.abi, signer)
++      const erc721Address = await datatokenContract.getERC721Address()
++      if (erc721Address?.toLowerCase() !== dataNftAddress?.toLowerCase()) continue
++
+       orderEvent = event
+       break
++    } catch (error) {
++      CORE_LOGGER.logMessage(`Could not validate datatoken ${datatokenAddress}: ${error}`)
+     }
+   }
+ 

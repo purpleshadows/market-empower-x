@@ -1,0 +1,13 @@
+--- a/src/utils/util.ts
++++ b/src/utils/util.ts
+@@ -58,7 +58,9 @@
+     const events = txReceipt.logs
+       .map((log: any) => ({
+         topics: [...log.topics],
+-        data: log.data
++        data: log.data,
++        // PATCH(empower-x): keep the emitter so callers can check who emitted it
++        address: log.address
+       }))
+       .filter((log: any) => {
+         try {

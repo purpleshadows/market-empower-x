@@ -1,0 +1,12 @@
+--- a/src/utils/asset.ts
++++ b/src/utils/asset.ts
+@@ -56,7 +56,8 @@
+       method: method || 'get',
+       headers,
+       responseType: 'stream',
+-      timeout: 30000
++      // PATCH(empower-x): was a fixed 30 s; slow dynamic sources need longer
++      timeout: parseInt(process.env.FILE_METADATA_TIMEOUT_MS, 10) || 120000
+     })
+     contentType = response.headers['content-type']
+     let totalSize = 0

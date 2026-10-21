@@ -1,0 +1,13 @@
+--- a/src/components/c2d/compute_engine_docker.ts
++++ b/src/components/c2d/compute_engine_docker.ts
+@@ -1006,6 +1006,10 @@
+     if (atIdx !== -1) {
+       ref = name.slice(atIdx + 1)
+       name = name.slice(0, atIdx)
++      const tagColon = name.lastIndexOf(':')
++      if (tagColon !== -1 && !name.slice(tagColon).includes('/')) {
++        name = name.slice(0, tagColon)
++      }
+     } else if (colonIdx !== -1 && !name.slice(colonIdx).includes('/')) {
+       ref = name.slice(colonIdx + 1)
+       name = name.slice(0, colonIdx)

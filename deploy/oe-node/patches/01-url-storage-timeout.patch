@@ -1,0 +1,20 @@
+--- a/src/components/storage/UrlStorage.ts
++++ b/src/components/storage/UrlStorage.ts
+@@ -28,7 +28,7 @@
+       url: input,
+       headers,
+       responseType: 'stream',
+-      timeout: 30000
++      timeout: 120000
+     })
+ 
+     return {
+@@ -62,7 +62,7 @@
+       url,
+       data: stream,
+       headers,
+-      timeout: 30000,
++      timeout: 120000,
+       maxBodyLength: Infinity,
+       maxContentLength: Infinity
+     })
