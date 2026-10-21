@@ -117,7 +117,7 @@ environment; set `TOOLS_HOST`/`TOOLS_BIND` to this host's LAN IP). It joins the
 | policy-server | `v1.3.2` | Last release for OE Node 3.x. Use `v1.3.3+` only with Node 4.2.1 (market 1.5.x is designed for Node 4.2.1). |
 | wallet-api / verifier-api | `gaiax-0.1.1-OE` / `gaiax-0.1.2-OE` | OE builds |
 | issuer-api | `0.23.2` | 0.15.x/0.16.x crash on start: hardcoded example certificate dates expired in 2026 |
-| web wallet (OE dev wallet) | `gaiax-0.1.5-OE` | MetaMask login, same account as the marketplace |
+| web wallet (OE dev wallet) | `gaiax-0.1.5-OE` + `dev-wallet/patch.mjs` | MetaMask login, same account as the marketplace. Built on deploy with key-page fixes: "Public JWK" no longer shows the private key (`d`), the shown JWK carries the key ID, and "Delete key" asks first and reports failures. The build fails if a new base version no longer matches the patch. |
 | portal | `0.15.1` | |
 | OPA | `1.4.2` | |
 

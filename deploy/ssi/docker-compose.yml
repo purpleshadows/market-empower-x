@@ -80,7 +80,13 @@ services:
     # Ocean Enterprise's web wallet: "Connect with MetaMask" uses the same
     # wallet-api login as the marketplace, so it is the same account/wallet.
     # (Its OIDC/DFNS/signer-server buttons need services we don't run.)
-    image: oceanenterprise/waltid-dev-wallet:${DEV_WALLET_VERSION:-gaiax-0.1.5-OE}
+    # Built locally from the OE image plus dev-wallet/patch.mjs (key page: no
+    # private key under "Public JWK", kid shown, delete reports errors).
+    build:
+      context: ./dev-wallet
+      args:
+        BASE: oceanenterprise/waltid-dev-wallet:${DEV_WALLET_VERSION:-gaiax-0.1.5-OE}
+    image: empower-x/waltid-dev-wallet:${DEV_WALLET_VERSION:-gaiax-0.1.5-OE}-patched
     depends_on:
       - wallet-api
     environment:
