@@ -133,7 +133,7 @@ describe('@utils/aquarius', () => {
 
   test('orderByHomeNodeFirst lists this market node before federated nodes', () => {
     const asset = (id: string, datetime: string) =>
-      ({ id, indexedMetadata: { event: { datetime } } }) as Asset
+      ({ id, indexedMetadata: { event: { datetime } } } as Asset)
     const sort = { [SortTermOptions.Created]: SortDirectionOptions.Descending }
 
     expect(
