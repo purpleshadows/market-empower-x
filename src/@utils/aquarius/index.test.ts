@@ -8,9 +8,11 @@ import {
   parseFilters,
   generateBaseQuery,
   getWhitelistShould,
-  sortMergedResults
+  sortMergedResults,
+  orderByHomeNodeFirst
 } from '.'
 import { Asset } from 'src/@types/Asset'
+import { customProviderUrl } from '../../../app.config.cjs'
 
 const defaultBaseQueryReturn: SearchQuery = {
   from: 0,
@@ -127,5 +129,38 @@ describe('@utils/aquarius', () => {
         [SortTermOptions.Created]: SortDirectionOptions.Descending
       }).map((asset) => asset.id)
     ).toStrictEqual(['eth-sepolia', 'op-sepolia'])
+  })
+
+  test('orderByHomeNodeFirst lists this market node before federated nodes', () => {
+    const asset = (id: string, datetime: string) =>
+      ({ id, indexedMetadata: { event: { datetime } } }) as Asset
+    const sort = { [SortTermOptions.Created]: SortDirectionOptions.Descending }
+
+    expect(
+      orderByHomeNodeFirst(
+        [
+          {
+            cacheUri: 'https://node.demo.pontus-x.eu',
+            result: {
+              results: [
+                asset('sense-new', '2026-10-20T00:00:00.000Z'),
+                asset('shared', '2026-01-01T00:00:00.000Z')
+              ]
+            }
+          },
+          {
+            cacheUri: `${customProviderUrl}/`,
+            result: {
+              results: [
+                asset('ours-old', '2026-07-01T00:00:00.000Z'),
+                asset('ours-new', '2026-09-01T00:00:00.000Z'),
+                asset('shared', '2026-01-01T00:00:00.000Z')
+              ]
+            }
+          }
+        ],
+        sort
+      ).map((a) => a.id)
+    ).toStrictEqual(['ours-new', 'ours-old', 'shared', 'sense-new'])
   })
 })

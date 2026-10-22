@@ -334,6 +334,11 @@ interface MetadataCacheQuery {
   query: SearchQuery
 }
 
+interface NodeQueryResult {
+  cacheUri: string
+  result: AquariusQueryResult
+}
+
 function getSearchFilters(query: SearchQuery): unknown[] {
   return Array.isArray(query?.query?.bool?.filter)
     ? query.query.bool.filter
@@ -576,10 +581,40 @@ export function sortMergedResults(
   })
 }
 
+// Federated catalogs list this market's own node first, then the other nodes,
+// each group sorted by the requested sort. Each node is queried for
+// page * size results, so slicing the concatenation stays correct.
+export function orderByHomeNodeFirst(
+  queryResults: NodeQueryResult[],
+  sort?: SearchQuery['sort']
+): Asset[] {
+  const homeNode = normalizeNodeUri(customProviderUrl)
+  const seen = new Set<string>()
+  const group = (isHome: boolean): Asset[] => {
+    const assets: Asset[] = []
+    queryResults
+      .filter(
+        ({ cacheUri }) => (normalizeNodeUri(cacheUri) === homeNode) === isHome
+      )
+      .forEach(({ result }) =>
+        result?.results?.forEach((asset: Asset, index: number) => {
+          const key = asset?.id || `${seen.size}-${index}`
+          if (seen.has(key)) return
+          seen.add(key)
+          assets.push(asset)
+        })
+      )
+    return sortMergedResults(assets, sort)
+  }
+
+  return [...group(true), ...group(false)]
+}
+
 function transformMergedQueryResults(
-  queryResults: AquariusQueryResult[],
+  nodeQueryResults: NodeQueryResult[],
   query: SearchQuery
 ): PagedAssets {
+  const queryResults = nodeQueryResults.map(({ result }) => result)
   const parsedFrom = Number(query.from)
   const parsedSize = Number(query.size)
   const from = Number.isFinite(parsedFrom) && parsedFrom > 0 ? parsedFrom : 0
@@ -587,18 +622,7 @@ function transformMergedQueryResults(
   const requestedPage = from > 0 ? from : 1
   const pageStart = (requestedPage - 1) * size
   const pageEnd = pageStart + size
-  const uniqueResults = new Map<string, Asset>()
-
-  queryResults.forEach((queryResult) => {
-    queryResult?.results?.forEach((asset: Asset, index: number) => {
-      uniqueResults.set(asset?.id || `${uniqueResults.size}-${index}`, asset)
-    })
-  })
-
-  const results = sortMergedResults(
-    Array.from(uniqueResults.values()),
-    query.sort
-  )
+  const results = orderByHomeNodeFirst(nodeQueryResults, query.sort)
   const rawResultsCount = queryResults.reduce(
     (sum, queryResult) => sum + (queryResult?.results?.length || 0),
     0
@@ -660,18 +684,19 @@ export async function queryMetadata(
   const cacheQueries = buildMetadataCacheQueries(cacheUris, query)
   const queryResults = (
     await Promise.all(
-      cacheQueries.map(({ cacheUri, query }) =>
-        postMetadataQuery(cacheUri, query, cancelToken)
-      )
+      cacheQueries.map(async ({ cacheUri, query }) => ({
+        cacheUri,
+        result: await postMetadataQuery(cacheUri, query, cancelToken)
+      }))
     )
-  ).filter((queryResult): queryResult is AquariusQueryResult =>
-    Boolean(queryResult)
+  ).filter((nodeResult): nodeResult is NodeQueryResult =>
+    Boolean(nodeResult.result)
   )
 
   if (queryResults.length === 0) return
 
   return cacheQueries.length === 1
-    ? transformQueryResult(queryResults[0], query.from, query.size)
+    ? transformQueryResult(queryResults[0].result, query.from, query.size)
     : transformMergedQueryResults(queryResults, query)
 }
 
